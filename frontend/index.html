@@ -652,7 +652,7 @@
             mainContentSpace.classList.remove('hidden');
             mainContentSpace.classList.add('streaming-cursor');
 
-            const contentMarkdown = compileComprehensiveSynthesis(text);
+            const contentMarkdown = await compileComprehensiveSynthesis(text);
             await streamPayloadMarkdown(contentMarkdown, mainContentSpace);
 
             mainContentSpace.classList.remove('streaming-cursor');
@@ -727,84 +727,21 @@
             return container;
         }
 
-        // Markdown text generator mapping the 13 specifications cleanly
-        function compileComprehensiveSynthesis(topic) {
-            return `
-### 1. Overview
-**${topic}** is a critical system paradigm that bridges foundational mathematics and empirical science. It transforms what initially seems like complex intuitive concepts into structured models for robust optimization, research, and analysis.
+        // FastAPI Backend Configuration
+        const FASTAPI_BASE_URL = "http://localhost:8000";
 
-### 2. Beginner Explanation
-Think of this like a thermostat inside an oven. Instead of trying to guess how to change the heat from moment to moment, the thermostat continuously monitors the current heat error (how cold or hot it is compared to the target) and adjusts itself accordingly. In short, it is a self-regulating loop of precision.
-
-### 3. Deep Explanation
-Underneath the surface, the mechanism maps data points into a continuous, high-dimensional manifolds vector workspace. By operating in low-dimensional representations, we eliminate arbitrary noise, ensuring data transformations are mathematically consistent and numerically stable across deep layers.
-
-### 4. Scientific Explanation
-Scientifically, the model uses concepts from information theory and statistical mechanics. Specifically, it seeks to minimize global system entropy while maximizing predictive precision. The information transfer function $I(X; Y)$ guarantees complete semantic preservation.
-
-### 5. Mathematical Foundation
-To derive the state equations, let $x \\in \\mathbb{R}^d$ be our initial model states, parameterized by matrices $W$:
-
-$$\\mathcal{L}(W) = -\\frac{1}{M} \\sum_{i=1}^M \\log P(y^{(i)} | x^{(i)}; W) + \\frac{\\lambda}{2} ||W||_F^2$$
-
-We update states iteratively using standard gradient trajectories:
-
-$$W_{t+1} = W_t - \\gamma \\nabla_W \\mathcal{L}(W_t)$$
-
-Where $\\gamma$ represents learning coefficients, and the Frobenius norm $||W||_F^2$ forces high weights to decay.
-
-### 6. Visual Explanation
-* **High-Error Zone (Peaks):** Unstable state configurations shown as steep red cliffs.
-* **Stable Solutions (Valleys):** Deep green valleys representing ideal system equilibrium.
-* **The Gradient Vectors:** A continuous path of arrows guiding states downward.
-
-### 7. Real-world Examples
-* **Bioinformatics:** Mapping DNA profiles to synthesize targeted cancer therapeutics.
-* **Aerospace Systems:** Autonomous micro-adjustments for entry vehicle tracking.
-* **Quantitative Finance:** High-frequency portfolio dynamic adjustments under extreme volatility.
-
-### 8. Applications
-* Machine translation models (Large Language Models, Transformers)
-* Dynamic state space estimation (Robotics and spatial tracking)
-* Physics-informed neural systems
-
-### 9. Common Mistakes
-* **Vanishing Signal Coefficients:** Forgetting to scale transformations correctly, causing downstream optimization to completely freeze.
-* **Symmetry Collapse:** Initializing parameters with uniform values, which locks calculation updates into redundant states.
-
-### 10. Advanced Concepts
-* **Manifold Alignment Hypothesis:** The premise that real-world complex data exists on low-dimensional spaces.
-* **Diffeomorphic Topology:** Mapping transformations while preserving exact structural boundaries.
-
-### 11. Research Insights
-State-of-the-art research (e.g., *Sutton et al., 2025*) proves that dynamic, on-the-fly regularization tweaks yield up to a 22% spike in calculation efficiency compared to static parameter weights.
-
-### 12. Quiz (Interactive Testing)
-Evaluate your master level with this interactive card:
-
-<div class="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-4 my-3 max-w-xl space-y-3 transition-colors duration-300" id="interactive-quiz">
-    <p class="font-bold text-slate-800 dark:text-slate-200 text-sm">Question: What is the main utility of adding the Frobenius norm $||W||_F^2$ to the optimization objective?</p>
-    <div class="space-y-2 text-xs">
-        <label class="flex items-start gap-2.5 p-2 rounded-lg bg-white dark:bg-neutral-950 border border-slate-200 dark:border-neutral-700 hover:border-slate-300 dark:hover:border-neutral-600 cursor-pointer transition">
-            <input type="radio" name="quiz-opt" value="A" class="mt-0.5 accent-brand-600">
-            <span class="text-slate-700 dark:text-slate-300">A) It eliminates non-linearity within high-dimensional mappings.</span>
-        </label>
-        <label class="flex items-start gap-2.5 p-2 rounded-lg bg-white dark:bg-neutral-950 border border-slate-200 dark:border-neutral-700 hover:border-slate-300 dark:hover:border-neutral-600 cursor-pointer transition">
-            <input type="radio" name="quiz-opt" value="B" class="mt-0.5 accent-brand-600">
-            <span class="text-slate-700 dark:text-slate-300">B) It penalizes high parameter weights, preventing severe model overfitting.</span>
-        </label>
-        <label class="flex items-start gap-2.5 p-2 rounded-lg bg-white dark:bg-neutral-950 border border-slate-200 dark:border-neutral-700 hover:border-slate-300 dark:hover:border-neutral-600 cursor-pointer transition">
-            <input type="radio" name="quiz-opt" value="C" class="mt-0.5 accent-brand-600">
-            <span class="text-slate-700 dark:text-slate-300">C) It accelerates inference times directly.</span>
-        </label>
-    </div>
-    <button class="quiz-submit-btn w-full py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-bold transition">Submit Answer</button>
-    <div class="quiz-feedback text-xs font-bold hidden p-2 rounded-lg"></div>
-</div>
-
-### 13. Summary
-Ultimately, mastering **${topic}** is about matching high-level intuitive metaphors with foundational linear algebra optimization formulas. Continuous validation yields persistent learning mastery.
-            `;
+        // Fetch response from backend
+        async function compileComprehensiveSynthesis(topic) {
+            const userMessage = chatInput.value.trim() || topic;
+            
+            const response = await fetch(`${FASTAPI_BASE_URL}/api/chat`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: userMessage, topic: topic })
+            });
+            
+            const data = await response.json();
+            return data.response;
         }
 
         // Custom parser rendering Quiz into actual interactive HTML inputs
@@ -824,11 +761,11 @@ Ultimately, mastering **${topic}** is about matching high-level intuitive metaph
 
                 if (selected.value === 'B') {
                     feedback.className = "quiz-feedback text-xs font-bold p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 mt-2 fade-in transition-colors";
-                    feedback.innerHTML = "🎉 Correct! The regularization component prevents weights from exploding, stabilizing the general model outputs.";
+                    feedback.innerHTML = " Correct! The regularization component prevents weights from exploding, stabilizing the general model outputs.";
                     feedback.classList.remove('hidden');
                 } else {
                     feedback.className = "quiz-feedback text-xs font-bold p-2.5 rounded-lg bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400 mt-2 fade-in transition-colors";
-                    feedback.innerHTML = "❌ Incorrect. Try again! Think about the effect of weight scale on parameter sensitivity.";
+                    feedback.innerHTML = " Incorrect. Try again! Think about the effect of weight scale on parameter sensitivity.";
                     feedback.classList.remove('hidden');
                 }
             });

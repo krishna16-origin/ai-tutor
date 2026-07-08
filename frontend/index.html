@@ -526,7 +526,7 @@
     });
 
     return html;
-}
+   }
         function renderVisuals(container) {
             const blocks = container.querySelectorAll('pre code');
 
@@ -597,11 +597,9 @@
             });
 
             renderInteractiveQuiz(container);
-        }
-            renderInteractiveQuiz(container);
-        }
+             }
 
-        function renderInteractiveQuiz(container) {
+         function renderInteractiveQuiz(container) {
             const rawText = container.getAttribute('data-raw') || "";
             const quizStart = rawText.search(/(?:#+\s*|\*\*?)(?:Quiz|Practice Problems|Test Your Knowledge|Knowledge Check|Pop Quiz)(?:\*\*?)?/i);
 

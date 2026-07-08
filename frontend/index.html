@@ -3,20 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cortex AI  -Learn Anything</title>
+    <title>Cortex AI - Learn Anything</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Marked.js for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Mermaid.js for diagrams -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <!-- Plotly.js for charts -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Three.js for 3D models -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        /* Exact ChatGPT Dark Theme Colors */
                         chat: {
                             bg: '#212121',
                             sidebar: '#171717',
@@ -26,27 +31,6 @@
                             user: '#2f2f2f',
                             text: '#ececec',
                             muted: '#b4b4b4'
-                        }
-                    },
-                    typography: {
-                        DEFAULT: {
-                            css: {
-                                color: '#ececec',
-                                a: { color: '#3b82f6', '&:hover': { color: '#60a5fa' } },
-                                h1: { color: '#ececec', fontWeight: '600', marginTop: '1.5em', marginBottom: '0.5em' },
-                                h2: { color: '#ececec', fontWeight: '600', marginTop: '1.5em', marginBottom: '0.5em' },
-                                h3: { color: '#ececec', fontWeight: '600', marginTop: '1.5em', marginBottom: '0.5em' },
-                                strong: { color: '#ececec', fontWeight: '600' },
-                                code: { color: '#ececec', backgroundColor: '#2f2f2f', padding: '0.2em 0.4em', borderRadius: '0.25rem', fontSize: '0.875em' },
-                                'pre code': { backgroundColor: 'transparent', padding: '0', color: 'inherit' },
-                                pre: { backgroundColor: '#0d0d0d', padding: '1rem', borderRadius: '0.5rem', overflowX: 'auto', border: '1px solid #383838' },
-                                blockquote: { borderLeftColor: '#383838', color: '#b4b4b4', fontStyle: 'italic' },
-                                ul: { listStyleType: 'disc', paddingLeft: '1.5em', marginTop: '1em', marginBottom: '1em' },
-                                ol: { listStyleType: 'decimal', paddingLeft: '1.5em', marginTop: '1em', marginBottom: '1em' },
-                                table: { width: '100%', borderCollapse: 'collapse', marginTop: '1em', marginBottom: '1em' },
-                                th: { borderBottom: '1px solid #383838', padding: '0.5em', textAlign: 'left', fontWeight: '600' },
-                                td: { borderBottom: '1px solid #383838', padding: '0.5em', textAlign: 'left' }
-                            }
                         }
                     }
                 }
@@ -62,10 +46,20 @@
 
         body { background-color: #212121; color: #ececec; }
 
-        /* Typography utility classes to avoid needing @tailwindcss/typography plugin */
+        /* Typography & Tables */
         .prose p { margin-bottom: 1rem; line-height: 1.7; }
-        .prose pre { margin: 1rem 0; }
-        .prose > :last-child { margin-bottom: 0; }
+        .prose pre { margin: 1rem 0; background-color: #0d0d0d; padding: 1rem; borderRadius: 0.5rem; overflow-x: auto; border: 1px solid #383838; }
+        .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9em; }
+        .prose th { border-bottom: 2px solid #383838; padding: 0.75rem; text-align: left; font-weight: 600; background: #2a2a2a; }
+        .prose td { border-bottom: 1px solid #383838; padding: 0.75rem; text-align: left; }
+        .prose tr:hover { background: #2a2a2a; }
+        .prose blockquote { border-left: 4px solid #383838; padding-left: 1rem; color: #b4b4b4; font-style: italic; margin: 1rem 0; }
+        .prose ul { list-style-type: disc; padding-left: 1.5rem; margin: 1rem 0; }
+        .prose ol { list-style-type: decimal; padding-left: 1.5rem; margin: 1rem 0; }
+        .prose h1, .prose h2, .prose h3 { font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #fff; }
+        .prose h1 { font-size: 1.5rem; }
+        .prose h2 { font-size: 1.25rem; }
+        .prose h3 { font-size: 1.1rem; }
 
         .blinking-cursor::after {
             content: '●';
@@ -76,33 +70,38 @@
         }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-        /* Textarea auto-resize */
         textarea { resize: none; overflow-y: hidden; max-height: 200px; }
         textarea::-webkit-scrollbar { display: none; }
         
-        /* Details/Summary animation for thought process */
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
+
+        /* Rendering Containers */
+        .mermaid-container, .plotly-container, .threejs-container {
+            margin: 1.5rem 0;
+            background: #1a1a1a;
+            border: 1px solid #383838;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            overflow: hidden;
+        }
+        .threejs-container canvas { width: 100% !important; height: 300px !important; }
     </style>
 </head>
 <body class="h-screen flex font-sans overflow-hidden text-sm md:text-base">
 
     <!-- Sidebar -->
     <aside class="w-[260px] bg-chat-sidebar border-r border-chat-border flex flex-col hidden md:flex shrink-0 transition-all duration-300 z-20">
-        <!-- New Chat Button -->
         <div class="p-3">
             <button onclick="location.reload()" class="w-full flex items-center gap-2 px-3 py-2 text-sm text-chat-text hover:bg-chat-hover rounded-lg transition-colors border border-chat-border group">
                 <i data-lucide="plus" class="w-4 h-4 text-chat-muted group-hover:text-chat-text"></i>
                 New lesson
-                <i data-lucide="edit" class="w-4 h-4 ml-auto text-chat-muted opacity-0 group-hover:opacity-100 transition-opacity"></i>
             </button>
         </div>
 
         <div class="flex-1 overflow-y-auto px-3 py-2 space-y-6 custom-scrollbar">
-            <!-- Settings Section -->
             <div class="space-y-3">
                 <h3 class="text-xs font-semibold text-chat-muted uppercase tracking-wider px-2">Settings</h3>
-                
                 <div class="space-y-1">
                     <label class="text-xs text-chat-muted px-2">Learner Level</label>
                     <select id="setting-level" class="w-full bg-chat-bg border border-chat-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-500 cursor-pointer">
@@ -114,7 +113,6 @@
                         <option value="Mariana Trench Mode">Mariana Trench</option>
                     </select>
                 </div>
-
                 <div class="space-y-1">
                     <label class="text-xs text-chat-muted px-2">Provider Model</label>
                     <select id="setting-provider" class="w-full bg-chat-bg border border-chat-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-500 cursor-pointer">
@@ -123,7 +121,6 @@
                         <option value="glm">GLM (Zhipu)</option>
                     </select>
                 </div>
-
                 <div class="space-y-1">
                     <label class="text-xs text-chat-muted px-2">Language</label>
                     <input type="text" id="setting-language" value="English" class="w-full bg-chat-bg border border-chat-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-500">
@@ -131,7 +128,6 @@
             </div>
         </div>
 
-        <!-- User Profile (Static) -->
         <div class="p-3 border-t border-chat-border">
             <div class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-chat-hover cursor-pointer transition-colors">
                 <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white font-medium text-xs">U</div>
@@ -142,27 +138,18 @@
 
     <!-- Main Chat Area -->
     <main class="flex-1 flex flex-col relative h-full bg-chat-bg">
-        <!-- Mobile Header -->
         <header class="md:hidden flex items-center justify-between p-3 border-b border-chat-border text-chat-text">
-            <button class="p-2 hover:bg-chat-hover rounded-md">
-                <i data-lucide="menu" class="w-5 h-5"></i>
-            </button>
+            <button class="p-2 hover:bg-chat-hover rounded-md"><i data-lucide="menu" class="w-5 h-5"></i></button>
             <span class="font-medium">DeepLearn AI</span>
-            <button onclick="location.reload()" class="p-2 hover:bg-chat-hover rounded-md">
-                <i data-lucide="plus" class="w-5 h-5"></i>
-            </button>
+            <button onclick="location.reload()" class="p-2 hover:bg-chat-hover rounded-md"><i data-lucide="plus" class="w-5 h-5"></i></button>
         </header>
 
-        <!-- Messages Container -->
         <div id="chat-container" class="flex-1 overflow-y-auto scroll-smooth">
-            
-            <!-- Empty State -->
             <div id="empty-state" class="h-full flex flex-col items-center justify-center px-4 text-center max-w-2xl mx-auto opacity-100 transition-opacity duration-500">
                 <div class="w-16 h-16 bg-white text-black rounded-full flex items-center justify-center mb-6 shadow-lg">
                     <i data-lucide="brain-circuit" class="w-8 h-8"></i>
                 </div>
                 <h1 class="text-2xl font-semibold mb-8">How can I help you learn today?</h1>
-                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
                     <button onclick="prefill('Teach me about Quantum Entanglement', 'teach')" class="p-4 border border-chat-border rounded-xl text-left hover:bg-chat-hover transition-colors">
                         <div class="font-medium text-sm text-chat-text">Quantum Entanglement</div>
@@ -174,16 +161,11 @@
                     </button>
                 </div>
             </div>
-
-            <!-- Chat Transcript (Dynamic) -->
             <div id="chat-transcript" class="pb-32 pt-8 flex flex-col gap-6 w-full"></div>
         </div>
 
-        <!-- Input Box Area -->
         <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-chat-bg via-chat-bg to-transparent pt-6 pb-6 px-4 md:px-8">
             <div class="max-w-3xl mx-auto relative">
-                
-                <!-- Mode Selectors (Pills) -->
                 <div class="flex items-center gap-2 mb-3 overflow-x-auto pb-1 hide-scrollbar">
                     <button onclick="setMode('teach')" id="mode-teach" class="mode-btn px-3 py-1.5 rounded-full text-xs font-medium bg-chat-input text-chat-text border border-chat-border hover:bg-gray-700 transition-colors flex items-center gap-1.5 whitespace-nowrap">
                         <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i> Teach
@@ -199,7 +181,6 @@
                     </button>
                 </div>
 
-                <!-- Contextual Options (Hidden by default, shown based on mode) -->
                 <div id="context-options" class="hidden flex items-center gap-3 mb-2 px-1">
                     <div id="opt-task" class="hidden flex items-center gap-2 text-xs text-chat-muted">
                         <label>Task:</label>
@@ -216,11 +197,8 @@
                     </div>
                 </div>
 
-                <!-- Main Input Container -->
                 <form id="chat-form" class="relative flex items-end bg-chat-input rounded-2xl border border-chat-border shadow-lg focus-within:border-gray-500 transition-colors p-1">
-                    
                     <textarea id="main-input" rows="1" placeholder="Enter a topic to learn..." class="w-full bg-transparent text-chat-text text-base px-4 py-3 focus:outline-none placeholder-chat-muted resize-none custom-scrollbar m-0" oninput="autoResize(this)" onkeydown="handleEnter(event)"></textarea>
-                    
                     <button type="submit" id="submit-btn" class="mb-2 mr-2 p-2 bg-white text-black rounded-xl hover:bg-gray-200 disabled:bg-chat-border disabled:text-chat-muted transition-colors flex-shrink-0">
                         <i data-lucide="arrow-up" class="w-5 h-5"></i>
                     </button>
@@ -245,7 +223,6 @@
                 <i data-lucide="sparkles" class="w-4 h-4"></i>
             </div>
             <div class="flex-1 overflow-hidden">
-                <!-- Thought Process Accordion -->
                 <details class="group mb-3 border border-chat-border rounded-lg bg-[#1a1a1a] text-xs overflow-hidden hidden" id="thought-accordion">
                     <summary class="px-3 py-2 cursor-pointer flex items-center gap-2 text-chat-muted hover:text-chat-text transition-colors">
                         <i data-lucide="chevron-right" class="w-3 h-3 group-open:rotate-90 transition-transform"></i>
@@ -254,15 +231,9 @@
                     </summary>
                     <div class="px-3 pb-3 font-mono text-chat-muted space-y-1 max-h-32 overflow-y-auto custom-scrollbar" id="thought-logs"></div>
                 </details>
-
-                <!-- Markdown Content -->
                 <div class="prose prose-invert max-w-none text-chat-text prose-sm md:prose-base content-area"></div>
-                
-                <!-- Action bar (Copy, Provider badge) -->
                 <div class="flex items-center gap-3 mt-4 opacity-0 transition-opacity action-bar hidden">
-                    <button class="text-chat-muted hover:text-chat-text transition-colors" title="Copy" onclick="copyText(this)">
-                        <i data-lucide="copy" class="w-4 h-4"></i>
-                    </button>
+                    <button class="text-chat-muted hover:text-chat-text transition-colors" title="Copy" onclick="copyText(this)"><i data-lucide="copy" class="w-4 h-4"></i></button>
                     <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-chat-input text-chat-muted border border-chat-border provider-badge"></span>
                 </div>
             </div>
@@ -270,8 +241,9 @@
     </template>
 
     <script>
-        // Initialize Icons
+        // Initialize Libraries
         lucide.createIcons();
+        mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
 
         // --- State ---
         let currentMode = 'teach';
@@ -292,7 +264,6 @@
             optNum: document.getElementById('opt-num')
         };
 
-        // --- Auto-resize Textarea ---
         function autoResize(el) {
             el.style.height = 'auto';
             el.style.height = el.scrollHeight + 'px';
@@ -305,42 +276,24 @@
             }
         }
 
-        // --- Mode Switching ---
         function setMode(mode) {
             if(isGenerating) return;
             currentMode = mode;
-            
-            // Reset button styles
             document.querySelectorAll('.mode-btn').forEach(btn => {
                 btn.className = 'mode-btn px-3 py-1.5 rounded-full text-xs font-medium bg-transparent text-chat-muted border border-transparent hover:bg-chat-hover transition-colors flex items-center gap-1.5 whitespace-nowrap';
             });
-            
-            // Set active button style
             const active = document.getElementById(`mode-${mode}`);
             active.className = 'mode-btn px-3 py-1.5 rounded-full text-xs font-medium bg-chat-input text-chat-text border border-chat-border transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-sm';
-            
-            // Adjust input and context options
             ui.contextOptions.classList.add('hidden');
             ui.optTask.classList.add('hidden');
             ui.optNum.classList.add('hidden');
-            
-            if (mode === 'teach') {
-                ui.input.placeholder = "Enter a topic to learn (e.g. Black Holes)...";
-            } else if (mode === 'deep') {
-                ui.input.placeholder = "Enter advanced topic for Mariana Mode...";
-            } else if (mode === 'connectors') {
-                ui.input.placeholder = "Paste source text here for analysis...";
-                ui.contextOptions.classList.remove('hidden');
-                ui.optTask.classList.remove('hidden');
-            } else if (mode === 'quiz') {
-                ui.input.placeholder = "Enter topic for the quiz...";
-                ui.contextOptions.classList.remove('hidden');
-                ui.optNum.classList.remove('hidden');
-            }
+            if (mode === 'teach') ui.input.placeholder = "Enter a topic to learn...";
+            else if (mode === 'deep') ui.input.placeholder = "Enter advanced topic for Mariana Mode...";
+            else if (mode === 'connectors') { ui.input.placeholder = "Paste source text here..."; ui.contextOptions.classList.remove('hidden'); ui.optTask.classList.remove('hidden'); }
+            else if (mode === 'quiz') { ui.input.placeholder = "Enter topic for quiz..."; ui.contextOptions.classList.remove('hidden'); ui.optNum.classList.remove('hidden'); }
             ui.input.focus();
         }
 
-        // --- Pre-fill from Empty State ---
         function prefill(text, mode) {
             setMode(mode);
             ui.input.value = text;
@@ -348,7 +301,6 @@
             ui.form.dispatchEvent(new Event('submit'));
         }
 
-        // --- Chat UI Rendering ---
         function appendUserMessage(text) {
             ui.emptyState.classList.add('hidden');
             const tpl = document.getElementById('tpl-user-msg').content.cloneNode(true);
@@ -360,7 +312,7 @@
         function createAIMessage() {
             ui.emptyState.classList.add('hidden');
             const tpl = document.getElementById('tpl-ai-msg').content.cloneNode(true);
-            const container = document.createElement('div'); // Wrapper to return reference
+            const container = document.createElement('div');
             container.appendChild(tpl);
             ui.transcript.appendChild(container.firstElementChild);
             lucide.createIcons();
@@ -373,24 +325,13 @@
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        // --- Simulation & Streaming Logic ---
         function startThinking(aiNode) {
             const accordion = aiNode.querySelector('#thought-accordion');
             const logs = aiNode.querySelector('#thought-logs');
             const status = aiNode.querySelector('#thought-status');
-            
             accordion.classList.remove('hidden');
-            accordion.open = true; // Open by default while thinking
-            
-            const steps = [
-                "Initializing API request...",
-                "Formatting pedagogical structure...",
-                "Selecting optimal inference model...",
-                "Generating structural abstractions...",
-                "Retrieving domain logic...",
-                "Awaiting final response stream..."
-            ];
-            
+            accordion.open = true;
+            const steps = ["Initializing...", "Formatting...", "Selecting model...", "Generating...", "Retrieving...", "Awaiting stream..."];
             let i = 0;
             simulationInterval = setInterval(() => {
                 if (i < steps.length) {
@@ -409,24 +350,104 @@
             const accordion = aiNode.querySelector('#thought-accordion');
             const spinner = aiNode.querySelector('#thought-spinner');
             const status = aiNode.querySelector('#thought-status');
-            
             spinner.classList.remove('animate-spin');
             spinner.setAttribute('data-lucide', 'check-circle');
             status.textContent = "Generation complete";
-            accordion.open = false; // Collapse when done
+            accordion.open = false;
             lucide.createIcons();
+        }
+
+        // --- Specialized Rendering Logic ---
+        function renderVisuals(container) {
+            // 1. Mermaid
+            const mermaidBlocks = container.querySelectorAll('pre code.language-mermaid');
+            mermaidBlocks.forEach((block, i) => {
+                const id = `mermaid-${Date.now()}-${i}`;
+                const div = document.createElement('div');
+                div.className = 'mermaid-container';
+                div.id = id;
+                div.textContent = block.textContent;
+                block.parentElement.replaceWith(div);
+                mermaid.render(`${id}-svg`, div.textContent).then(({svg}) => {
+                    div.innerHTML = svg;
+                });
+            });
+
+            // 2. Plotly
+            const plotlyBlocks = container.querySelectorAll('pre code.language-plotly');
+            plotlyBlocks.forEach((block, i) => {
+                try {
+                    const data = JSON.parse(block.textContent);
+                    const div = document.createElement('div');
+                    div.className = 'plotly-container';
+                    block.parentElement.replaceWith(div);
+                    Plotly.newPlot(div, data.data || [], data.layout || {}, {responsive: true});
+                } catch (e) { console.error("Plotly parse error", e); }
+            });
+
+            // 3. Three.js (Basic Scene Loader)
+            const threeBlocks = container.querySelectorAll('pre code.language-threejs');
+            threeBlocks.forEach((block, i) => {
+                try {
+                    const spec = JSON.parse(block.textContent);
+                    const div = document.createElement('div');
+                    div.className = 'threejs-container';
+                    block.parentElement.replaceWith(div);
+                    initThreeJS(div, spec);
+                } catch (e) { console.error("Three.js parse error", e); }
+            });
+        }
+
+        function initThreeJS(container, spec) {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / 300, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, 300);
+            container.appendChild(renderer.domElement);
+
+            const light = new THREE.PointLight(0xffffff, 1, 100);
+            light.position.set(10, 10, 10);
+            scene.add(light);
+            scene.add(new THREE.AmbientLight(0x404040));
+
+            // Basic shapes based on spec
+            if (spec.type === 'cube') {
+                const geometry = new THREE.BoxGeometry();
+                const material = new THREE.MeshPhongMaterial({ color: spec.color || 0x00ff00 });
+                const mesh = new THREE.Mesh(geometry, material);
+                scene.add(mesh);
+                animate();
+                function animate() {
+                    requestAnimationFrame(animate);
+                    mesh.rotation.x += 0.01;
+                    mesh.rotation.y += 0.01;
+                    renderer.render(scene, camera);
+                }
+            } else if (spec.type === 'sphere') {
+                const geometry = new THREE.SphereGeometry(1, 32, 32);
+                const material = new THREE.MeshPhongMaterial({ color: spec.color || 0x0000ff });
+                const mesh = new THREE.Mesh(geometry, material);
+                scene.add(mesh);
+                animate();
+                function animate() {
+                    requestAnimationFrame(animate);
+                    mesh.rotation.y += 0.01;
+                    renderer.render(scene, camera);
+                }
+            }
+            camera.position.z = 5;
+            renderer.render(scene, camera);
         }
 
         function streamMarkdown(aiNode, text, provider) {
             const contentArea = aiNode.querySelector('.content-area');
             const actionBar = aiNode.querySelector('.action-bar');
             const badge = aiNode.querySelector('.provider-badge');
-            
             contentArea.classList.add('blinking-cursor');
             badge.textContent = provider;
             
             let index = 0;
-            const chunkSize = 4; // characters per tick
+            const chunkSize = 8;
 
             function tick() {
                 if (index < text.length) {
@@ -435,15 +456,12 @@
                     scrollToBottom();
                     streamingInterval = requestAnimationFrame(tick);
                 } else {
-                    // Done
                     contentArea.innerHTML = marked.parse(text);
                     contentArea.classList.remove('blinking-cursor');
+                    renderVisuals(contentArea);
                     actionBar.classList.remove('hidden');
                     setTimeout(() => actionBar.classList.replace('opacity-0', 'opacity-100'), 100);
-                    
-                    // Store raw text for copying
                     contentArea.setAttribute('data-raw', text);
-                    
                     isGenerating = false;
                     ui.submitBtn.disabled = false;
                     ui.submitBtn.innerHTML = '<i data-lucide="arrow-up" class="w-5 h-5"></i>';
@@ -459,90 +477,51 @@
             navigator.clipboard.writeText(raw).then(() => {
                 btn.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-green-400"></i>';
                 lucide.createIcons();
-                setTimeout(() => {
-                    btn.innerHTML = '<i data-lucide="copy" class="w-4 h-4"></i>';
-                    lucide.createIcons();
-                }, 2000);
+                setTimeout(() => { btn.innerHTML = '<i data-lucide="copy" class="w-4 h-4"></i>'; lucide.createIcons(); }, 2000);
             });
         }
 
-        // --- Form Submission ---
         ui.form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const text = ui.input.value.trim();
             if(!text || isGenerating) return;
-
-            // Lock UI
             isGenerating = true;
             ui.submitBtn.disabled = true;
             ui.submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>';
             lucide.createIcons();
-            
-            // Render User Input
             appendUserMessage(text);
             ui.input.value = '';
             autoResize(ui.input);
-            
-            // Prepare AI message node
             const aiNode = createAIMessage();
             startThinking(aiNode);
-
-            // Construct Payload
             const level = document.getElementById('setting-level').value;
             const provider = document.getElementById('setting-provider').value;
             const language = document.getElementById('setting-language').value;
-            
             let endpoint = '';
             let payload = { level, provider, language };
-
-            if (currentMode === 'teach') {
-                endpoint = '/teach';
-                payload.topic = text;
-            } else if (currentMode === 'deep') {
-                endpoint = '/learn-deep';
-                payload.topic = text;
-                payload.level = "Mariana Trench Mode"; // Override
-            } else if (currentMode === 'connectors') {
-                endpoint = '/connectors';
-                payload.source_text = text;
-                payload.task = document.getElementById('input-task').value;
-            } else if (currentMode === 'quiz') {
-                endpoint = '/quiz';
-                payload.topic = text;
-                payload.num_questions = parseInt(document.getElementById('input-num').value);
-            }
-
+            if (currentMode === 'teach') { endpoint = '/teach'; payload.topic = text; }
+            else if (currentMode === 'deep') { endpoint = '/learn-deep'; payload.topic = text; payload.level = "Mariana Trench Mode"; }
+            else if (currentMode === 'connectors') { endpoint = '/connectors'; payload.source_text = text; payload.task = document.getElementById('input-task').value; }
+            else if (currentMode === 'quiz') { endpoint = '/quiz'; payload.topic = text; payload.num_questions = parseInt(document.getElementById('input-num').value); }
             try {
                 const response = await fetch(`${apiUrl}${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(JSON.stringify(err.detail) || 'API Error');
-                }
-
+                if (!response.ok) { const err = await response.json(); throw new Error(JSON.stringify(err.detail) || 'API Error'); }
                 const data = await response.json();
-                
                 stopThinking(aiNode);
                 streamMarkdown(aiNode, data.answer || "No response received.", data.provider_used || provider);
-
             } catch (error) {
                 stopThinking(aiNode);
-                aiNode.querySelector('.content-area').innerHTML = `
-                    <div class="p-3 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-sm">
-                        <strong>Connection Error:</strong> ${error.message}
-                    </div>`;
-                
+                aiNode.querySelector('.content-area').innerHTML = `<div class="p-3 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-sm"><strong>Connection Error:</strong> ${error.message}</div>`;
                 isGenerating = false;
                 ui.submitBtn.disabled = false;
                 ui.submitBtn.innerHTML = '<i data-lucide="arrow-up" class="w-5 h-5"></i>';
                 lucide.createIcons();
             }
         });
-
     </script>
 </body>
 </html>

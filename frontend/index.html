@@ -17,6 +17,10 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <!-- Three.js for 3D models -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- KaTeX for Math -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -407,7 +411,7 @@
                 if (!content.startsWith('graph') && !content.startsWith('flowchart') && !content.startsWith('sequenceDiagram') && !content.startsWith('classDiagram') && !content.startsWith('stateDiagram') && !content.startsWith('erDiagram') && !content.startsWith('gantt') && !content.startsWith('pie') && !content.startsWith('gitGraph') && !content.startsWith('journey')) {
                     content = 'graph TD\n' + content;
                 }
-                content = content.replace(/‑/g, '-');
+                content = content.replace(/‑/g, '-').replace(/&quot;/g, '"');
                 div.textContent = content;
                 block.parentElement.replaceWith(div);
                 try {
@@ -443,92 +447,96 @@
                 } catch (e) { console.error("Three.js error", e); }
             });
 
-            // 4. Interactive Quiz
+            // 4. KaTeX Auto-render
+            renderMathInElement(container, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError : false
+            });
+
+            // 5. Interactive Quiz
             renderInteractiveQuiz(container);
         }
 
         function renderInteractiveQuiz(container) {
             const rawText = container.getAttribute('data-raw') || "";
-            // Detect quiz section (usually starts with "Quiz" or "Practice Problems")
-            const quizMatch = rawText.match(/## Quiz([\s\S]*)/i);
-            if (!quizMatch) return;
+            const quizHeaderMatch = rawText.match(/(?:##|###)\s*(?:Quiz|Practice Problems|Test Your Knowledge)([\s\S]*)/i);
+            if (!quizHeaderMatch) return;
 
-            const quizContent = quizMatch[1];
+            const quizContent = quizHeaderMatch[1];
             const questions = [];
             
-            // Basic regex to parse questions and options
-            const qBlocks = quizContent.split(/\d+\.\s+/).filter(b => b.trim().length > 10);
+            // Split by numbers (1. or 1))
+            const qBlocks = quizContent.split(/\n\d+[\.\)]\s+/).filter(b => b.trim().length > 5);
             
             qBlocks.forEach(block => {
                 const lines = block.split('\n').map(l => l.trim()).filter(l => l);
                 const questionText = lines[0];
-                const options = lines.filter(l => l.match(/^[a-d]\)/i) || l.match(/^\([a-d]\)/i) || l.match(/^[a-d]\./i));
+                const options = lines.filter(l => l.match(/^[a-d][\)\.\s]/i) || l.match(/^\([a-d]\)/i));
                 
                 if (questionText && options.length >= 2) {
                     questions.push({
                         question: questionText,
-                        options: options.map(o => o.replace(/^[a-d][\)\.\s]+/i, '').trim()),
-                        correct: 0 // Default to first for now, usually backend provides answer key at end
+                        options: options.map(o => o.replace(/^[a-d][\)\.\s]+/i, '').replace(/^\([a-d]\)\s*/i, '').trim()),
+                        correct: 0 
                     });
                 }
             });
 
             if (questions.length === 0) return;
 
-            // Find Answer Key
-            const answerKeyMatch = quizContent.match(/Answer Key:?([\s\S]*)/i);
+            // Robust Answer Key Detection
+            const answerKeyMatch = rawText.match(/(?:Answer Key|Answers):?([\s\S]*)/i);
             if (answerKeyMatch) {
-                const keys = answerKeyMatch[1].match(/[a-d]/gi);
+                const keySection = answerKeyMatch[1];
+                const keys = keySection.match(/(?:\d+[\.\)]\s*)?([a-d])/gi);
                 if (keys) {
                     keys.forEach((key, idx) => {
+                        const cleanKey = key.replace(/\d+[\.\)]\s*/, '').trim().toLowerCase();
                         if (questions[idx]) {
-                            questions[idx].correct = key.toLowerCase().charCodeAt(0) - 97;
+                            questions[idx].correct = cleanKey.charCodeAt(0) - 97;
                         }
                     });
                 }
             }
 
-            // Create Quiz UI
             const quizDiv = document.createElement('div');
-            quizDiv.className = 'quiz-container space-y-6';
-            quizDiv.innerHTML = `<h3 class="text-lg font-bold border-b border-chat-border pb-2 flex items-center gap-2">
-                <i data-lucide="help-circle" class="w-5 h-5 text-blue-400"></i> Interactive Quiz
+            quizDiv.className = 'quiz-container space-y-6 mt-8 border-t-2 border-blue-500/30 pt-6';
+            quizDiv.innerHTML = `<h3 class="text-xl font-bold text-blue-400 flex items-center gap-2 mb-4">
+                <i data-lucide="help-circle" class="w-6 h-6"></i> Interactive Knowledge Check
             </h3>`;
 
             questions.forEach((q, qIdx) => {
                 const qEl = document.createElement('div');
-                qEl.className = 'space-y-3';
-                qEl.innerHTML = `<p class="font-medium text-chat-text">${qIdx + 1}. ${q.question}</p>`;
+                qEl.className = 'space-y-3 bg-chat-input/30 p-4 rounded-xl border border-chat-border';
+                qEl.innerHTML = `<p class="font-semibold text-chat-text text-lg">${qIdx + 1}. ${q.question}</p>`;
                 
                 const optGrid = document.createElement('div');
                 optGrid.className = 'grid grid-cols-1 gap-2';
                 
                 q.options.forEach((opt, oIdx) => {
                     const btn = document.createElement('div');
-                    btn.className = 'quiz-option p-3 rounded-lg text-sm flex items-center gap-3';
-                    btn.innerHTML = `<span class="w-6 h-6 rounded-full bg-chat-input border border-chat-border flex items-center justify-center shrink-0 text-xs font-bold">${String.fromCharCode(65 + oIdx)}</span> <span>${opt}</span>`;
+                    btn.className = 'quiz-option p-4 rounded-xl text-sm flex items-center gap-4 border border-chat-border hover:border-blue-500/50 transition-all';
+                    btn.innerHTML = `<span class="w-8 h-8 rounded-full bg-chat-bg border border-chat-border flex items-center justify-center shrink-0 text-xs font-bold">${String.fromCharCode(65 + oIdx)}</span> <span>${opt}</span>`;
                     
                     btn.onclick = () => {
                         if (qEl.hasAttribute('data-answered')) return;
                         qEl.setAttribute('data-answered', 'true');
-                        
-                        // Mark selection
                         const allOpts = optGrid.querySelectorAll('.quiz-option');
                         allOpts[q.correct].classList.add('correct');
-                        if (oIdx !== q.correct) {
-                            btn.classList.add('incorrect');
-                        }
-                        
-                        // Show explanation if exists in text
+                        if (oIdx !== q.correct) btn.classList.add('incorrect');
                         const feedback = document.createElement('div');
-                        feedback.className = `mt-2 text-xs p-2 rounded ${oIdx === q.correct ? 'bg-green-900/20 text-green-400' : 'bg-red-900/20 text-red-400'}`;
-                        feedback.textContent = oIdx === q.correct ? "Correct! Well done." : `Incorrect. The correct answer is ${String.fromCharCode(65 + q.correct)}.`;
+                        feedback.className = `mt-4 text-sm p-3 rounded-lg flex items-center gap-2 ${oIdx === q.correct ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`;
+                        feedback.innerHTML = oIdx === q.correct ? '<i data-lucide="check-circle" class="w-4 h-4"></i> Correct!' : `<i data-lucide="alert-circle" class="w-4 h-4"></i> Incorrect. The correct answer is ${String.fromCharCode(65 + q.correct)}.`;
                         qEl.appendChild(feedback);
+                        lucide.createIcons();
                     };
-                    
                     optGrid.appendChild(btn);
                 });
-                
                 qEl.appendChild(optGrid);
                 quizDiv.appendChild(qEl);
             });
@@ -569,7 +577,7 @@
             contentArea.classList.add('blinking-cursor');
             badge.textContent = provider;
             let index = 0;
-            const chunkSize = 8;
+            const chunkSize = 10;
             function tick() {
                 if (index < text.length) {
                     contentArea.innerHTML = marked.parse(text.slice(0, index + chunkSize));

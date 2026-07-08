@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Marked.js for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked-gfm-heading-id/lib/index.umd.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Mermaid.js for diagrams -->
@@ -243,7 +244,20 @@
     <script>
         // Initialize Libraries
         lucide.createIcons();
-        mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+        mermaid.initialize({ 
+            startOnLoad: false, 
+            theme: 'dark', 
+            securityLevel: 'loose',
+            flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+        });
+        
+        // Configure marked to support GFM (tables, etc.)
+        marked.setOptions({
+            gfm: true,
+            breaks: true,
+            headerIds: true,
+            mangle: false
+        });
 
         // --- State ---
         let currentMode = 'teach';
@@ -366,11 +380,29 @@
                 const div = document.createElement('div');
                 div.className = 'mermaid-container';
                 div.id = id;
-                div.textContent = block.textContent;
+                
+                // Sanitize Mermaid content: Fix non-standard hyphens and spaces in IDs
+                let content = block.textContent.trim();
+                if (!content.startsWith('graph') && !content.startsWith('flowchart') && !content.startsWith('sequenceDiagram') && !content.startsWith('classDiagram') && !content.startsWith('stateDiagram') && !content.startsWith('erDiagram') && !content.startsWith('gantt') && !content.startsWith('pie') && !content.startsWith('gitGraph') && !content.startsWith('journey')) {
+                    content = 'graph TD\n' + content;
+                }
+                
+                // Replace non-standard hyphens and ensure valid syntax for common issues
+                content = content.replace(/‑/g, '-'); // Replace non-breaking hyphen
+                
+                div.textContent = content;
                 block.parentElement.replaceWith(div);
-                mermaid.render(`${id}-svg`, div.textContent).then(({svg}) => {
-                    div.innerHTML = svg;
-                });
+                
+                try {
+                    mermaid.render(`${id}-svg`, content).then(({svg}) => {
+                        div.innerHTML = svg;
+                    }).catch(err => {
+                        console.error("Mermaid render error", err);
+                        div.innerHTML = `<div class="text-xs text-red-500 p-2">Mermaid Syntax Error: Check diagram code</div><pre class="text-[10px] opacity-50">${content}</pre>`;
+                    });
+                } catch (e) {
+                    div.innerHTML = `<div class="text-xs text-red-500 p-2">Mermaid Render Failed</div>`;
+                }
             });
 
             // 2. Plotly

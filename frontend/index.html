@@ -716,24 +716,52 @@
             startThinking(aiNode);
 
             try {
-                // Ensure a target URL is provided. 
-                const targetUrl = apiUrl || 'http://localhost:3000/api/chat'; // Change fallback if needed
+                // The backend only exposes /teach, /learn-deep, /connectors and /quiz
+                // (see app.py) - there is no route on the bare root URL, which is why
+                // posting straight to apiUrl was returning 404. Build the correct
+                // endpoint + payload shape for the current mode instead.
+                const level = document.getElementById('setting-level').value;
+                const provider = document.getElementById('setting-provider').value;
+                const language = document.getElementById('setting-language').value;
+
+                let endpointPath = '/teach';
+                let requestBody = {};
+
+                if (currentMode === 'teach') {
+                    endpointPath = '/teach';
+                    requestBody = { topic: text, question: text, level, provider, language };
+                } else if (currentMode === 'deep') {
+                    endpointPath = '/learn-deep';
+                    requestBody = { topic: text, question: text, level, provider, language };
+                } else if (currentMode === 'connectors') {
+                    endpointPath = '/connectors';
+                    requestBody = {
+                        source_text: text,
+                        task: document.getElementById('input-task').value,
+                        level,
+                        provider,
+                        language
+                    };
+                } else if (currentMode === 'quiz') {
+                    endpointPath = '/quiz';
+                    requestBody = {
+                        topic: text,
+                        level,
+                        provider,
+                        language,
+                        num_questions: parseInt(document.getElementById('input-num').value, 10) || 10
+                    };
+                }
+
+                // Ensure a target URL is provided.
+                const targetUrl = (apiUrl || 'http://localhost:3000') + endpointPath; // Change fallback if needed
 
                 const response = await fetch(targetUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        message: text,
-                        mode: currentMode,
-                        level: document.getElementById('setting-level').value,
-                        provider: document.getElementById('setting-provider').value,
-                        language: document.getElementById('setting-language').value,
-                        // Add specific payload requirements for your backend here if needed
-                        task: document.getElementById('input-task').value,
-                        numQuestions: document.getElementById('input-num').value
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
                 if (!response.ok) {

@@ -338,7 +338,20 @@
         // --- State ---
         let currentMode = 'teach';
         let isGenerating = false;
-        let apiUrl = 'https://ai-tutor-backend-8098.onrender.com';
+        
+        // Determine API URL based on environment
+        let apiUrl = (() => {
+            // Check if we're in development (localhost)
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                return 'http://localhost:8000';
+            }
+            // Production: use relative path or check for custom backend URL
+            const customBackend = localStorage.getItem('backendUrl');
+            if (customBackend) return customBackend;
+            // Try to use relative path for same-origin deployment
+            return window.location.origin + '/api';
+        })();
+        
         let simulationInterval;
         let streamingInterval;
 
@@ -768,6 +781,12 @@
             else if (currentMode === 'connectors') { endpoint = '/connectors'; payload.source_text = text; payload.task = document.getElementById('input-task').value; }
             else if (currentMode === 'quiz') { endpoint = '/quiz'; payload.topic = text; payload.num_questions = parseInt(document.getElementById('input-num').value); }
             try {
+                // Test backend connectivity first
+                const healthCheck = await fetch(`${apiUrl}/health`).catch(() => null);
+                if (!healthCheck || !healthCheck.ok) {
+                    throw new Error(`Backend unavailable at ${apiUrl}. Please check your backend URL or set it via localStorage.setItem('backendUrl', 'your-url')`);
+                }
+                
                 const response = await fetch(`${apiUrl}${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -779,7 +798,12 @@
                 streamMarkdown(aiNode, data.answer || "No response received.", data.provider_used || provider);
             } catch (error) {
                 stopThinking(aiNode);
-                aiNode.querySelector('.content-area').innerHTML = `<div class="p-3 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-sm"><strong>Connection Error:</strong> ${error.message}</div>`;
+                const errorMsg = error.message || 'Unknown error occurred';
+                const isConnectionError = errorMsg.includes('Backend unavailable') || errorMsg.includes('fetch');
+                aiNode.querySelector('.content-area').innerHTML = `<div class="p-3 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-sm">
+                    <strong>${isConnectionError ? 'Backend Connection Error' : 'Error'}:</strong> ${errorMsg}
+                    ${isConnectionError ? '<br><br><small>To use a custom backend, run: <code>localStorage.setItem("backendUrl", "https://your-backend.com")</code> in the browser console.</small>' : ''}
+                </div>`;
                 isGenerating = false;
                 ui.submitBtn.disabled = false;
                 ui.submitBtn.innerHTML = '<i data-lucide="arrow-up" class="w-5 h-5"></i>';

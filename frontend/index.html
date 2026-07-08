@@ -318,7 +318,10 @@
 
         let currentMode = 'teach';
         let isGenerating = false;
-        let apiUrl = 'https://ai-tutor-mhua.onrender.com';
+        
+        // --- ADD YOUR ACTUAL BACKEND API URL HERE ---
+        let apiUrl = 'https://ai-tutor-mhua.onrender.com'; 
+        
         let simulationInterval;
         let streamingInterval;
 
@@ -445,7 +448,7 @@
             accordion.classList.remove('hidden');
             accordion.open = true;
 
-            const steps = ["Initializing...", "Formatting...", "Selecting model...", "Generating...", "Awaiting stream..."];
+            const steps = ["Initializing connection...", "Routing payload...", "Awaiting backend response..."];
             let i = 0;
 
             simulationInterval = setInterval(() => {
@@ -457,7 +460,7 @@
                     logs.scrollTop = logs.scrollHeight;
                     i++;
                 }
-            }, 800);
+            }, 500);
         }
 
         function stopThinking(aiNode) {
@@ -620,7 +623,6 @@
                 }
             }
 
-            // ADDED: The missing code to actually build and append the quiz to the DOM
             const quizContainer = document.createElement('div');
             quizContainer.className = 'quiz-container mt-6';
             quizContainer.innerHTML = `<h3 class="text-base font-semibold mb-4 flex items-center gap-2 text-blue-400"><i data-lucide="help-circle" class="w-5 h-5"></i> Interactive Knowledge Check</h3>`;
@@ -659,12 +661,10 @@
             lucide.createIcons();
         }
 
-        // ADDED: The missing initialize function for ThreeJS
         function initThreeJS(div, spec) {
             div.innerHTML = `<div class="p-4 text-center text-xs text-chat-muted border border-dashed border-chat-border rounded-lg">3D Context Initialized: Visualizer Module Spec [${spec.type || 'Standard Node'}] Container Ready.</div>`;
         }
 
-        // ADDED: The missing copy to clipboard function
         function copyText(btn) {
             const contentArea = btn.closest('.flex-1').querySelector('.content-area');
             const textToCopy = contentArea.innerText;
@@ -690,7 +690,9 @@
             }, 2000);
         }
 
-        // ADDED: The critical form submit listener to drive the whole chat
+        // ==========================================
+        // ACTUAL BACKEND INTEGRATION
+        // ==========================================
         ui.form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const text = ui.input.value.trim();
@@ -713,38 +715,116 @@
 
             startThinking(aiNode);
 
-            // Simulate baseline network latency
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            try {
+                // Ensure a target URL is provided. 
+                const targetUrl = apiUrl || 'http://localhost:3000/api/chat'; // Change fallback if needed
 
-            stopThinking(aiNode);
-            actionBar.classList.remove('hidden');
-            actionBar.classList.add('flex');
-            setTimeout(() => actionBar.classList.remove('opacity-0'), 50);
+                const response = await fetch(targetUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: text,
+                        mode: currentMode,
+                        level: document.getElementById('setting-level').value,
+                        provider: document.getElementById('setting-provider').value,
+                        language: document.getElementById('setting-language').value,
+                        // Add specific payload requirements for your backend here if needed
+                        task: document.getElementById('input-task').value,
+                        numQuestions: document.getElementById('input-num').value
+                    })
+                });
 
-            // A mocked complex response that includes text, math, a mermaid diagram, and a quiz
-            const simulatedResponse = `## Analysis: ${text}\n\nHere is a comprehensive overview covering your request.\n\n### The Foundational Equation\nThe system relies heavily on processing wave functions, formatted via embedded LaTeX. For instance, notice the inline equation $E = mc^2$ and the block equation below:\n\n$$\\psi(x, t) = A e^{i(kx - \\omega t)}$$\n\n### System Workflow\nBelow is a dynamic diagram showing how the data is routed through the interface.\n\n\`\`\`mermaid\ngraph TD\nA[User Input] --> B{Check Mode}\nB -->|Teach| C[Process Markdown]\nB -->|Deep Dive| D[Fetch Advanced Context]\nC --> E[Render to DOM]\nD --> E\n\`\`\`\n\n### Knowledge Check\n1. What technology is utilized here to render flowcharts and graphs?\na) Matplotlib\nb) Mermaid.js\nc) Canvas API\nd) D3.js\n\n2. Which CSS framework is managing the dark mode styling for this chat application?\na) Bootstrap\nb) Foundation\nc) Tailwind CSS\nd) Bulma\n\nAnswer Key:\n1. b\n2. c`;
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
 
-            let currentIdx = 0;
-            aiNode.setAttribute('data-raw', simulatedResponse);
+                stopThinking(aiNode);
+                actionBar.classList.remove('hidden');
+                actionBar.classList.add('flex');
+                setTimeout(() => actionBar.classList.remove('opacity-0'), 50);
 
-            streamingInterval = setInterval(() => {
-                if (currentIdx <= simulatedResponse.length) {
-                    const chunk = simulatedResponse.substring(0, currentIdx);
-                    contentArea.innerHTML = processTextWithMath(chunk) + '<span class="blinking-cursor"></span>';
-                    scrollToBottom();
-                    currentIdx += 5; // Text streaming speed
+                const contentType = response.headers.get('content-type');
+                let fullResponse = '';
+
+                // Handle Server-Sent Events (SSE) streaming
+                if (contentType && contentType.includes('text/event-stream')) {
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder('utf-8');
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        const chunk = decoder.decode(value, { stream: true });
+                        const lines = chunk.split('\n');
+                        
+                        for (const line of lines) {
+                            if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+                                try {
+                                    const data = JSON.parse(line.slice(6));
+                                    // Map this to your backend's streamed object property
+                                    const textToken = data.choices?.[0]?.delta?.content || data.text || data.message || '';
+                                    fullResponse += textToken;
+                                } catch (e) {
+                                    // Fallback to raw line reading if not JSON format
+                                    fullResponse += line.slice(6).replace(/^"|"$/g, '');
+                                }
+                            } else if (line.trim() && !line.startsWith('data:') && !line.startsWith(':')) {
+                                fullResponse += line;
+                            }
+                        }
+                        
+                        aiNode.setAttribute('data-raw', fullResponse);
+                        contentArea.innerHTML = processTextWithMath(fullResponse) + '<span class="blinking-cursor"></span>';
+                        scrollToBottom();
+                    }
+
+                    finalizeResponse();
+                
                 } else {
-                    clearInterval(streamingInterval);
-                    contentArea.innerHTML = processTextWithMath(simulatedResponse);
-                    renderVisuals(aiNode);
+                    // Handle standard non-streaming JSON or text response
+                    const data = await response.json().catch(async () => ({ text: await response.text() }));
                     
+                    // Map this to your backend's static object property
+                    fullResponse = data.choices?.[0]?.message?.content || data.reply || data.response || data.answer || data.message || data.text || JSON.stringify(data);
+                    
+                    aiNode.setAttribute('data-raw', fullResponse);
+                    
+                    // Simulate streaming effect locally so the UI still looks cool
+                    let currentIdx = 0;
+                    streamingInterval = setInterval(() => {
+                        if (currentIdx <= fullResponse.length) {
+                            const chunk = fullResponse.substring(0, currentIdx);
+                            contentArea.innerHTML = processTextWithMath(chunk) + '<span class="blinking-cursor"></span>';
+                            scrollToBottom();
+                            currentIdx += 4;
+                        } else {
+                            clearInterval(streamingInterval);
+                            finalizeResponse();
+                        }
+                    }, 15);
+                }
+
+                function finalizeResponse() {
+                    contentArea.innerHTML = processTextWithMath(fullResponse);
+                    renderVisuals(aiNode);
                     isGenerating = false;
                     ui.submitBtn.disabled = false;
                     ui.input.disabled = false;
                     ui.input.focus();
                     scrollToBottom();
                 }
-            }, 15);
+
+            } catch (error) {
+                stopThinking(aiNode);
+                contentArea.innerHTML = `<div class="text-red-500 font-mono text-sm p-3 bg-red-900/20 border border-red-500/30 rounded-lg">Error connecting to backend: ${error.message}<br><br>Please verify your API URL is correctly set and running.</div>`;
+                isGenerating = false;
+                ui.submitBtn.disabled = false;
+                ui.input.disabled = false;
+                scrollToBottom();
+            }
         });
 
     </script>

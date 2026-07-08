@@ -1,634 +1,417 @@
-
-import asyncio
 import os
-from dataclasses import dataclass, field
 from enum import Enum
-from typing import Iterable, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
-from langchain_community.document_loaders import ArxivLoader, PyPDFLoader, WebBaseLoader
-from langchain_core.documents import Document
-from langchain_core.messages import HumanMessage, SystemMessage
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.vectorstores import InMemoryVectorStore
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_groq import ChatGroq
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
-
-class TeachingLevel(str, Enum):
-    BEGINNER = "beginner"
-    STUDENT = "student"
-    COLLEGE = "college"
-    RESEARCHER = "researcher"
-    PROFESSOR = "professor"
-    SCIENTIST = "scientist"
-    AUTO = "auto"
+load_dotenv()
 
 
-class ModelPolicy(str, Enum):
-    FAST = "fast"
-    DEEP = "deep"
-    HYBRID = "hybrid"
+class Level(str, Enum):
+    beginner = "Beginner"
+    student = "Student"
+    college = "College"
+    engineer = "Engineer"
+    researcher = "Researcher"
+    professor = "Professor"
+    scientist = "Scientist"
+    mariana = "Mariana Trench Mode"
 
 
-class DeepLearnAnswer(BaseModel):
-    overview: str
-    beginner_explanation: str
-    deep_explanation: str
-    scientific_explanation: str
-    mathematical_foundation: str
-    visual_explanation: str
-    real_world_examples: list[str]
-    applications: list[str]
-    common_mistakes: list[str]
-    advanced_concepts: list[str]
-    research_insights: list[str]
-    quiz: list[str]
-    summary: str
-    visualization_assets: dict[str, str] = Field(default_factory=dict)
-    citations: list[str] = Field(default_factory=list)
+class Provider(str, Enum):
+    auto = "auto"
+    groq = "groq"
+    glm = "glm"
+    both = "both"
 
 
-@dataclass(slots=True)
-class DeepLearnConfig:
-    groq_model: str = field(default_factory=lambda: os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"))
-    gemini_model: str = field(default_factory=lambda: os.getenv("GEMINI_MODEL", "glm-5.2"))
-    gemini_fast_model: str = field(default_factory=lambda: os.getenv("GEMINI_FAST_MODEL", "gemini-2.5-flash"))
-    embedding_model: str = field(default_factory=lambda: os.getenv("GEMINI_EMBEDDING_MODEL", "models/text-embedding-004"))
-    temperature: float = 0.2
-    max_retries: int = 2
-    chunk_size: int = 1400
-    chunk_overlap: int = 180
-    retrieval_k: int = 7
-    learn_deep_max_rounds: int = 3
+class ChatTurn(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
 
 
-DEEPLearn_SYSTEM_PROMPT = """
-You are DeepLearn AI, an elite education engine.
+class TeachRequest(BaseModel):
+    topic: str = Field(..., min_length=1)
+    question: Optional[str] = None
+    level: Level = Level.student
+    provider: Provider = Provider.auto
+    language: str = "English"
+    connected_source: Optional[str] = None
+    history: List[ChatTurn] = Field(default_factory=list)
 
-Your objective is not to merely answer; your objective is to build complete understanding.
 
-Adapt automatically to the learner level:
-beginner, student, college, researcher, professor, scientist.
+class QuizRequest(BaseModel):
+    topic: str = Field(..., min_length=1)
+    level: Level = Level.student
+    provider: Provider = Provider.auto
+    language: str = "English"
+    num_questions: int = Field(default=10, ge=1, le=50)
 
-When Learn Deep is enabled:
-- Explore principles, history, intuition, derivations, proofs, edge cases, misconceptions,
-  applications, engineering uses, research uses, limitations, open problems, and cross-domain links.
-- Show educational reasoning, derivations, and proof steps clearly.
-- Do not reveal private hidden chain-of-thought. Provide concise, inspectable reasoning instead.
-- Do not hallucinate. If evidence is uncertain, say so.
-- Use cited source context when provided.
-- Prefer conceptual understanding before memorization.
-- Generate useful visualization assets when they improve learning.
 
-Every answer must follow exactly these sections:
-1. Overview
-2. Beginner Explanation
+class SourceRequest(BaseModel):
+    source_text: str = Field(..., min_length=1)
+    task: Literal[
+        "summary",
+        "deep_explanation",
+        "knowledge_graph",
+        "formula_extraction",
+        "definitions",
+        "quiz",
+        "assignments",
+        "research_notes",
+    ] = "deep_explanation"
+    level: Level = Level.student
+    provider: Provider = Provider.auto
+    language: str = "English"
+
+
+class AIResponse(BaseModel):
+    provider_used: str
+    answer: str
+    raw_outputs: Optional[Dict[str, str]] = None
+
+
+def getenv(name: str, default: Optional[str] = None) -> Optional[str]:
+    return os.getenv(name) or default
+
+
+def groq_llm() -> ChatGroq:
+    if not getenv("GROQ_API_KEY"):
+        raise RuntimeError("Missing GROQ_API_KEY")
+
+    return ChatGroq(
+        api_key=getenv("GROQ_API_KEY"),
+        model=getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
+        temperature=float(getenv("MODEL_TEMPERATURE", "0.2")),
+        max_tokens=int(getenv("MAX_TOKENS", "8192")),
+    )
+
+
+def glm_llm() -> ChatOpenAI:
+    api_key = getenv("GLM_API_KEY") or getenv("ZHIPUAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("Missing GLM_API_KEY or ZHIPUAI_API_KEY")
+
+    return ChatOpenAI(
+        api_key=api_key,
+        base_url=getenv("GLM_BASE_URL", "https://open.bigmodel.cn/api/paas/v4/"),
+        model=getenv("GLM_MODEL", "glm-4-plus"),
+        temperature=float(getenv("MODEL_TEMPERATURE", "0.2")),
+        max_tokens=int(getenv("MAX_TOKENS", "8192")),
+    )
+
+
+SYSTEM_PROMPT = """
+You are DeepLearn AI, a backend-only AI education engine.
+
+Teach any educational topic with clarity, accuracy, depth, and adaptive pedagogy.
+
+Rules:
+- Adapt to learner level: {level}
+- Reply in: {language}
+- Never hallucinate facts, equations, citations, or research claims.
+- If uncertain, clearly say what is uncertain.
+- If source text is provided, separate "Source-derived content" from "AI-generated explanation".
+- No frontend code.
+- For visuals, return backend-friendly specs: Mermaid, MathJax, Plotly JSON, D3 data,
+  SVG description, Three.js scene spec, or simulation pseudocode.
+- Do not claim that graphs, animations, or 3D models were rendered.
+
+Teaching style:
+1. Explain like a child.
+2. Explain like a college professor.
+3. Explain like a research scientist.
+
+Answer structure:
+1. Topic Overview
+2. Simple Explanation
 3. Deep Explanation
 4. Scientific Explanation
 5. Mathematical Foundation
 6. Visual Explanation
-7. Real-world Examples
-8. Applications
-9. Common Mistakes
-10. Advanced Concepts
-11. Research Insights
-12. Quiz
-13. Summary
+7. Interactive Simulation Spec
+8. Animation Spec
+9. Graph Spec
+10. 3D Model Spec
+11. Real World Examples
+12. Historical Timeline
+13. Scientists Behind Discovery
+14. Modern Research
+15. Future Scope
+16. Common Mistakes
+17. Exam Perspective
+18. Interview Questions
+19. Research Questions
+20. Summary
+21. Quiz
+22. Assignments
+23. Projects
+24. Further Reading
+
+If level is Mariana Trench Mode, explain from fundamentals, derive equations,
+show assumptions, proofs, limits, edge cases, history, applications, and research depth.
 """
 
-
-ROUTER_PROMPT = ChatPromptTemplate.from_messages(
+TEACH_PROMPT = ChatPromptTemplate.from_messages(
     [
-        (
-            "system",
-            """
-Classify the educational request.
-
-Return only one label:
-FAST - direct coding, short explanation, simple factual teaching
-DEEP - advanced reasoning, research depth, math derivation, medicine, physics, proof, complex science
-HYBRID - needs fast first draft plus deeper Gemini synthesis
-""",
-        ),
-        ("human", "{question}"),
-    ]
-)
-
-
-ANSWER_PROMPT = ChatPromptTemplate.from_messages(
-    [
-        ("system", DEEPLearn_SYSTEM_PROMPT),
+        ("system", SYSTEM_PROMPT),
+        MessagesPlaceholder("history"),
         (
             "human",
             """
-Learner level: {level}
-Learn Deep enabled: {learn_deep}
+Topic: {topic}
+Question: {question}
 
-Question:
-{question}
+Connected source:
+{connected_source}
 
-Source context:
-{context}
-
-Citation hints:
-{citations}
-
-Produce a complete educational answer.
+Teach this topic using the required structure.
 """,
         ),
     ]
 )
 
-
-SYNTHESIS_PROMPT = ChatPromptTemplate.from_messages(
+QUIZ_PROMPT = ChatPromptTemplate.from_messages(
     [
-        ("system", DEEPLearn_SYSTEM_PROMPT),
+        ("system", SYSTEM_PROMPT),
         (
             "human",
             """
-Synthesize the strongest final educational answer from both model drafts.
+Create a quiz for:
 
-Learner level: {level}
-Learn Deep enabled: {learn_deep}
+Topic: {topic}
+Number of questions: {num_questions}
 
-Question:
-{question}
-
-Groq fast draft:
-{groq_draft}
-
-Gemini deep draft:
-{gemini_draft}
-
-Source context:
-{context}
-
-Citation hints:
-{citations}
-
-Return the final answer in the required 13-section structure.
+Include:
+- mixed difficulty questions
+- answer key
+- explanations
+- common mistakes
+- advanced challenge questions
 """,
         ),
     ]
 )
 
-
-DEPTH_AUDIT_PROMPT = ChatPromptTemplate.from_messages(
+SOURCE_PROMPT = ChatPromptTemplate.from_messages(
     [
-        (
-            "system",
-            """
-You are a strict professor auditing whether an educational answer is deep enough.
-Return exactly one of:
-ENOUGH
-DEEPEN
-""",
-        ),
+        ("system", SYSTEM_PROMPT),
         (
             "human",
             """
-Question:
-{question}
+Task: {task}
 
-Answer:
-{answer}
+Source text:
+{source_text}
 
-Should this be expanded with deeper derivations, caveats, edge cases, or research detail?
+Use the source faithfully. Clearly separate source-derived content from AI-generated extensions.
 """,
         ),
     ]
 )
 
 
-DEEPEN_PROMPT = ChatPromptTemplate.from_messages(
-    [
-        ("system", DEEPLearn_SYSTEM_PROMPT),
-        (
-            "human",
-            """
-Improve and deepen this answer without changing the required 13-section structure.
+def convert_history(history: List[ChatTurn]) -> List[BaseMessage]:
+    messages: List[BaseMessage] = []
 
-Question:
-{question}
-
-Current answer:
-{answer}
-
-Add missing foundations, derivations, hidden assumptions, edge cases, misconceptions,
-applications, research insights, and better visualization assets where useful.
-""",
-        ),
-    ]
-)
-
-
-class DeepLearnAI:
-    def __init__(self, config: Optional[DeepLearnConfig] = None) -> None:
-        self.config = config or DeepLearnConfig()
-        self._validate_env()
-
-        self.groq = ChatGroq(
-            model=self.config.groq_model,
-            temperature=self.config.temperature,
-            max_retries=self.config.max_retries,
-        )
-
-        self.gemini = ChatGoogleGenerativeAI(
-            model=self.config.gemini_model,
-            temperature=self.config.temperature,
-            max_retries=self.config.max_retries,
-        )
-
-        self.gemini_fast = ChatGoogleGenerativeAI(
-            model=self.config.gemini_fast_model,
-            temperature=self.config.temperature,
-            max_retries=self.config.max_retries,
-        )
-
-        self.embeddings = GoogleGenerativeAIEmbeddings(model=self.config.embedding_model)
-
-        self.splitter = RecursiveCharacterTextSplitter(
-            chunk_size=self.config.chunk_size,
-            chunk_overlap=self.config.chunk_overlap,
-            separators=["\n\n", "\n", ". ", " ", ""],
-        )
-
-        self.vectorstore: Optional[InMemoryVectorStore] = None
-        self.documents: list[Document] = []
-
-    def _validate_env(self) -> None:
-        missing = []
-
-        if not os.getenv("GROQ_API_KEY"):
-            missing.append("GROQ_API_KEY")
-
-        if not os.getenv("GOOGLE_API_KEY") and not os.getenv("GEMINI_API_KEY"):
-            missing.append("GOOGLE_API_KEY or GEMINI_API_KEY")
-
-        if missing:
-            raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
-
-    async def add_websites(self, urls: Iterable[str]) -> None:
-        docs: list[Document] = []
-
-        for url in urls:
-            loaded = WebBaseLoader(url).load()
-            for doc in loaded:
-                doc.metadata["source_type"] = "website"
-                doc.metadata["source"] = doc.metadata.get("source", url)
-            docs.extend(loaded)
-
-        await self._index_documents(docs)
-
-    async def add_pdfs(self, paths: Iterable[str]) -> None:
-        docs: list[Document] = []
-
-        for path in paths:
-            loaded = PyPDFLoader(path).load()
-            for doc in loaded:
-                doc.metadata["source_type"] = "pdf"
-                doc.metadata["source"] = doc.metadata.get("source", path)
-            docs.extend(loaded)
-
-        await self._index_documents(docs)
-
-    async def add_arxiv_papers(self, queries: Iterable[str], max_docs: int = 3) -> None:
-        docs: list[Document] = []
-
-        for query in queries:
-            loaded = ArxivLoader(query=query, load_max_docs=max_docs).load()
-            for doc in loaded:
-                doc.metadata["source_type"] = "arxiv"
-            docs.extend(loaded)
-
-        await self._index_documents(docs)
-
-    async def _index_documents(self, docs: list[Document]) -> None:
-        if not docs:
-            return
-
-        chunks = self.splitter.split_documents(docs)
-        self.documents.extend(chunks)
-
-        if self.vectorstore is None:
-            self.vectorstore = InMemoryVectorStore.from_documents(chunks, self.embeddings)
+    for turn in history:
+        if turn.role == "user":
+            messages.append(HumanMessage(content=turn.content))
         else:
-            await self.vectorstore.aadd_documents(chunks)
+            messages.append(AIMessage(content=turn.content))
 
-    async def teach(
-        self,
-        question: str,
-        *,
-        level: TeachingLevel = TeachingLevel.AUTO,
-        learn_deep: bool = True,
-        policy: ModelPolicy | Literal["auto"] = "auto",
-    ) -> str:
-        context_docs = await self._retrieve(question)
-        context = self._format_context(context_docs)
-        citations = self._format_citations(context_docs)
+    return messages
 
-        chosen_policy = await self._choose_policy(question, policy)
 
-        if chosen_policy == ModelPolicy.FAST:
-            answer = await self._answer_with_groq(question, level, learn_deep, context, citations)
-        elif chosen_policy == ModelPolicy.DEEP:
-            answer = await self._answer_with_gemini(question, level, learn_deep, context, citations)
-        else:
-            answer = await self._answer_hybrid(question, level, learn_deep, context, citations)
+def choose_provider(provider: Provider, text: str, level: Level) -> Provider:
+    if provider != Provider.auto:
+        return provider
 
-        if learn_deep:
-            answer = await self._deepen_until_sufficient(question, answer)
+    deep_keywords = [
+        "derive",
+        "proof",
+        "research",
+        "paper",
+        "phd",
+        "advanced",
+        "mathematical",
+        "scientific",
+        "theorem",
+        "mechanism",
+        "deep",
+    ]
 
-        return answer
+    if level in {Level.researcher, Level.professor, Level.scientist, Level.mariana}:
+        return Provider.glm
 
-    async def teach_structured(
-        self,
-        question: str,
-        *,
-        level: TeachingLevel = TeachingLevel.AUTO,
-        learn_deep: bool = True,
-        policy: ModelPolicy | Literal["auto"] = "auto",
-    ) -> DeepLearnAnswer:
-        raw = await self.teach(
-            question,
-            level=level,
-            learn_deep=learn_deep,
-            policy=policy,
-        )
+    if any(word in text.lower() for word in deep_keywords):
+        return Provider.glm
 
-        structured_model = self.gemini.with_structured_output(DeepLearnAnswer)
+    return Provider.groq
 
-        return await structured_model.ainvoke(
-            [
-                SystemMessage(content="Convert the answer into the requested structured schema. Preserve meaning."),
-                HumanMessage(content=raw),
-            ]
-        )
 
-    async def _choose_policy(
-        self,
-        question: str,
-        policy: ModelPolicy | Literal["auto"],
-    ) -> ModelPolicy:
-        if policy != "auto":
-            return ModelPolicy(policy)
+def get_model(provider: Provider):
+    if provider == Provider.groq:
+        return groq_llm()
+    if provider == Provider.glm:
+        return glm_llm()
+    raise ValueError("Provider must be groq or glm")
 
-        chain = ROUTER_PROMPT | self.gemini_fast | StrOutputParser()
-        label = (await chain.ainvoke({"question": question})).strip().upper()
 
-        if "HYBRID" in label:
-            return ModelPolicy.HYBRID
-        if "DEEP" in label:
-            return ModelPolicy.DEEP
-        return ModelPolicy.FAST
+async def run_model(provider: Provider, prompt: ChatPromptTemplate, values: Dict[str, Any]) -> str:
+    chain = prompt | get_model(provider) | StrOutputParser()
+    return await chain.ainvoke(values)
 
-    async def _answer_with_groq(
-        self,
-        question: str,
-        level: TeachingLevel,
-        learn_deep: bool,
-        context: str,
-        citations: str,
-    ) -> str:
-        chain = ANSWER_PROMPT | self.groq | StrOutputParser()
-        return await chain.ainvoke(
-            {
-                "question": question,
-                "level": level.value,
-                "learn_deep": learn_deep,
-                "context": context,
-                "citations": citations,
-            }
-        )
 
-    async def _answer_with_gemini(
-        self,
-        question: str,
-        level: TeachingLevel,
-        learn_deep: bool,
-        context: str,
-        citations: str,
-    ) -> str:
-        chain = ANSWER_PROMPT | self.gemini | StrOutputParser()
-        return await chain.ainvoke(
-            {
-                "question": question,
-                "level": level.value,
-                "learn_deep": learn_deep,
-                "context": context,
-                "citations": citations,
-            }
-        )
+async def run_routed(
+    provider: Provider,
+    prompt: ChatPromptTemplate,
+    values: Dict[str, Any],
+    routing_text: str,
+    level: Level,
+) -> AIResponse:
+    selected = choose_provider(provider, routing_text, level)
 
-    async def _answer_hybrid(
-        self,
-        question: str,
-        level: TeachingLevel,
-        learn_deep: bool,
-        context: str,
-        citations: str,
-    ) -> str:
-        groq_task = self._answer_with_groq(question, level, learn_deep, context, citations)
-        gemini_task = self._answer_with_gemini(question, level, learn_deep, context, citations)
+    if selected == Provider.both:
+        outputs: Dict[str, str] = {}
 
-        groq_draft, gemini_draft = await asyncio.gather(groq_task, gemini_task)
+        for candidate in [Provider.groq, Provider.glm]:
+            try:
+                outputs[candidate.value] = await run_model(candidate, prompt, values)
+            except Exception as exc:
+                outputs[candidate.value] = f"ERROR: {exc}"
 
-        chain = SYNTHESIS_PROMPT | self.gemini | StrOutputParser()
+        valid = {k: v for k, v in outputs.items() if not v.startswith("ERROR:")}
+        if not valid:
+            raise HTTPException(status_code=502, detail=outputs)
 
-        return await chain.ainvoke(
-            {
-                "question": question,
-                "level": level.value,
-                "learn_deep": learn_deep,
-                "groq_draft": groq_draft,
-                "gemini_draft": gemini_draft,
-                "context": context,
-                "citations": citations,
-            }
-        )
+        if "glm" in valid:
+            return AIResponse(provider_used="both", answer=valid["glm"], raw_outputs=outputs)
 
-    async def _deepen_until_sufficient(self, question: str, answer: str) -> str:
-        audit_chain = DEPTH_AUDIT_PROMPT | self.gemini_fast | StrOutputParser()
-        deepen_chain = DEEPEN_PROMPT | self.gemini | StrOutputParser()
+        return AIResponse(provider_used="both", answer=next(iter(valid.values())), raw_outputs=outputs)
 
-        current = answer
+    try:
+        answer = await run_model(selected, prompt, values)
+        return AIResponse(provider_used=selected.value, answer=answer)
+    except Exception as primary_error:
+        fallback = Provider.glm if selected == Provider.groq else Provider.groq
 
-        for _ in range(self.config.learn_deep_max_rounds):
-            verdict = (
-                await audit_chain.ainvoke(
-                    {
-                        "question": question,
-                        "answer": current,
-                    }
-                )
-            ).strip().upper()
-
-            if verdict == "ENOUGH":
-                break
-
-            current = await deepen_chain.ainvoke(
-                {
-                    "question": question,
-                    "answer": current,
-                }
+        try:
+            answer = await run_model(fallback, prompt, values)
+            return AIResponse(
+                provider_used=f"{fallback.value}:fallback",
+                answer=answer,
+                raw_outputs={selected.value: str(primary_error), fallback.value: answer},
+            )
+        except Exception as fallback_error:
+            raise HTTPException(
+                status_code=502,
+                detail={
+                    "primary_error": str(primary_error),
+                    "fallback_error": str(fallback_error),
+                },
             )
 
-        return current
 
-    async def _retrieve(self, question: str) -> list[Document]:
-        if self.vectorstore is None:
-            return []
-
-        return await self.vectorstore.asimilarity_search(
-            question,
-            k=self.config.retrieval_k,
-        )
-
-    def _format_context(self, docs: list[Document]) -> str:
-        if not docs:
-            return "No external source context provided."
-
-        blocks = []
-
-        for index, doc in enumerate(docs, start=1):
-            source = doc.metadata.get("source") or doc.metadata.get("entry_id") or "unknown"
-            page = doc.metadata.get("page")
-            page_part = f", page {page}" if page is not None else ""
-
-            blocks.append(
-                f"[Source {index}: {source}{page_part}]\n"
-                f"{doc.page_content[:3500]}"
-            )
-
-        return "\n\n".join(blocks)
-
-    def _format_citations(self, docs: list[Document]) -> str:
-        if not docs:
-            return "No citations."
-
-        seen: set[str] = set()
-        citations: list[str] = []
-
-        for doc in docs:
-            source = doc.metadata.get("source") or doc.metadata.get("entry_id") or "unknown"
-            title = doc.metadata.get("title")
-            page = doc.metadata.get("page")
-
-            key = f"{title}|{source}|{page}"
-            if key in seen:
-                continue
-
-            seen.add(key)
-
-            if title and page is not None:
-                citations.append(f"- {title}: {source}, page {page}")
-            elif title:
-                citations.append(f"- {title}: {source}")
-            elif page is not None:
-                citations.append(f"- {source}, page {page}")
-            else:
-                citations.append(f"- {source}")
-
-        return "\n".join(citations)
+app = FastAPI(
+    title="DeepLearn AI Backend",
+    version="1.0.0",
+    description="Pure backend LangChain API using Groq and GLM models.",
+)
 
 
-def ask_bool(prompt: str, default: bool = True) -> bool:
-    suffix = "Y/n" if default else "y/N"
-
-    while True:
-        value = input(f"{prompt} [{suffix}]: ").strip().lower()
-
-        if not value:
-            return default
-        if value in {"y", "yes", "true", "1"}:
-            return True
-        if value in {"n", "no", "false", "0"}:
-            return False
-
-        print("Enter yes or no.")
+@app.get("/health")
+def health() -> Dict[str, Any]:
+    return {
+        "status": "ok",
+        "groq_configured": bool(getenv("GROQ_API_KEY")),
+        "glm_configured": bool(getenv("GLM_API_KEY") or getenv("ZHIPUAI_API_KEY")),
+        "groq_model": getenv("GROQ_MODEL", "openai/gpt-oss-20b"),
+        "glm_model": getenv("GLM_MODEL", "GLM-5.2"),
+    }
 
 
-def ask_choice(prompt: str, choices: list[str], default: str) -> str:
-    normalized = {choice.lower(): choice for choice in choices}
+@app.post("/teach", response_model=AIResponse)
+async def teach(request: TeachRequest) -> AIResponse:
+    values = {
+        "level": request.level.value,
+        "language": request.language,
+        "history": convert_history(request.history),
+        "topic": request.topic,
+        "question": request.question or "Teach this topic comprehensively.",
+        "connected_source": request.connected_source or "None",
+    }
 
-    while True:
-        value = input(f"{prompt} ({'/'.join(choices)}) [{default}]: ").strip().lower()
+    routing_text = f"{request.topic}\n{request.question or ''}\n{request.connected_source or ''}"
 
-        if not value:
-            return default
-        if value in normalized:
-            return normalized[value]
-
-        print(f"Choose one of: {', '.join(choices)}")
-
-
-def ask_many(prompt: str) -> list[str]:
-    raw = input(prompt).strip()
-
-    if not raw:
-        return []
-
-    return [item.strip() for item in raw.split(",") if item.strip()]
+    return await run_routed(
+        request.provider,
+        TEACH_PROMPT,
+        values,
+        routing_text,
+        request.level,
+    )
 
 
-async def interactive_main() -> None:
-    engine = DeepLearnAI()
+@app.post("/learn-deep", response_model=AIResponse)
+async def learn_deep(request: TeachRequest) -> AIResponse:
+    request.level = Level.mariana
+    request.question = request.question or "Teach this topic in maximum possible depth."
+    if request.provider == Provider.auto:
+        request.provider = Provider.glm
 
-    print("DeepLearn AI backend")
-    print("Type 'exit' to quit.")
-    print()
+    return await teach(request)
 
-    pdf_paths = ask_many("PDF paths to index, comma-separated, or empty: ")
-    if pdf_paths:
-        await engine.add_pdfs(pdf_paths)
 
-    websites = ask_many("Website URLs to index, comma-separated, or empty: ")
-    if websites:
-        await engine.add_websites(websites)
+@app.post("/connectors", response_model=AIResponse)
+async def connectors(request: SourceRequest) -> AIResponse:
+    values = {
+        "level": request.level.value,
+        "language": request.language,
+        "source_text": request.source_text,
+        "task": request.task,
+    }
 
-    arxiv_queries = ask_many("Arxiv queries to index, comma-separated, or empty: ")
-    if arxiv_queries:
-        await engine.add_arxiv_papers(arxiv_queries)
+    return await run_routed(
+        request.provider,
+        SOURCE_PROMPT,
+        values,
+        request.source_text,
+        request.level,
+    )
 
-    while True:
-        question = input("\nAsk a topic/question: ").strip()
 
-        if question.lower() in {"exit", "quit", "q"}:
-            break
+@app.post("/quiz", response_model=AIResponse)
+async def quiz(request: QuizRequest) -> AIResponse:
+    values = {
+        "level": request.level.value,
+        "language": request.language,
+        "topic": request.topic,
+        "num_questions": request.num_questions,
+    }
 
-        if not question:
-            continue
-
-        level = TeachingLevel(
-            ask_choice(
-                "Teaching level",
-                [item.value for item in TeachingLevel],
-                TeachingLevel.AUTO.value,
-            )
-        )
-
-        policy_input = ask_choice(
-            "Model policy",
-            ["auto", *[item.value for item in ModelPolicy]],
-            "auto",
-        )
-
-        learn_deep = ask_bool("Enable Learn Deep", default=True)
-
-        answer = await engine.teach(
-            question,
-            level=level,
-            learn_deep=learn_deep,
-            policy=policy_input,
-        )
-
-        print("\n" + "=" * 100)
-        print(answer)
-        print("=" * 100)
+    return await run_routed(
+        request.provider,
+        QUIZ_PROMPT,
+        values,
+        request.topic,
+        request.level,
+    )
 
 
 if __name__ == "__main__":
-    asyncio.run(interactive_main())
+    import uvicorn
+
+    uvicorn.run(
+        "backend:app",
+        host=getenv("HOST", "0.0.0.0"),
+        port=int(getenv("PORT", "8000")),
+        reload=getenv("RELOAD", "false").lower() == "true",
+    )

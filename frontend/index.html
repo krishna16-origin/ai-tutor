@@ -339,18 +339,8 @@
         let currentMode = 'teach';
         let isGenerating = false;
         
-        // Determine API URL based on environment
-        let apiUrl = (() => {
-            // Check if we're in development (localhost)
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                return 'http://localhost:8000';
-            }
-            // Production: use relative path or check for custom backend URL
-            const customBackend = localStorage.getItem('backendUrl');
-            if (customBackend) return customBackend;
-            // Try to use relative path for same-origin deployment
-            return window.location.origin + '/api';
-        })();
+        // Specific backend URL provided by user
+        let apiUrl = 'https://ai-tutor-mhua.onrender.com';
         
         let simulationInterval;
         let streamingInterval;

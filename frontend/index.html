@@ -49,7 +49,7 @@
 
         /* Typography & Tables */
         .prose p { margin-bottom: 1rem; line-height: 1.7; }
-        .prose pre { margin: 1rem 0; background-color: #0d0d0d; padding: 1rem; borderRadius: 0.5rem; overflow-x: auto; border: 1px solid #383838; }
+        .prose pre { margin: 1rem 0; background-color: #0d0d0d; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; border: 1px solid #383838; }
         .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9em; }
         .prose th { border-bottom: 2px solid #383838; padding: 0.75rem; text-align: left; font-weight: 600; background: #2a2a2a; }
         .prose td { border-bottom: 1px solid #383838; padding: 0.75rem; text-align: left; }
@@ -78,15 +78,39 @@
         details > summary::-webkit-details-marker { display: none; }
 
         /* Rendering Containers */
-        .mermaid-container, .plotly-container, .threejs-container {
+        .mermaid-container, .plotly-container, .threejs-container, .quiz-container {
             margin: 1.5rem 0;
             background: #1a1a1a;
             border: 1px solid #383838;
             border-radius: 0.75rem;
-            padding: 1rem;
+            padding: 1.25rem;
             overflow: hidden;
         }
         .threejs-container canvas { width: 100% !important; height: 300px !important; }
+
+        /* Quiz Specific Styles */
+        .quiz-option {
+            transition: all 0.2s;
+            cursor: pointer;
+            border: 1px solid #383838;
+            background: #2f2f2f;
+        }
+        .quiz-option:hover {
+            background: #3d3d3d;
+            border-color: #555;
+        }
+        .quiz-option.selected {
+            background: #3b82f633;
+            border-color: #3b82f6;
+        }
+        .quiz-option.correct {
+            background: #10b98133;
+            border-color: #10b981;
+        }
+        .quiz-option.incorrect {
+            background: #ef444433;
+            border-color: #ef4444;
+        }
     </style>
 </head>
 <body class="h-screen flex font-sans overflow-hidden text-sm md:text-base">
@@ -251,7 +275,6 @@
             flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
         });
         
-        // Configure marked to support GFM (tables, etc.)
         marked.setOptions({
             gfm: true,
             breaks: true,
@@ -380,29 +403,20 @@
                 const div = document.createElement('div');
                 div.className = 'mermaid-container';
                 div.id = id;
-                
-                // Sanitize Mermaid content: Fix non-standard hyphens and spaces in IDs
                 let content = block.textContent.trim();
                 if (!content.startsWith('graph') && !content.startsWith('flowchart') && !content.startsWith('sequenceDiagram') && !content.startsWith('classDiagram') && !content.startsWith('stateDiagram') && !content.startsWith('erDiagram') && !content.startsWith('gantt') && !content.startsWith('pie') && !content.startsWith('gitGraph') && !content.startsWith('journey')) {
                     content = 'graph TD\n' + content;
                 }
-                
-                // Replace non-standard hyphens and ensure valid syntax for common issues
-                content = content.replace(/‑/g, '-'); // Replace non-breaking hyphen
-                
+                content = content.replace(/‑/g, '-');
                 div.textContent = content;
                 block.parentElement.replaceWith(div);
-                
                 try {
                     mermaid.render(`${id}-svg`, content).then(({svg}) => {
                         div.innerHTML = svg;
                     }).catch(err => {
-                        console.error("Mermaid render error", err);
-                        div.innerHTML = `<div class="text-xs text-red-500 p-2">Mermaid Syntax Error: Check diagram code</div><pre class="text-[10px] opacity-50">${content}</pre>`;
+                        div.innerHTML = `<div class="text-xs text-red-500 p-2">Mermaid Syntax Error</div>`;
                     });
-                } catch (e) {
-                    div.innerHTML = `<div class="text-xs text-red-500 p-2">Mermaid Render Failed</div>`;
-                }
+                } catch (e) { div.innerHTML = `<div class="text-xs text-red-500 p-2">Mermaid Render Failed</div>`; }
             });
 
             // 2. Plotly
@@ -414,10 +428,10 @@
                     div.className = 'plotly-container';
                     block.parentElement.replaceWith(div);
                     Plotly.newPlot(div, data.data || [], data.layout || {}, {responsive: true});
-                } catch (e) { console.error("Plotly parse error", e); }
+                } catch (e) { console.error("Plotly error", e); }
             });
 
-            // 3. Three.js (Basic Scene Loader)
+            // 3. Three.js
             const threeBlocks = container.querySelectorAll('pre code.language-threejs');
             threeBlocks.forEach((block, i) => {
                 try {
@@ -426,8 +440,101 @@
                     div.className = 'threejs-container';
                     block.parentElement.replaceWith(div);
                     initThreeJS(div, spec);
-                } catch (e) { console.error("Three.js parse error", e); }
+                } catch (e) { console.error("Three.js error", e); }
             });
+
+            // 4. Interactive Quiz
+            renderInteractiveQuiz(container);
+        }
+
+        function renderInteractiveQuiz(container) {
+            const rawText = container.getAttribute('data-raw') || "";
+            // Detect quiz section (usually starts with "Quiz" or "Practice Problems")
+            const quizMatch = rawText.match(/## Quiz([\s\S]*)/i);
+            if (!quizMatch) return;
+
+            const quizContent = quizMatch[1];
+            const questions = [];
+            
+            // Basic regex to parse questions and options
+            const qBlocks = quizContent.split(/\d+\.\s+/).filter(b => b.trim().length > 10);
+            
+            qBlocks.forEach(block => {
+                const lines = block.split('\n').map(l => l.trim()).filter(l => l);
+                const questionText = lines[0];
+                const options = lines.filter(l => l.match(/^[a-d]\)/i) || l.match(/^\([a-d]\)/i) || l.match(/^[a-d]\./i));
+                
+                if (questionText && options.length >= 2) {
+                    questions.push({
+                        question: questionText,
+                        options: options.map(o => o.replace(/^[a-d][\)\.\s]+/i, '').trim()),
+                        correct: 0 // Default to first for now, usually backend provides answer key at end
+                    });
+                }
+            });
+
+            if (questions.length === 0) return;
+
+            // Find Answer Key
+            const answerKeyMatch = quizContent.match(/Answer Key:?([\s\S]*)/i);
+            if (answerKeyMatch) {
+                const keys = answerKeyMatch[1].match(/[a-d]/gi);
+                if (keys) {
+                    keys.forEach((key, idx) => {
+                        if (questions[idx]) {
+                            questions[idx].correct = key.toLowerCase().charCodeAt(0) - 97;
+                        }
+                    });
+                }
+            }
+
+            // Create Quiz UI
+            const quizDiv = document.createElement('div');
+            quizDiv.className = 'quiz-container space-y-6';
+            quizDiv.innerHTML = `<h3 class="text-lg font-bold border-b border-chat-border pb-2 flex items-center gap-2">
+                <i data-lucide="help-circle" class="w-5 h-5 text-blue-400"></i> Interactive Quiz
+            </h3>`;
+
+            questions.forEach((q, qIdx) => {
+                const qEl = document.createElement('div');
+                qEl.className = 'space-y-3';
+                qEl.innerHTML = `<p class="font-medium text-chat-text">${qIdx + 1}. ${q.question}</p>`;
+                
+                const optGrid = document.createElement('div');
+                optGrid.className = 'grid grid-cols-1 gap-2';
+                
+                q.options.forEach((opt, oIdx) => {
+                    const btn = document.createElement('div');
+                    btn.className = 'quiz-option p-3 rounded-lg text-sm flex items-center gap-3';
+                    btn.innerHTML = `<span class="w-6 h-6 rounded-full bg-chat-input border border-chat-border flex items-center justify-center shrink-0 text-xs font-bold">${String.fromCharCode(65 + oIdx)}</span> <span>${opt}</span>`;
+                    
+                    btn.onclick = () => {
+                        if (qEl.hasAttribute('data-answered')) return;
+                        qEl.setAttribute('data-answered', 'true');
+                        
+                        // Mark selection
+                        const allOpts = optGrid.querySelectorAll('.quiz-option');
+                        allOpts[q.correct].classList.add('correct');
+                        if (oIdx !== q.correct) {
+                            btn.classList.add('incorrect');
+                        }
+                        
+                        // Show explanation if exists in text
+                        const feedback = document.createElement('div');
+                        feedback.className = `mt-2 text-xs p-2 rounded ${oIdx === q.correct ? 'bg-green-900/20 text-green-400' : 'bg-red-900/20 text-red-400'}`;
+                        feedback.textContent = oIdx === q.correct ? "Correct! Well done." : `Incorrect. The correct answer is ${String.fromCharCode(65 + q.correct)}.`;
+                        qEl.appendChild(feedback);
+                    };
+                    
+                    optGrid.appendChild(btn);
+                });
+                
+                qEl.appendChild(optGrid);
+                quizDiv.appendChild(qEl);
+            });
+
+            container.appendChild(quizDiv);
+            lucide.createIcons();
         }
 
         function initThreeJS(container, spec) {
@@ -436,36 +543,20 @@
             const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(container.clientWidth, 300);
             container.appendChild(renderer.domElement);
-
             const light = new THREE.PointLight(0xffffff, 1, 100);
             light.position.set(10, 10, 10);
             scene.add(light);
             scene.add(new THREE.AmbientLight(0x404040));
-
-            // Basic shapes based on spec
             if (spec.type === 'cube') {
-                const geometry = new THREE.BoxGeometry();
-                const material = new THREE.MeshPhongMaterial({ color: spec.color || 0x00ff00 });
-                const mesh = new THREE.Mesh(geometry, material);
+                const mesh = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhongMaterial({ color: spec.color || 0x00ff00 }));
                 scene.add(mesh);
-                animate();
-                function animate() {
-                    requestAnimationFrame(animate);
-                    mesh.rotation.x += 0.01;
-                    mesh.rotation.y += 0.01;
-                    renderer.render(scene, camera);
-                }
+                const anim = () => { requestAnimationFrame(anim); mesh.rotation.x += 0.01; mesh.rotation.y += 0.01; renderer.render(scene, camera); };
+                anim();
             } else if (spec.type === 'sphere') {
-                const geometry = new THREE.SphereGeometry(1, 32, 32);
-                const material = new THREE.MeshPhongMaterial({ color: spec.color || 0x0000ff });
-                const mesh = new THREE.Mesh(geometry, material);
+                const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 32), new THREE.MeshPhongMaterial({ color: spec.color || 0x0000ff }));
                 scene.add(mesh);
-                animate();
-                function animate() {
-                    requestAnimationFrame(animate);
-                    mesh.rotation.y += 0.01;
-                    renderer.render(scene, camera);
-                }
+                const anim = () => { requestAnimationFrame(anim); mesh.rotation.y += 0.01; renderer.render(scene, camera); };
+                anim();
             }
             camera.position.z = 5;
             renderer.render(scene, camera);
@@ -477,10 +568,8 @@
             const badge = aiNode.querySelector('.provider-badge');
             contentArea.classList.add('blinking-cursor');
             badge.textContent = provider;
-            
             let index = 0;
             const chunkSize = 8;
-
             function tick() {
                 if (index < text.length) {
                     contentArea.innerHTML = marked.parse(text.slice(0, index + chunkSize));
@@ -490,10 +579,10 @@
                 } else {
                     contentArea.innerHTML = marked.parse(text);
                     contentArea.classList.remove('blinking-cursor');
+                    contentArea.setAttribute('data-raw', text);
                     renderVisuals(contentArea);
                     actionBar.classList.remove('hidden');
                     setTimeout(() => actionBar.classList.replace('opacity-0', 'opacity-100'), 100);
-                    contentArea.setAttribute('data-raw', text);
                     isGenerating = false;
                     ui.submitBtn.disabled = false;
                     ui.submitBtn.innerHTML = '<i data-lucide="arrow-up" class="w-5 h-5"></i>';

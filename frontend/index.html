@@ -29,14 +29,8 @@
                 extend: {
                     colors: {
                         chat: {
-                            bg: '#212121',
-                            sidebar: '#171717',
-                            input: '#2f2f2f',
-                            border: '#383838',
-                            hover: '#2f2f2f',
-                            user: '#2f2f2f',
-                            text: '#ececec',
-                            muted: '#b4b4b4'
+                            bg: '#212121', sidebar: '#171717', input: '#2f2f2f', border: '#383838',
+                            hover: '#2f2f2f', user: '#2f2f2f', text: '#ececec', muted: '#b4b4b4'
                         }
                     }
                 }
@@ -68,11 +62,7 @@
         .prose h3 { font-size: 1.1rem; }
 
         .blinking-cursor::after {
-            content: '●';
-            animation: blink 1s step-end infinite;
-            margin-left: 4px;
-            font-size: 0.8em;
-            color: #ececec;
+            content: '●'; animation: blink 1s step-end infinite; margin-left: 4px; font-size: 0.8em; color: #ececec;
         }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
@@ -82,93 +72,39 @@
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
 
+        /* Rendering Containers */
         .mermaid-container, .plotly-container, .threejs-container, .quiz-container {
-            margin: 1.5rem 0;
-            background: #1a1a1a;
-            border: 1px solid #383838;
-            border-radius: 0.75rem;
-            padding: 1.25rem;
-            overflow: hidden;
-            width: 100%;
+            margin: 1.5rem 0; background: #1a1a1a; border: 1px solid #383838;
+            border-radius: 0.75rem; padding: 1.25rem; overflow: hidden; width: 100%;
         }
         .threejs-container canvas { width: 100% !important; height: 300px !important; }
 
-        .quiz-container {
-            background: #1a1a1a;
-            border: 2px solid #3b82f644;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin: 2rem 0;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-        }
-        .quiz-question-box {
-            background: #262626;
-            border: 1px solid #383838;
-            border-radius: 0.75rem;
-            padding: 1.25rem;
-            margin-bottom: 1.5rem;
-            transition: transform 0.2s;
-        }
+        /* Quiz Specific Styles */
+        .quiz-container { border: 2px solid #3b82f644; border-radius: 1rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); }
+        .quiz-question-box { background: #262626; border: 1px solid #383838; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1.5rem; transition: transform 0.2s; }
         .quiz-question-box:hover { border-color: #4b5563; }
         .quiz-option {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.875rem 1rem;
-            margin: 0.5rem 0;
-            border-radius: 0.5rem;
-            border: 1px solid #383838;
-            background: #2f2f2f;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: left;
-            width: 100%;
+            display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1rem; margin: 0.5rem 0;
+            border-radius: 0.5rem; border: 1px solid #383838; background: #2f2f2f; cursor: pointer;
+            transition: all 0.2s; text-align: left; width: 100%;
         }
-        .quiz-option:hover:not(.disabled) {
-            background: #3d3d3d;
-            border-color: #60a5fa;
-        }
-        .quiz-option.selected {
-            background: #3b82f622;
-            border-color: #3b82f6;
-            box-shadow: inset 0 0 0 1px #3b82f6;
-        }
-        .quiz-option.correct {
-            background: #10b98122 !important;
-            border-color: #10b981 !important;
-            color: #34d399;
-        }
-        .quiz-option.incorrect {
-            background: #ef444422 !important;
-            border-color: #ef4444 !important;
-            color: #f87171;
-        }
+        .quiz-option:hover:not(.disabled) { background: #3d3d3d; border-color: #60a5fa; }
+        .quiz-option.selected { background: #3b82f622; border-color: #3b82f6; box-shadow: inset 0 0 0 1px #3b82f6; }
+        .quiz-option.correct { background: #10b98122 !important; border-color: #10b981 !important; color: #34d399; }
+        .quiz-option.incorrect { background: #ef444422 !important; border-color: #ef4444 !important; color: #f87171; }
         .quiz-submit-btn {
-            background: #3b82f6;
-            color: white;
-            padding: 0.75rem 2rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            transition: all 0.2s;
-            display: block;
-            margin: 1.5rem auto 0;
+            background: #3b82f6; color: white; padding: 0.75rem 2rem; border-radius: 0.5rem;
+            font-weight: 600; transition: all 0.2s; display: block; margin: 1.5rem auto 0;
         }
         .quiz-submit-btn:hover { background: #2563eb; transform: translateY(-1px); }
         .quiz-submit-btn:disabled { background: #4b5563; cursor: not-allowed; transform: none; }
 
         /* Responsive Sidebar Toggle Classes */
         @media (min-width: 768px) {
-            .sidebar-desktop-closed {
-                width: 0 !important;
-                border-right-width: 0 !important;
-                padding-left: 0 !important;
-                padding-right: 0 !important;
-            }
+            .sidebar-desktop-closed { width: 0 !important; border-right-width: 0 !important; padding-left: 0 !important; padding-right: 0 !important; }
         }
         @media (max-width: 767px) {
-            .sidebar-mobile-open {
-                transform: translateX(0) !important;
-            }
+            .sidebar-mobile-open { transform: translateX(0) !important; }
         }
     </style>
 </head>
@@ -207,8 +143,8 @@
                     <label class="text-xs text-chat-muted px-2">Provider Model</label>
                     <select id="setting-provider" class="w-full bg-chat-bg border border-chat-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-500 cursor-pointer">
                         <option value="auto">Auto Route</option>
-                        <option value="groq">GPT 3.5</option>
-                        <option value="glm">GLM 5.2 (Zhipu)</option>
+                        <option value="groq">GPT 4.5</option>
+                        <option value="glm">GLM 5.2)</option>
                     </select>
                 </div>
                 <div class="space-y-1">
@@ -226,9 +162,7 @@
         </div>
     </aside>
 
-    <!-- Main Chat Area -->
     <main class="flex-1 flex flex-col relative h-full bg-chat-bg min-w-0">
-        <!-- Always visible header to support unified toggling -->
         <header class="flex items-center justify-between p-3 border-b border-chat-border text-chat-text bg-chat-bg z-10 shrink-0">
             <div class="flex items-center gap-2">
                 <button onclick="toggleSidebar()" class="p-2 hover:bg-chat-hover rounded-md text-chat-muted hover:text-chat-text transition-colors">
@@ -261,7 +195,7 @@
             <div id="chat-transcript" class="pb-6 pt-6 flex flex-col gap-6 w-full"></div>
         </div>
 
-        <!-- Flow layout (Not absolute bottom-0) prevents overlapping and merging of content -->
+        <!-- Input Area (Flow layout prevents overlap) -->
         <div class="w-full bg-chat-bg pt-2 pb-6 px-4 md:px-8 shrink-0 z-10 border-t border-chat-border md:border-transparent">
             <div class="max-w-3xl mx-auto relative">
                 <div class="flex items-center gap-2 mb-3 overflow-x-auto pb-1 hide-scrollbar">
@@ -301,14 +235,10 @@
                         <i data-lucide="arrow-up" class="w-5 h-5"></i>
                     </button>
                 </form>
-                <div class="text-center mt-2 text-[10px] text-chat-muted">
-                    AI can make mistakes. Consider verifying important information.
-                </div>
             </div>
         </div>
     </main>
 
-    <!-- Message Templates -->
     <template id="tpl-user-msg">
         <div class="w-full max-w-3xl mx-auto px-4 flex justify-end mb-4">
             <div class="bg-[#2f2f2f] text-chat-text rounded-2xl rounded-tr-sm px-5 py-3 max-w-[85%] whitespace-pre-wrap text-sm md:text-base border border-[#383838]"></div>
@@ -320,7 +250,7 @@
             <div class="w-8 h-8 rounded-full border border-chat-border flex items-center justify-center shrink-0 bg-white text-black">
                 <i data-lucide="sparkles" class="w-4 h-4"></i>
             </div>
-            <!-- Changed overflow-hidden to min-w-0 to prevent clipping of action bar -->
+            <!-- min-w-0 prevents flex children from overflowing horizontally -->
             <div class="flex-1 min-w-0">
                 <details class="group mb-3 border border-chat-border rounded-lg bg-[#1a1a1a] text-xs overflow-hidden hidden" id="thought-accordion">
                     <summary class="px-3 py-2 cursor-pointer flex items-center gap-2 text-chat-muted hover:text-chat-text transition-colors">
@@ -331,7 +261,7 @@
                     <div class="px-3 pb-3 font-mono text-chat-muted space-y-1 max-h-32 overflow-y-auto custom-scrollbar" id="thought-logs"></div>
                 </details>
                 <div class="prose prose-invert max-w-none text-chat-text prose-sm md:prose-base content-area"></div>
-                <!-- Added margin-bottom/padding to give breathing room for copy button -->
+                <!-- Action bar fits comfortably under content -->
                 <div class="flex items-center gap-3 mt-4 mb-2 opacity-0 transition-opacity action-bar hidden">
                     <button class="text-chat-muted hover:text-chat-text transition-colors p-1" title="Copy" onclick="copyText(this)"><i data-lucide="copy" class="w-4 h-4"></i></button>
                     <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-chat-input text-chat-muted border border-chat-border provider-badge"></span>
@@ -341,34 +271,23 @@
     </template>
 
     <script>
-        // Initialize Libraries
         lucide.createIcons();
         mermaid.initialize({ 
-            startOnLoad: false, 
-            theme: 'dark', 
-            securityLevel: 'loose',
+            startOnLoad: false, theme: 'dark', securityLevel: 'loose',
             flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
         });
         
-        // Setup Marked properly to prevent deprecation errors affecting generation
         if (window.markedGfmHeadingId) {
             marked.use(window.markedGfmHeadingId.gfmHeadingId());
         }
-        marked.setOptions({
-            gfm: true,
-            breaks: true,
-            mangle: false,
-            headerIds: false
-        });
+        marked.setOptions({ gfm: true, breaks: true, mangle: false, headerIds: false });
 
-        // --- State ---
         let currentMode = 'teach';
         let isGenerating = false;
-        let apiUrl = 'https://ai-tutor-mhua.onrender.com'; // Provide backend URL here
+        let apiUrl = 'https://ai-tutor-mhua.onrender.com'; 
         let simulationInterval;
         let streamingInterval;
 
-        // --- DOM Elements ---
         const ui = {
             input: document.getElementById('main-input'),
             form: document.getElementById('chat-form'),
@@ -380,43 +299,31 @@
             optNum: document.getElementById('opt-num')
         };
 
-        // --- Sidebar Toggle Logic ---
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('sidebar-backdrop');
             
             if (window.innerWidth >= 768) {
-                // Desktop toggle
                 sidebar.classList.toggle('sidebar-desktop-closed');
             } else {
-                // Mobile toggle
                 sidebar.classList.toggle('sidebar-mobile-open');
                 backdrop.classList.toggle('hidden');
             }
         }
 
-        // Handle window resize cleanly
         window.addEventListener('resize', () => {
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('sidebar-backdrop');
-            
             if (window.innerWidth >= 768) {
-                // Remove mobile open states if resized to desktop
                 sidebar.classList.remove('sidebar-mobile-open');
                 backdrop.classList.add('hidden');
             } else {
-                // Remove desktop closed states if resized to mobile
                 sidebar.classList.remove('sidebar-desktop-closed');
             }
         });
 
-        // --- Helper functions ---
         function unescapeHTML(str) {
-            return str.replace(/&lt;/g, '<')
-                      .replace(/&gt;/g, '>')
-                      .replace(/&amp;/g, '&')
-                      .replace(/&quot;/g, '"')
-                      .replace(/&#39;/g, "'");
+            return str.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
         }
 
         function autoResize(el) {
@@ -440,35 +347,21 @@
             const active = document.getElementById(`mode-${mode}`);
             active.className = 'mode-btn px-3 py-1.5 rounded-full text-xs font-medium bg-chat-input text-chat-text border border-chat-border transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-sm';
             
-            ui.contextOptions.classList.add('hidden');
-            ui.optTask.classList.add('hidden');
-            ui.optNum.classList.add('hidden');
+            ui.contextOptions.classList.add('hidden'); ui.optTask.classList.add('hidden'); ui.optNum.classList.add('hidden');
             
             if (mode === 'teach') ui.input.placeholder = "Enter a topic to learn...";
             else if (mode === 'deep') ui.input.placeholder = "Enter advanced topic for Mariana Mode...";
-            else if (mode === 'connectors') { 
-                ui.input.placeholder = "Paste source text here..."; 
-                ui.contextOptions.classList.remove('hidden'); 
-                ui.optTask.classList.remove('hidden'); 
-            }
-            else if (mode === 'quiz') { 
-                ui.input.placeholder = "Enter topic for quiz..."; 
-                ui.contextOptions.classList.remove('hidden'); 
-                ui.optNum.classList.remove('hidden'); 
-            }
+            else if (mode === 'connectors') { ui.input.placeholder = "Paste source text here..."; ui.contextOptions.classList.remove('hidden'); ui.optTask.classList.remove('hidden'); }
+            else if (mode === 'quiz') { ui.input.placeholder = "Enter topic for quiz..."; ui.contextOptions.classList.remove('hidden'); ui.optNum.classList.remove('hidden'); }
             ui.input.focus();
         }
 
         function prefill(text, mode) {
-            setMode(mode);
-            ui.input.value = text;
-            autoResize(ui.input);
-            ui.form.dispatchEvent(new Event('submit'));
+            setMode(mode); ui.input.value = text; autoResize(ui.input); ui.form.dispatchEvent(new Event('submit'));
         }
 
         function appendUserMessage(text) {
-            ui.emptyState.classList.add('hidden');
-            ui.emptyState.classList.add('md:hidden');
+            ui.emptyState.classList.add('hidden'); ui.emptyState.classList.add('md:hidden');
             const tpl = document.getElementById('tpl-user-msg').content.cloneNode(true);
             tpl.querySelector('div > div').textContent = text;
             ui.transcript.appendChild(tpl);
@@ -476,8 +369,7 @@
         }
 
         function createAIMessage() {
-            ui.emptyState.classList.add('hidden');
-            ui.emptyState.classList.add('md:hidden');
+            ui.emptyState.classList.add('hidden'); ui.emptyState.classList.add('md:hidden');
             const tpl = document.getElementById('tpl-ai-msg').content.cloneNode(true);
             const container = document.createElement('div');
             container.appendChild(tpl);
@@ -496,18 +388,13 @@
             const accordion = aiNode.querySelector('#thought-accordion');
             const logs = aiNode.querySelector('#thought-logs');
             const status = aiNode.querySelector('#thought-status');
-            accordion.classList.remove('hidden');
-            accordion.open = true;
-            const steps = ["Initializing...", "Formatting...", "Selecting model...", "Generating...", "Retrieving...", "Awaiting stream..."];
+            accordion.classList.remove('hidden'); accordion.open = true;
+            const steps = ["Initializing...", "Formatting...", "Selecting model...", "Generating...", "Awaiting stream..."];
             let i = 0;
             simulationInterval = setInterval(() => {
                 if (i < steps.length) {
-                    const log = document.createElement('div');
-                    log.textContent = `> ${steps[i]}`;
-                    logs.appendChild(log);
-                    status.textContent = steps[i];
-                    logs.scrollTop = logs.scrollHeight;
-                    i++;
+                    const log = document.createElement('div'); log.textContent = `> ${steps[i]}`;
+                    logs.appendChild(log); status.textContent = steps[i]; logs.scrollTop = logs.scrollHeight; i++;
                 }
             }, 800);
         }
@@ -517,77 +404,70 @@
             const accordion = aiNode.querySelector('#thought-accordion');
             const spinner = aiNode.querySelector('#thought-spinner');
             const status = aiNode.querySelector('#thought-status');
-            spinner.classList.remove('animate-spin');
-            spinner.setAttribute('data-lucide', 'check-circle');
-            status.textContent = "Generation complete";
-            accordion.open = false;
-            lucide.createIcons();
+            spinner.classList.remove('animate-spin'); spinner.setAttribute('data-lucide', 'check-circle');
+            status.textContent = "Generation complete"; accordion.open = false; lucide.createIcons();
         }
 
-        // --- Specialized Rendering Logic ---
         function renderVisuals(container) {
-            // 1. Mermaid
-            const mermaidBlocks = container.querySelectorAll('pre code.language-mermaid');
-            mermaidBlocks.forEach((block, i) => {
-                const pre = block.parentElement;
-                const id = `mermaid_chart_${Date.now()}_${i}`;
-                const div = document.createElement('div');
-                div.className = 'mermaid-container';
-                div.id = id;
-                
-                // Decode HTML Entities to restore >, <, & 
+            // Find all code blocks. LLMs might miss the `language-*` class, so we inspect content too.
+            const blocks = container.querySelectorAll('pre code');
+            
+            blocks.forEach((block, i) => {
+                const lang = block.className || '';
                 let content = unescapeHTML(block.textContent.trim());
-                
-                if (!/^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gantt|pie|gitGraph|journey|C4Context)/i.test(content)) {
-                    content = 'graph TD\n' + content;
-                }
-                
-                pre.replaceWith(div);
-                
-                setTimeout(() => {
-                    try {
-                        mermaid.render(`${id}_svg`, content).then(({svg}) => {
-                            div.innerHTML = svg;
-                        }).catch(err => {
-                            console.error("Mermaid Render Error:", err);
-                            div.innerHTML = `<div class="text-xs text-red-500 p-2 bg-red-900/20 rounded">Mermaid Syntax Error: ${err.message || 'Check syntax'}</div>`;
-                        });
-                    } catch (e) { 
-                        div.innerHTML = `<div class="text-xs text-red-500 p-2 bg-red-900/20 rounded">Mermaid Render Failed</div>`; 
+                const pre = block.parentElement;
+
+                // 1. Mermaid Parser (Very forgiving)
+                if (lang.includes('mermaid') || /^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gantt|pie|gitGraph|journey|C4Context)\b/i.test(content)) {
+                    const id = `mermaid_${Date.now()}_${i}`;
+                    const div = document.createElement('div');
+                    div.className = 'mermaid-container';
+                    div.id = id;
+                    
+                    if (!/^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gantt|pie|gitGraph|journey|C4Context)\b/i.test(content)) {
+                        content = 'graph TD\n' + content; // Fallback to basic graph if missing declaration
                     }
-                }, 50);
-            });
-
-            // 2. Plotly
-            const plotlyBlocks = container.querySelectorAll('pre code.language-plotly');
-            plotlyBlocks.forEach((block) => {
-                try {
-                    const data = JSON.parse(unescapeHTML(block.textContent.trim()));
-                    const div = document.createElement('div');
-                    div.className = 'plotly-container';
-                    block.parentElement.replaceWith(div);
-                    Plotly.newPlot(div, data.data || [], data.layout || { template: 'plotly_dark' }, {responsive: true});
-                } catch (e) { 
-                    console.error("Plotly parsing error", e); 
-                    block.parentElement.innerHTML = `<div class="text-xs text-red-500">Plotly Data Error</div>`;
+                    
+                    pre.replaceWith(div);
+                    
+                    setTimeout(() => {
+                        try {
+                            mermaid.render(`${id}_svg`, content).then(({svg}) => {
+                                div.innerHTML = svg;
+                            }).catch(err => {
+                                div.innerHTML = `<div class="text-xs text-red-500 p-2 bg-red-900/20 rounded font-mono">Mermaid Syntax Error:<br>${err.message}</div>`;
+                            });
+                        } catch (e) { 
+                            div.innerHTML = `<div class="text-xs text-red-500 p-2 bg-red-900/20 rounded font-mono">Mermaid Render Failed</div>`; 
+                        }
+                    }, 50);
+                }
+                // 2. Plotly Parser
+                else if (lang.includes('plotly') || (content.includes('"data"') && content.includes('"layout"'))) {
+                    try {
+                        const data = JSON.parse(content);
+                        const div = document.createElement('div');
+                        div.className = 'plotly-container';
+                        pre.replaceWith(div);
+                        Plotly.newPlot(div, data.data || [], data.layout || { template: 'plotly_dark' }, {responsive: true});
+                    } catch (e) { 
+                        // Silent fail for JSON parse error in case it was just a random JSON block
+                        if(lang.includes('plotly')) pre.innerHTML = `<div class="text-xs text-red-500 font-mono">Plotly Data Error</div>`;
+                    }
+                }
+                // 3. Three.js Parser
+                else if (lang.includes('threejs') || (content.includes('"type"') && content.includes('"color"'))) {
+                    try {
+                        const spec = JSON.parse(content);
+                        const div = document.createElement('div');
+                        div.className = 'threejs-container';
+                        pre.replaceWith(div);
+                        initThreeJS(div, spec);
+                    } catch (e) {}
                 }
             });
 
-            // 3. Three.js
-            const threeBlocks = container.querySelectorAll('pre code.language-threejs');
-            threeBlocks.forEach((block) => {
-                try {
-                    const spec = JSON.parse(unescapeHTML(block.textContent.trim()));
-                    const div = document.createElement('div');
-                    div.className = 'threejs-container';
-                    block.parentElement.replaceWith(div);
-                    initThreeJS(div, spec);
-                } catch (e) { 
-                    console.error("Three.js parsing error", e); 
-                }
-            });
-
-            // 4. KaTeX Auto-render
+            // 4. KaTeX Math Render
             if (window.renderMathInElement) {
                 renderMathInElement(container, {
                     delimiters: [
@@ -600,34 +480,41 @@
                 });
             }
 
-            // 5. Interactive Quiz
+            // 5. Build Quiz UI
             renderInteractiveQuiz(container);
         }
 
         function renderInteractiveQuiz(container) {
             const rawText = container.getAttribute('data-raw') || "";
-            // More robust regex to catch different header styles
-            const quizHeaderMatch = rawText.match(/(?:##|###)\s*(?:Quiz|Practice Problems|Test Your Knowledge|Knowledge Check)([\s\S]*)/i);
-            if (!quizHeaderMatch) return;
+            
+            // Look for common Quiz headers from various LLMs
+            const quizStart = rawText.search(/(?:#+\s*|\*\*?)(?:Quiz|Practice Problems|Test Your Knowledge|Knowledge Check|Pop Quiz)(?:\*\*?)?/i);
+            
+            // If no explicit header, search for "1. " followed by options
+            if (quizStart === -1) {
+                if (!rawText.match(/(?:^|\n)\s*1[\.\)]\s+.+\n\s*(?:[a-d][\)\.]|\([a-d]\))/i)) return; 
+            }
 
-            const quizContent = quizHeaderMatch[1];
+            const quizContent = quizStart !== -1 ? rawText.substring(quizStart) : rawText;
             const questions = [];
             
-            // Extract questions and options splitting robustly
-            const qBlocks = quizContent.split(/\n\s*\d+[\.\)]\s+/).filter(b => b.trim().length > 5);
+            // Split by "1.", "2)", "3." ensuring it's at the start of a line
+            const qBlocks = quizContent.split(/(?:^|\n)\s*\d+[\.\)]\s+/).filter(b => b.trim().length > 5);
             
             qBlocks.forEach(block => {
                 const lines = block.split('\n').map(l => l.trim()).filter(l => l);
                 if (lines.length < 2) return;
 
                 const questionText = lines[0];
-                const options = lines.filter(l => /^[a-d][\)\.\s]/i.test(l) || /^\([a-d]\)/i.test(l));
+                // Match lines starting with "A.", "b)", "(C)", "  d." 
+                const options = lines.filter(l => /^\s*(?:[a-d][\)\.]|\([a-d]\))/i.test(l));
                 
                 if (questionText && options.length >= 2) {
                     questions.push({
                         question: unescapeHTML(questionText),
-                        options: options.map(o => unescapeHTML(o.replace(/^[a-d][\)\.\s]+/i, '').replace(/^\([a-d]\)\s*/i, '').trim())),
-                        correct: 0,
+                        // Strip the "A." prefix from the option text
+                        options: options.map(o => unescapeHTML(o.replace(/^\s*(?:[a-d][\)\.]|\([a-d]\))\s*/i, '').trim())),
+                        correct: 0, 
                         selectedIndex: null
                     });
                 }
@@ -635,22 +522,31 @@
 
             if (questions.length === 0) return;
 
-            // Extract Answer Key robustly
-            const answerKeyMatch = rawText.match(/(?:Answer Key|Answers|Correct Answers):?([\s\S]*)/i);
+            // Robust Answer Key Extraction
+            const answerKeyMatch = rawText.match(/(?:Answer Key|Answers|Correct Answers|Solutions):?([\s\S]*)/i);
             if (answerKeyMatch) {
                 const keySection = answerKeyMatch[1];
-                const keys = keySection.match(/(?:\d+[\.\)]\s*)?([a-d])/gi);
-                if (keys) {
-                    keys.forEach((key, idx) => {
-                        const cleanKey = key.replace(/\d+[\.\)]\s*/, '').trim().toLowerCase();
-                        if (questions[idx]) {
-                            questions[idx].correct = cleanKey.charCodeAt(0) - 97;
-                        }
+                
+                // Method 1: Look for "1. B", "1: c", "1 - D"
+                const mappedKeys = [...keySection.matchAll(/\b(\d+)[\.\-\):]\s*([a-d])\b/gi)];
+                if (mappedKeys.length > 0) {
+                    mappedKeys.forEach(match => {
+                        const targetIdx = parseInt(match[1]) - 1;
+                        const ansLetter = match[2].toLowerCase();
+                        if (questions[targetIdx]) questions[targetIdx].correct = ansLetter.charCodeAt(0) - 97;
                     });
+                } else {
+                    // Method 2: Just look for sequential isolated letters a,b,c,d
+                    const fallbackKeys = keySection.match(/\b([a-d])\b/gi);
+                    if (fallbackKeys) {
+                        fallbackKeys.forEach((key, idx) => {
+                            if (questions[idx]) questions[idx].correct = key.toLowerCase().charCodeAt(0) - 97;
+                        });
+                    }
                 }
             }
 
-            // Create Quiz UI
+            // Create Quiz UI Elements
             const quizWrapper = document.createElement('div');
             quizWrapper.className = 'quiz-container';
             quizWrapper.innerHTML = `
@@ -689,14 +585,12 @@
                         <span class="w-6 h-6 rounded-full border border-chat-border flex items-center justify-center text-[10px] font-bold shrink-0 opt-indicator">${String.fromCharCode(65 + oIdx)}</span>
                         <span class="text-sm">${opt}</span>
                     `;
-                    
                     optBtn.onclick = () => {
                         if (submitBtn.disabled) return;
                         optList.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('selected'));
                         optBtn.classList.add('selected');
                         q.selectedIndex = oIdx;
                     };
-                    
                     optList.appendChild(optBtn);
                 });
                 
@@ -705,20 +599,12 @@
             });
 
             submitBtn.onclick = () => {
-                let score = 0;
-                let allAnswered = true;
-                
-                questions.forEach((q, idx) => {
-                    if (q.selectedIndex === null) allAnswered = false;
-                });
+                let score = 0; let allAnswered = true;
+                questions.forEach(q => { if (q.selectedIndex === null) allAnswered = false; });
 
-                if (!allAnswered) {
-                    alert("Please answer all questions before submitting!");
-                    return;
-                }
+                if (!allAnswered) { alert("Please answer all questions before submitting!"); return; }
 
-                submitBtn.disabled = true;
-                submitBtn.textContent = "Quiz Completed";
+                submitBtn.disabled = true; submitBtn.textContent = "Quiz Completed";
                 
                 const qBoxes = qContainer.querySelectorAll('.quiz-question-box');
                 questions.forEach((q, idx) => {
@@ -726,11 +612,8 @@
                     const opts = qBox.querySelectorAll('.quiz-option');
                     
                     opts[q.correct].classList.add('correct');
-                    if (q.selectedIndex !== q.correct) {
-                        opts[q.selectedIndex].classList.add('incorrect');
-                    } else {
-                        score++;
-                    }
+                    if (q.selectedIndex !== q.correct) opts[q.selectedIndex].classList.add('incorrect');
+                    else score++;
 
                     const feedback = document.createElement('div');
                     feedback.className = `mt-4 text-xs p-3 rounded-lg ${q.selectedIndex === q.correct ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`;
@@ -743,13 +626,8 @@
                 overallFeedback.classList.remove('hidden');
                 const percentage = Math.round((score / questions.length) * 100);
                 overallFeedback.className = `text-center p-4 rounded-xl w-full ${percentage >= 70 ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`;
-                overallFeedback.innerHTML = `
-                    <h4 class="font-bold text-lg m-0">Your Score: ${score}/${questions.length} (${percentage}%)</h4>
-                    <p class="text-sm mt-1 m-0">${percentage >= 70 ? 'Excellent! You have a solid grasp of this topic.' : 'Good effort! Review the material to master these concepts.'}</p>
-                `;
-                
-                lucide.createIcons();
-                scrollToBottom();
+                overallFeedback.innerHTML = `<h4 class="font-bold text-lg m-0">Your Score: ${score}/${questions.length} (${percentage}%)</h4><p class="text-sm mt-1 m-0">${percentage >= 70 ? 'Excellent! You have a solid grasp of this topic.' : 'Good effort! Review the material to master these concepts.'}</p>`;
+                lucide.createIcons(); scrollToBottom();
             };
 
             container.appendChild(quizWrapper);
@@ -760,28 +638,20 @@
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(75, container.clientWidth / 300, 0.1, 1000);
             const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(container.clientWidth, 300);
-            container.appendChild(renderer.domElement);
-            
-            const light = new THREE.PointLight(0xffffff, 1, 100);
-            light.position.set(10, 10, 10);
-            scene.add(light);
+            renderer.setSize(container.clientWidth, 300); container.appendChild(renderer.domElement);
+            const light = new THREE.PointLight(0xffffff, 1, 100); light.position.set(10, 10, 10); scene.add(light);
             scene.add(new THREE.AmbientLight(0x404040));
             
             if (spec.type === 'cube') {
                 const mesh = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhongMaterial({ color: spec.color || 0x00ff00 }));
                 scene.add(mesh);
-                const anim = () => { requestAnimationFrame(anim); mesh.rotation.x += 0.01; mesh.rotation.y += 0.01; renderer.render(scene, camera); };
-                anim();
+                const anim = () => { requestAnimationFrame(anim); mesh.rotation.x += 0.01; mesh.rotation.y += 0.01; renderer.render(scene, camera); }; anim();
             } else if (spec.type === 'sphere') {
                 const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 32), new THREE.MeshPhongMaterial({ color: spec.color || 0x0000ff }));
                 scene.add(mesh);
-                const anim = () => { requestAnimationFrame(anim); mesh.rotation.y += 0.01; renderer.render(scene, camera); };
-                anim();
+                const anim = () => { requestAnimationFrame(anim); mesh.rotation.y += 0.01; renderer.render(scene, camera); }; anim();
             }
-            
-            camera.position.z = 5;
-            renderer.render(scene, camera);
+            camera.position.z = 5; renderer.render(scene, camera);
         }
 
         function streamMarkdown(aiNode, text, provider) {
@@ -805,9 +675,9 @@
                     // Final full rendering
                     contentArea.innerHTML = marked.parse(text);
                     contentArea.classList.remove('blinking-cursor');
-                    contentArea.setAttribute('data-raw', text); // Store raw text for interactive logic
+                    contentArea.setAttribute('data-raw', text); 
                     
-                    // Render interactive modules 
+                    // Trigger robust visual parsing
                     renderVisuals(contentArea);
                     
                     actionBar.classList.remove('hidden');
@@ -838,35 +708,28 @@
             const text = ui.input.value.trim();
             if(!text || isGenerating) return;
             
-            isGenerating = true;
-            ui.submitBtn.disabled = true;
-            ui.submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>';
-            lucide.createIcons();
+            isGenerating = true; ui.submitBtn.disabled = true;
+            ui.submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>'; lucide.createIcons();
             
             appendUserMessage(text);
-            ui.input.value = '';
-            autoResize(ui.input);
-            
-            const aiNode = createAIMessage();
-            startThinking(aiNode);
+            ui.input.value = ''; autoResize(ui.input);
+            const aiNode = createAIMessage(); startThinking(aiNode);
             
             const level = document.getElementById('setting-level').value;
             const provider = document.getElementById('setting-provider').value;
             const language = document.getElementById('setting-language').value;
             
-            let endpoint = '';
-            let payload = { level, provider, language };
-            
+            let endpoint = ''; let payload = { level, provider, language };
             if (currentMode === 'teach') { endpoint = '/teach'; payload.topic = text; }
             else if (currentMode === 'deep') { endpoint = '/learn-deep'; payload.topic = text; payload.level = "Mariana Trench Mode"; }
             else if (currentMode === 'connectors') { endpoint = '/connectors'; payload.source_text = text; payload.task = document.getElementById('input-task').value; }
             else if (currentMode === 'quiz') { endpoint = '/quiz'; payload.topic = text; payload.num_questions = parseInt(document.getElementById('input-num').value); }
             
-            // To simulate local generation in standard HTML without a real backend
+            // To simulate local generation if API URL is empty
             if (!apiUrl) {
                 setTimeout(() => {
                     stopThinking(aiNode);
-                    let dummyText = "Here is a simulated response.\n\n### Diagram Test\n```mermaid\ngraph TD\nA-->B;\n```\n\n### Quiz\n1. What is the result of 1+1?\na) 1\nb) 2\nc) 3\nd) 4\n\nAnswer Key: b";
+                    let dummyText = "Here is a simulated backend response.\n\n### Diagram Test\n```mermaid\ngraph TD\nA-->B;\n```\n\n**Practice Problems**\n1. What is the result of 1+1?\n A. 1\n B. 2\n C. 3\n D. 4\n\nAnswers: 1. B";
                     streamMarkdown(aiNode, dummyText, 'Simulated Local');
                 }, 1500);
                 return;
@@ -874,15 +737,10 @@
 
             try {
                 const response = await fetch(`${apiUrl}${endpoint}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
                 });
                 
-                if (!response.ok) { 
-                    const err = await response.json(); 
-                    throw new Error(JSON.stringify(err.detail) || 'API Error'); 
-                }
+                if (!response.ok) { const err = await response.json(); throw new Error(JSON.stringify(err.detail) || 'API Error'); }
                 
                 const data = await response.json();
                 stopThinking(aiNode);
@@ -890,16 +748,14 @@
             } catch (error) {
                 stopThinking(aiNode);
                 const errorMsg = error.message || 'Unknown error occurred';
-                const isConnectionError = errorMsg.includes('Failed to fetch') || errorMsg.includes('unavailable');
+                const isConnErr = errorMsg.includes('Failed to fetch') || errorMsg.includes('unavailable');
                 aiNode.querySelector('.content-area').innerHTML = `<div class="p-3 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-sm">
-                    <strong>${isConnectionError ? 'Connection Error' : 'Error'}:</strong> ${errorMsg}
-                    ${isConnectionError ? '<br><br><small>Ensure your API URL is correctly configured.</small>' : ''}
+                    <strong>${isConnErr ? 'Connection Error' : 'Error'}:</strong> ${errorMsg}
+                    ${isConnErr ? '<br><br><small>Ensure your API URL is correctly configured.</small>' : ''}
                 </div>`;
                 
-                isGenerating = false;
-                ui.submitBtn.disabled = false;
-                ui.submitBtn.innerHTML = '<i data-lucide="arrow-up" class="w-5 h-5"></i>';
-                lucide.createIcons();
+                isGenerating = false; ui.submitBtn.disabled = false;
+                ui.submitBtn.innerHTML = '<i data-lucide="arrow-up" class="w-5 h-5"></i>'; lucide.createIcons();
             }
         });
     </script>

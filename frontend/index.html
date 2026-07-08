@@ -548,7 +548,15 @@
                     setTimeout(async () => {
                         try {
                             let cleanContent = content.replace(/^```mermaid\s*/i, '').replace(/```$/i, '').trim();
-                            const { svg } = await mermaid.render(`${id}_svg`, cleanContent);
+
+                         // Sanitize node labels: Mermaid chokes on raw ( ) inside [...] "..." labels
+                           cleanContent = cleanContent.replace(/\[([^\]]*)\]/g, (match, label) => {
+                           if (label.startsWith('"') && label.endsWith('"')) return match;
+                           const safeLabel = label.replace(/\(/g, '（').replace(/\)/g, '）');
+                           return `["${safeLabel.replace(/"/g, "'")}"]`;
+                           });
+
+                           const { svg } = await mermaid.render(`${id}_svg`, cleanContent);
                             div.innerHTML = svg;
                         } catch (err) {
                             console.error("Mermaid Render Error:", err);

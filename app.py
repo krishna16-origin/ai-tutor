@@ -13,8 +13,15 @@ from pydantic import BaseModel, Field
 
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+load_dotenv()
 
+app = FastAPI(
+    title="DeepLearn AI Backend",
+    version="1.0.0",
+    description="Pure backend LangChain API using Groq and GLM models.",
+)
+
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,9 +29,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-load_dotenv()
 
 
 class Level(str, Enum):
@@ -333,21 +337,14 @@ async def run_routed(
             )
 
 
-app = FastAPI(
-    title="DeepLearn AI Backend",
-    version="1.0.0",
-    description="Pure backend LangChain API using Groq and GLM models.",
-)
-
-
 @app.get("/health")
 def health() -> Dict[str, Any]:
     return {
         "status": "ok",
         "groq_configured": bool(getenv("GROQ_API_KEY")),
         "glm_configured": bool(getenv("GLM_API_KEY") or getenv("ZHIPUAI_API_KEY")),
-        "groq_model": getenv("GROQ_MODEL", "openai/gpt-oss-20b"),
-        "glm_model": getenv("GLM_MODEL", "GLM-5.2"),
+        "groq_model": getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
+        "glm_model": getenv("GLM_MODEL", "glm-4-plus"),
     }
 
 
@@ -423,7 +420,7 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "backend:app",
+        "app:app",
         host=getenv("HOST", "0.0.0.0"),
         port=int(getenv("PORT", "8000")),
         reload=getenv("RELOAD", "false").lower() == "true",

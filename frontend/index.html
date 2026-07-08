@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -81,7 +82,6 @@
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
 
-        /* Rendering Containers */
         .mermaid-container, .plotly-container, .threejs-container, .quiz-container {
             margin: 1.5rem 0;
             background: #1a1a1a;
@@ -89,10 +89,10 @@
             border-radius: 0.75rem;
             padding: 1.25rem;
             overflow: hidden;
+            width: 100%;
         }
         .threejs-container canvas { width: 100% !important; height: 300px !important; }
 
-        /* Quiz Specific Styles */
         .quiz-container {
             background: #1a1a1a;
             border: 2px solid #3b82f644;
@@ -109,9 +109,7 @@
             margin-bottom: 1.5rem;
             transition: transform 0.2s;
         }
-        .quiz-question-box:hover {
-            border-color: #4b5563;
-        }
+        .quiz-question-box:hover { border-color: #4b5563; }
         .quiz-option {
             display: flex;
             align-items: center;
@@ -133,7 +131,7 @@
         .quiz-option.selected {
             background: #3b82f622;
             border-color: #3b82f6;
-            ring: 1px solid #3b82f6;
+            box-shadow: inset 0 0 0 1px #3b82f6;
         }
         .quiz-option.correct {
             background: #10b98122 !important;
@@ -155,29 +153,43 @@
             display: block;
             margin: 1.5rem auto 0;
         }
-        .quiz-submit-btn:hover {
-            background: #2563eb;
-            transform: translateY(-1px);
+        .quiz-submit-btn:hover { background: #2563eb; transform: translateY(-1px); }
+        .quiz-submit-btn:disabled { background: #4b5563; cursor: not-allowed; transform: none; }
+
+        /* Responsive Sidebar Toggle Classes */
+        @media (min-width: 768px) {
+            .sidebar-desktop-closed {
+                width: 0 !important;
+                border-right-width: 0 !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+            }
         }
-        .quiz-submit-btn:disabled {
-            background: #4b5563;
-            cursor: not-allowed;
-            transform: none;
+        @media (max-width: 767px) {
+            .sidebar-mobile-open {
+                transform: translateX(0) !important;
+            }
         }
     </style>
 </head>
 <body class="h-screen flex font-sans overflow-hidden text-sm md:text-base">
 
+    <!-- Mobile Backdrop -->
+    <div id="sidebar-backdrop" class="fixed inset-0 bg-black/60 z-20 hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
     <!-- Sidebar -->
-    <aside class="w-[260px] bg-chat-sidebar border-r border-chat-border flex flex-col hidden md:flex shrink-0 transition-all duration-300 z-20">
-        <div class="p-3">
-            <button onclick="location.reload()" class="w-full flex items-center gap-2 px-3 py-2 text-sm text-chat-text hover:bg-chat-hover rounded-lg transition-colors border border-chat-border group">
-                <i data-lucide="plus" class="w-4 h-4 text-chat-muted group-hover:text-chat-text"></i>
+    <aside id="sidebar" class="bg-chat-sidebar border-r border-chat-border flex flex-col shrink-0 transition-all duration-300 ease-in-out z-30 fixed md:relative h-full w-[260px] -translate-x-full md:translate-x-0 overflow-hidden">
+        <div class="p-3 flex items-center justify-between">
+            <button onclick="location.reload()" class="flex-1 flex items-center gap-2 px-3 py-2 text-sm text-chat-text hover:bg-chat-hover rounded-lg transition-colors border border-chat-border group whitespace-nowrap">
+                <i data-lucide="plus" class="w-4 h-4 text-chat-muted group-hover:text-chat-text shrink-0"></i>
                 New lesson
+            </button>
+            <button onclick="toggleSidebar()" class="md:hidden ml-2 p-2 text-chat-muted hover:text-chat-text rounded-md hover:bg-chat-hover shrink-0">
+                <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
 
-        <div class="flex-1 overflow-y-auto px-3 py-2 space-y-6 custom-scrollbar">
+        <div class="flex-1 overflow-y-auto px-3 py-2 space-y-6 custom-scrollbar w-[260px]">
             <div class="space-y-3">
                 <h3 class="text-xs font-semibold text-chat-muted uppercase tracking-wider px-2">Settings</h3>
                 <div class="space-y-1">
@@ -195,8 +207,8 @@
                     <label class="text-xs text-chat-muted px-2">Provider Model</label>
                     <select id="setting-provider" class="w-full bg-chat-bg border border-chat-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-500 cursor-pointer">
                         <option value="auto">Auto Route</option>
-                        <option value="groq">Groq (Llama)</option>
-                        <option value="glm">GLM (Zhipu)</option>
+                        <option value="groq">GPT 3.5</option>
+                        <option value="glm">GLM 5.2 (Zhipu)</option>
                     </select>
                 </div>
                 <div class="space-y-1">
@@ -206,24 +218,31 @@
             </div>
         </div>
 
-        <div class="p-3 border-t border-chat-border">
+        <div class="p-3 border-t border-chat-border w-[260px]">
             <div class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-chat-hover cursor-pointer transition-colors">
-                <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white font-medium text-xs">U</div>
-                <span class="font-medium text-chat-text">User</span>
+                <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white font-medium text-xs shrink-0">U</div>
+                <span class="font-medium text-chat-text truncate">User</span>
             </div>
         </div>
     </aside>
 
     <!-- Main Chat Area -->
-    <main class="flex-1 flex flex-col relative h-full bg-chat-bg">
-        <header class="md:hidden flex items-center justify-between p-3 border-b border-chat-border text-chat-text">
-            <button class="p-2 hover:bg-chat-hover rounded-md"><i data-lucide="menu" class="w-5 h-5"></i></button>
-            <span class="font-medium">DeepLearn AI</span>
-            <button onclick="location.reload()" class="p-2 hover:bg-chat-hover rounded-md"><i data-lucide="plus" class="w-5 h-5"></i></button>
+    <main class="flex-1 flex flex-col relative h-full bg-chat-bg min-w-0">
+        <!-- Always visible header to support unified toggling -->
+        <header class="flex items-center justify-between p-3 border-b border-chat-border text-chat-text bg-chat-bg z-10 shrink-0">
+            <div class="flex items-center gap-2">
+                <button onclick="toggleSidebar()" class="p-2 hover:bg-chat-hover rounded-md text-chat-muted hover:text-chat-text transition-colors">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
+                </button>
+                <span class="font-medium tracking-tight ml-1">Cortex AI</span>
+            </div>
+            <button onclick="location.reload()" class="p-2 hover:bg-chat-hover rounded-md text-chat-muted hover:text-chat-text md:hidden">
+                <i data-lucide="plus" class="w-5 h-5"></i>
+            </button>
         </header>
 
         <div id="chat-container" class="flex-1 overflow-y-auto scroll-smooth">
-            <div id="empty-state" class="h-full flex flex-col items-center justify-center px-4 text-center max-w-2xl mx-auto opacity-100 transition-opacity duration-500">
+            <div id="empty-state" class="h-full flex flex-col items-center justify-center px-4 text-center max-w-2xl mx-auto opacity-100 transition-opacity duration-500 min-h-[60vh]">
                 <div class="w-16 h-16 bg-white text-black rounded-full flex items-center justify-center mb-6 shadow-lg">
                     <i data-lucide="brain-circuit" class="w-8 h-8"></i>
                 </div>
@@ -239,10 +258,11 @@
                     </button>
                 </div>
             </div>
-            <div id="chat-transcript" class="pb-32 pt-8 flex flex-col gap-6 w-full"></div>
+            <div id="chat-transcript" class="pb-6 pt-6 flex flex-col gap-6 w-full"></div>
         </div>
 
-        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-chat-bg via-chat-bg to-transparent pt-6 pb-6 px-4 md:px-8">
+        <!-- Flow layout (Not absolute bottom-0) prevents overlapping and merging of content -->
+        <div class="w-full bg-chat-bg pt-2 pb-6 px-4 md:px-8 shrink-0 z-10 border-t border-chat-border md:border-transparent">
             <div class="max-w-3xl mx-auto relative">
                 <div class="flex items-center gap-2 mb-3 overflow-x-auto pb-1 hide-scrollbar">
                     <button onclick="setMode('teach')" id="mode-teach" class="mode-btn px-3 py-1.5 rounded-full text-xs font-medium bg-chat-input text-chat-text border border-chat-border hover:bg-gray-700 transition-colors flex items-center gap-1.5 whitespace-nowrap">
@@ -259,7 +279,7 @@
                     </button>
                 </div>
 
-                <div id="context-options" class="hidden flex items-center gap-3 mb-2 px-1">
+                <div id="context-options" class="hidden flex flex-wrap items-center gap-3 mb-3 px-1 transition-all">
                     <div id="opt-task" class="hidden flex items-center gap-2 text-xs text-chat-muted">
                         <label>Task:</label>
                         <select id="input-task" class="bg-chat-input border border-chat-border rounded px-2 py-1 focus:outline-none text-chat-text">
@@ -300,7 +320,8 @@
             <div class="w-8 h-8 rounded-full border border-chat-border flex items-center justify-center shrink-0 bg-white text-black">
                 <i data-lucide="sparkles" class="w-4 h-4"></i>
             </div>
-            <div class="flex-1 overflow-hidden">
+            <!-- Changed overflow-hidden to min-w-0 to prevent clipping of action bar -->
+            <div class="flex-1 min-w-0">
                 <details class="group mb-3 border border-chat-border rounded-lg bg-[#1a1a1a] text-xs overflow-hidden hidden" id="thought-accordion">
                     <summary class="px-3 py-2 cursor-pointer flex items-center gap-2 text-chat-muted hover:text-chat-text transition-colors">
                         <i data-lucide="chevron-right" class="w-3 h-3 group-open:rotate-90 transition-transform"></i>
@@ -310,8 +331,9 @@
                     <div class="px-3 pb-3 font-mono text-chat-muted space-y-1 max-h-32 overflow-y-auto custom-scrollbar" id="thought-logs"></div>
                 </details>
                 <div class="prose prose-invert max-w-none text-chat-text prose-sm md:prose-base content-area"></div>
-                <div class="flex items-center gap-3 mt-4 opacity-0 transition-opacity action-bar hidden">
-                    <button class="text-chat-muted hover:text-chat-text transition-colors" title="Copy" onclick="copyText(this)"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                <!-- Added margin-bottom/padding to give breathing room for copy button -->
+                <div class="flex items-center gap-3 mt-4 mb-2 opacity-0 transition-opacity action-bar hidden">
+                    <button class="text-chat-muted hover:text-chat-text transition-colors p-1" title="Copy" onclick="copyText(this)"><i data-lucide="copy" class="w-4 h-4"></i></button>
                     <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-chat-input text-chat-muted border border-chat-border provider-badge"></span>
                 </div>
             </div>
@@ -328,20 +350,21 @@
             flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
         });
         
+        // Setup Marked properly to prevent deprecation errors affecting generation
+        if (window.markedGfmHeadingId) {
+            marked.use(window.markedGfmHeadingId.gfmHeadingId());
+        }
         marked.setOptions({
             gfm: true,
             breaks: true,
-            headerIds: true,
-            mangle: false
+            mangle: false,
+            headerIds: false
         });
 
         // --- State ---
         let currentMode = 'teach';
         let isGenerating = false;
-        
-        // Specific backend URL provided by user
-        let apiUrl = 'https://ai-tutor-mhua.onrender.com';
-        
+        let apiUrl = 'https://ai-tutor-mhua.onrender.com'; // Provide backend URL here
         let simulationInterval;
         let streamingInterval;
 
@@ -356,6 +379,45 @@
             optTask: document.getElementById('opt-task'),
             optNum: document.getElementById('opt-num')
         };
+
+        // --- Sidebar Toggle Logic ---
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            
+            if (window.innerWidth >= 768) {
+                // Desktop toggle
+                sidebar.classList.toggle('sidebar-desktop-closed');
+            } else {
+                // Mobile toggle
+                sidebar.classList.toggle('sidebar-mobile-open');
+                backdrop.classList.toggle('hidden');
+            }
+        }
+
+        // Handle window resize cleanly
+        window.addEventListener('resize', () => {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            
+            if (window.innerWidth >= 768) {
+                // Remove mobile open states if resized to desktop
+                sidebar.classList.remove('sidebar-mobile-open');
+                backdrop.classList.add('hidden');
+            } else {
+                // Remove desktop closed states if resized to mobile
+                sidebar.classList.remove('sidebar-desktop-closed');
+            }
+        });
+
+        // --- Helper functions ---
+        function unescapeHTML(str) {
+            return str.replace(/&lt;/g, '<')
+                      .replace(/&gt;/g, '>')
+                      .replace(/&amp;/g, '&')
+                      .replace(/&quot;/g, '"')
+                      .replace(/&#39;/g, "'");
+        }
 
         function autoResize(el) {
             el.style.height = 'auto';
@@ -377,13 +439,23 @@
             });
             const active = document.getElementById(`mode-${mode}`);
             active.className = 'mode-btn px-3 py-1.5 rounded-full text-xs font-medium bg-chat-input text-chat-text border border-chat-border transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-sm';
+            
             ui.contextOptions.classList.add('hidden');
             ui.optTask.classList.add('hidden');
             ui.optNum.classList.add('hidden');
+            
             if (mode === 'teach') ui.input.placeholder = "Enter a topic to learn...";
             else if (mode === 'deep') ui.input.placeholder = "Enter advanced topic for Mariana Mode...";
-            else if (mode === 'connectors') { ui.input.placeholder = "Paste source text here..."; ui.contextOptions.classList.remove('hidden'); ui.optTask.classList.remove('hidden'); }
-            else if (mode === 'quiz') { ui.input.placeholder = "Enter topic for quiz..."; ui.contextOptions.classList.remove('hidden'); ui.optNum.classList.remove('hidden'); }
+            else if (mode === 'connectors') { 
+                ui.input.placeholder = "Paste source text here..."; 
+                ui.contextOptions.classList.remove('hidden'); 
+                ui.optTask.classList.remove('hidden'); 
+            }
+            else if (mode === 'quiz') { 
+                ui.input.placeholder = "Enter topic for quiz..."; 
+                ui.contextOptions.classList.remove('hidden'); 
+                ui.optNum.classList.remove('hidden'); 
+            }
             ui.input.focus();
         }
 
@@ -396,6 +468,7 @@
 
         function appendUserMessage(text) {
             ui.emptyState.classList.add('hidden');
+            ui.emptyState.classList.add('md:hidden');
             const tpl = document.getElementById('tpl-user-msg').content.cloneNode(true);
             tpl.querySelector('div > div').textContent = text;
             ui.transcript.appendChild(tpl);
@@ -404,6 +477,7 @@
 
         function createAIMessage() {
             ui.emptyState.classList.add('hidden');
+            ui.emptyState.classList.add('md:hidden');
             const tpl = document.getElementById('tpl-ai-msg').content.cloneNode(true);
             const container = document.createElement('div');
             container.appendChild(tpl);
@@ -456,26 +530,23 @@
             const mermaidBlocks = container.querySelectorAll('pre code.language-mermaid');
             mermaidBlocks.forEach((block, i) => {
                 const pre = block.parentElement;
-                const id = `mermaid-${Date.now()}-${i}`;
+                const id = `mermaid_chart_${Date.now()}_${i}`;
                 const div = document.createElement('div');
                 div.className = 'mermaid-container';
                 div.id = id;
                 
-                let content = block.textContent.trim();
-                // Basic validation and auto-fix for Mermaid content
+                // Decode HTML Entities to restore >, <, & 
+                let content = unescapeHTML(block.textContent.trim());
+                
                 if (!/^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gantt|pie|gitGraph|journey|C4Context)/i.test(content)) {
                     content = 'graph TD\n' + content;
                 }
                 
-                // Replace problematic characters
-                content = content.replace(/‑/g, '-').replace(/&quot;/g, '"');
-                
                 pre.replaceWith(div);
                 
-                // Use a small delay to ensure DOM is ready
                 setTimeout(() => {
                     try {
-                        mermaid.render(`${id}-svg`, content).then(({svg}) => {
+                        mermaid.render(`${id}_svg`, content).then(({svg}) => {
                             div.innerHTML = svg;
                         }).catch(err => {
                             console.error("Mermaid Render Error:", err);
@@ -491,36 +562,43 @@
             const plotlyBlocks = container.querySelectorAll('pre code.language-plotly');
             plotlyBlocks.forEach((block) => {
                 try {
-                    const data = JSON.parse(block.textContent);
+                    const data = JSON.parse(unescapeHTML(block.textContent.trim()));
                     const div = document.createElement('div');
                     div.className = 'plotly-container';
                     block.parentElement.replaceWith(div);
                     Plotly.newPlot(div, data.data || [], data.layout || { template: 'plotly_dark' }, {responsive: true});
-                } catch (e) { console.error("Plotly error", e); }
+                } catch (e) { 
+                    console.error("Plotly parsing error", e); 
+                    block.parentElement.innerHTML = `<div class="text-xs text-red-500">Plotly Data Error</div>`;
+                }
             });
 
             // 3. Three.js
             const threeBlocks = container.querySelectorAll('pre code.language-threejs');
             threeBlocks.forEach((block) => {
                 try {
-                    const spec = JSON.parse(block.textContent);
+                    const spec = JSON.parse(unescapeHTML(block.textContent.trim()));
                     const div = document.createElement('div');
                     div.className = 'threejs-container';
                     block.parentElement.replaceWith(div);
                     initThreeJS(div, spec);
-                } catch (e) { console.error("Three.js error", e); }
+                } catch (e) { 
+                    console.error("Three.js parsing error", e); 
+                }
             });
 
             // 4. KaTeX Auto-render
-            renderMathInElement(container, {
-                delimiters: [
-                    {left: '$$', right: '$$', display: true},
-                    {left: '$', right: '$', display: false},
-                    {left: '\\(', right: '\\)', display: false},
-                    {left: '\\[', right: '\\]', display: true}
-                ],
-                throwOnError : false
-            });
+            if (window.renderMathInElement) {
+                renderMathInElement(container, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    throwOnError: false
+                });
+            }
 
             // 5. Interactive Quiz
             renderInteractiveQuiz(container);
@@ -528,14 +606,14 @@
 
         function renderInteractiveQuiz(container) {
             const rawText = container.getAttribute('data-raw') || "";
-            // Look for quiz sections
-            const quizHeaderMatch = rawText.match(/(?:##|###)\s*(?:Quiz|Practice Problems|Test Your Knowledge)([\s\S]*)/i);
+            // More robust regex to catch different header styles
+            const quizHeaderMatch = rawText.match(/(?:##|###)\s*(?:Quiz|Practice Problems|Test Your Knowledge|Knowledge Check)([\s\S]*)/i);
             if (!quizHeaderMatch) return;
 
             const quizContent = quizHeaderMatch[1];
             const questions = [];
             
-            // Extract questions and options
+            // Extract questions and options splitting robustly
             const qBlocks = quizContent.split(/\n\s*\d+[\.\)]\s+/).filter(b => b.trim().length > 5);
             
             qBlocks.forEach(block => {
@@ -547,8 +625,8 @@
                 
                 if (questionText && options.length >= 2) {
                     questions.push({
-                        question: questionText,
-                        options: options.map(o => o.replace(/^[a-d][\)\.\s]+/i, '').replace(/^\([a-d]\)\s*/i, '').trim()),
+                        question: unescapeHTML(questionText),
+                        options: options.map(o => unescapeHTML(o.replace(/^[a-d][\)\.\s]+/i, '').replace(/^\([a-d]\)\s*/i, '').trim())),
                         correct: 0,
                         selectedIndex: null
                     });
@@ -557,8 +635,8 @@
 
             if (questions.length === 0) return;
 
-            // Extract Answer Key
-            const answerKeyMatch = rawText.match(/(?:Answer Key|Answers):?([\s\S]*)/i);
+            // Extract Answer Key robustly
+            const answerKeyMatch = rawText.match(/(?:Answer Key|Answers|Correct Answers):?([\s\S]*)/i);
             if (answerKeyMatch) {
                 const keySection = answerKeyMatch[1];
                 const keys = keySection.match(/(?:\d+[\.\)]\s*)?([a-d])/gi);
@@ -577,12 +655,12 @@
             quizWrapper.className = 'quiz-container';
             quizWrapper.innerHTML = `
                 <div class="flex items-center gap-3 mb-6 border-b border-blue-500/20 pb-4">
-                    <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                    <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
                         <i data-lucide="help-circle"></i>
                     </div>
                     <div>
-                        <h3 class="text-lg font-bold text-white">Knowledge Check</h3>
-                        <p class="text-xs text-chat-muted">Test what you've just learned</p>
+                        <h3 class="text-lg font-bold text-white m-0">Knowledge Check</h3>
+                        <p class="text-xs text-chat-muted m-0">Test what you've just learned</p>
                     </div>
                 </div>
                 <div id="quiz-questions-container"></div>
@@ -599,7 +677,7 @@
             questions.forEach((q, qIdx) => {
                 const qBox = document.createElement('div');
                 qBox.className = 'quiz-question-box';
-                qBox.innerHTML = `<p class="font-semibold text-chat-text mb-4"><span class="text-blue-400 mr-2">Q${qIdx+1}.</span>${q.question}</p>`;
+                qBox.innerHTML = `<p class="font-semibold text-chat-text mb-4 m-0"><span class="text-blue-400 mr-2">Q${qIdx+1}.</span>${q.question}</p>`;
                 
                 const optList = document.createElement('div');
                 optList.className = 'space-y-2';
@@ -613,9 +691,7 @@
                     `;
                     
                     optBtn.onclick = () => {
-                        if (submitBtn.disabled) return; // Already submitted
-                        
-                        // Clear previous selection in this question
+                        if (submitBtn.disabled) return;
                         optList.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('selected'));
                         optBtn.classList.add('selected');
                         q.selectedIndex = oIdx;
@@ -649,7 +725,6 @@
                     const qBox = qBoxes[idx];
                     const opts = qBox.querySelectorAll('.quiz-option');
                     
-                    // Show correct/incorrect
                     opts[q.correct].classList.add('correct');
                     if (q.selectedIndex !== q.correct) {
                         opts[q.selectedIndex].classList.add('incorrect');
@@ -657,7 +732,6 @@
                         score++;
                     }
 
-                    // Add explanation or correct answer text
                     const feedback = document.createElement('div');
                     feedback.className = `mt-4 text-xs p-3 rounded-lg ${q.selectedIndex === q.correct ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`;
                     feedback.innerHTML = q.selectedIndex === q.correct 
@@ -666,13 +740,12 @@
                     qBox.appendChild(feedback);
                 });
 
-                // Overall score
                 overallFeedback.classList.remove('hidden');
                 const percentage = Math.round((score / questions.length) * 100);
                 overallFeedback.className = `text-center p-4 rounded-xl w-full ${percentage >= 70 ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`;
                 overallFeedback.innerHTML = `
-                    <h4 class="font-bold text-lg">Your Score: ${score}/${questions.length} (${percentage}%)</h4>
-                    <p class="text-sm mt-1">${percentage >= 70 ? 'Excellent! You have a solid grasp of this topic.' : 'Good effort! Review the material to master these concepts.'}</p>
+                    <h4 class="font-bold text-lg m-0">Your Score: ${score}/${questions.length} (${percentage}%)</h4>
+                    <p class="text-sm mt-1 m-0">${percentage >= 70 ? 'Excellent! You have a solid grasp of this topic.' : 'Good effort! Review the material to master these concepts.'}</p>
                 `;
                 
                 lucide.createIcons();
@@ -689,10 +762,12 @@
             const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(container.clientWidth, 300);
             container.appendChild(renderer.domElement);
+            
             const light = new THREE.PointLight(0xffffff, 1, 100);
             light.position.set(10, 10, 10);
             scene.add(light);
             scene.add(new THREE.AmbientLight(0x404040));
+            
             if (spec.type === 'cube') {
                 const mesh = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhongMaterial({ color: spec.color || 0x00ff00 }));
                 scene.add(mesh);
@@ -704,6 +779,7 @@
                 const anim = () => { requestAnimationFrame(anim); mesh.rotation.y += 0.01; renderer.render(scene, camera); };
                 anim();
             }
+            
             camera.position.z = 5;
             renderer.render(scene, camera);
         }
@@ -712,10 +788,13 @@
             const contentArea = aiNode.querySelector('.content-area');
             const actionBar = aiNode.querySelector('.action-bar');
             const badge = aiNode.querySelector('.provider-badge');
+            
             contentArea.classList.add('blinking-cursor');
             badge.textContent = provider;
+            
             let index = 0;
-            const chunkSize = 10;
+            const chunkSize = 15;
+            
             function tick() {
                 if (index < text.length) {
                     contentArea.innerHTML = marked.parse(text.slice(0, index + chunkSize));
@@ -723,12 +802,17 @@
                     scrollToBottom();
                     streamingInterval = requestAnimationFrame(tick);
                 } else {
+                    // Final full rendering
                     contentArea.innerHTML = marked.parse(text);
                     contentArea.classList.remove('blinking-cursor');
-                    contentArea.setAttribute('data-raw', text);
+                    contentArea.setAttribute('data-raw', text); // Store raw text for interactive logic
+                    
+                    // Render interactive modules 
                     renderVisuals(contentArea);
+                    
                     actionBar.classList.remove('hidden');
                     setTimeout(() => actionBar.classList.replace('opacity-0', 'opacity-100'), 100);
+                    
                     isGenerating = false;
                     ui.submitBtn.disabled = false;
                     ui.submitBtn.innerHTML = '<i data-lucide="arrow-up" class="w-5 h-5"></i>';
@@ -741,6 +825,7 @@
 
         function copyText(btn) {
             const raw = btn.closest('.flex-1').querySelector('.content-area').getAttribute('data-raw');
+            if(!raw) return;
             navigator.clipboard.writeText(raw).then(() => {
                 btn.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-green-400"></i>';
                 lucide.createIcons();
@@ -752,48 +837,65 @@
             e.preventDefault();
             const text = ui.input.value.trim();
             if(!text || isGenerating) return;
+            
             isGenerating = true;
             ui.submitBtn.disabled = true;
             ui.submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>';
             lucide.createIcons();
+            
             appendUserMessage(text);
             ui.input.value = '';
             autoResize(ui.input);
+            
             const aiNode = createAIMessage();
             startThinking(aiNode);
+            
             const level = document.getElementById('setting-level').value;
             const provider = document.getElementById('setting-provider').value;
             const language = document.getElementById('setting-language').value;
+            
             let endpoint = '';
             let payload = { level, provider, language };
+            
             if (currentMode === 'teach') { endpoint = '/teach'; payload.topic = text; }
             else if (currentMode === 'deep') { endpoint = '/learn-deep'; payload.topic = text; payload.level = "Mariana Trench Mode"; }
             else if (currentMode === 'connectors') { endpoint = '/connectors'; payload.source_text = text; payload.task = document.getElementById('input-task').value; }
             else if (currentMode === 'quiz') { endpoint = '/quiz'; payload.topic = text; payload.num_questions = parseInt(document.getElementById('input-num').value); }
+            
+            // To simulate local generation in standard HTML without a real backend
+            if (!apiUrl) {
+                setTimeout(() => {
+                    stopThinking(aiNode);
+                    let dummyText = "Here is a simulated response.\n\n### Diagram Test\n```mermaid\ngraph TD\nA-->B;\n```\n\n### Quiz\n1. What is the result of 1+1?\na) 1\nb) 2\nc) 3\nd) 4\n\nAnswer Key: b";
+                    streamMarkdown(aiNode, dummyText, 'Simulated Local');
+                }, 1500);
+                return;
+            }
+
             try {
-                // Test backend connectivity first
-                const healthCheck = await fetch(`${apiUrl}/health`).catch(() => null);
-                if (!healthCheck || !healthCheck.ok) {
-                    throw new Error(`Backend unavailable at ${apiUrl}. Please check your backend URL or set it via localStorage.setItem('backendUrl', 'your-url')`);
-                }
-                
                 const response = await fetch(`${apiUrl}${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                if (!response.ok) { const err = await response.json(); throw new Error(JSON.stringify(err.detail) || 'API Error'); }
+                
+                if (!response.ok) { 
+                    const err = await response.json(); 
+                    throw new Error(JSON.stringify(err.detail) || 'API Error'); 
+                }
+                
                 const data = await response.json();
                 stopThinking(aiNode);
                 streamMarkdown(aiNode, data.answer || "No response received.", data.provider_used || provider);
             } catch (error) {
                 stopThinking(aiNode);
                 const errorMsg = error.message || 'Unknown error occurred';
-                const isConnectionError = errorMsg.includes('Backend unavailable') || errorMsg.includes('fetch');
+                const isConnectionError = errorMsg.includes('Failed to fetch') || errorMsg.includes('unavailable');
                 aiNode.querySelector('.content-area').innerHTML = `<div class="p-3 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-sm">
-                    <strong>${isConnectionError ? 'Backend Connection Error' : 'Error'}:</strong> ${errorMsg}
-                    ${isConnectionError ? '<br><br><small>To use a custom backend, run: <code>localStorage.setItem("backendUrl", "https://your-backend.com")</code> in the browser console.</small>' : ''}
+                    <strong>${isConnectionError ? 'Connection Error' : 'Error'}:</strong> ${errorMsg}
+                    ${isConnectionError ? '<br><br><small>Ensure your API URL is correctly configured.</small>' : ''}
                 </div>`;
+                
                 isGenerating = false;
                 ui.submitBtn.disabled = false;
                 ui.submitBtn.innerHTML = '<i data-lucide="arrow-up" class="w-5 h-5"></i>';

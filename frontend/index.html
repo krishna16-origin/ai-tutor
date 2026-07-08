@@ -93,27 +93,76 @@
         .threejs-container canvas { width: 100% !important; height: 300px !important; }
 
         /* Quiz Specific Styles */
+        .quiz-container {
+            background: #1a1a1a;
+            border: 2px solid #3b82f644;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        .quiz-question-box {
+            background: #262626;
+            border: 1px solid #383838;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s;
+        }
+        .quiz-question-box:hover {
+            border-color: #4b5563;
+        }
         .quiz-option {
-            transition: all 0.2s;
-            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            margin: 0.5rem 0;
+            border-radius: 0.5rem;
             border: 1px solid #383838;
             background: #2f2f2f;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            width: 100%;
         }
-        .quiz-option:hover {
+        .quiz-option:hover:not(.disabled) {
             background: #3d3d3d;
-            border-color: #555;
+            border-color: #60a5fa;
         }
         .quiz-option.selected {
-            background: #3b82f633;
+            background: #3b82f622;
             border-color: #3b82f6;
+            ring: 1px solid #3b82f6;
         }
         .quiz-option.correct {
-            background: #10b98133;
-            border-color: #10b981;
+            background: #10b98122 !important;
+            border-color: #10b981 !important;
+            color: #34d399;
         }
         .quiz-option.incorrect {
-            background: #ef444433;
-            border-color: #ef4444;
+            background: #ef444422 !important;
+            border-color: #ef4444 !important;
+            color: #f87171;
+        }
+        .quiz-submit-btn {
+            background: #3b82f6;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: block;
+            margin: 1.5rem auto 0;
+        }
+        .quiz-submit-btn:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+        .quiz-submit-btn:disabled {
+            background: #4b5563;
+            cursor: not-allowed;
+            transform: none;
         }
     </style>
 </head>
@@ -403,41 +452,53 @@
             // 1. Mermaid
             const mermaidBlocks = container.querySelectorAll('pre code.language-mermaid');
             mermaidBlocks.forEach((block, i) => {
+                const pre = block.parentElement;
                 const id = `mermaid-${Date.now()}-${i}`;
                 const div = document.createElement('div');
                 div.className = 'mermaid-container';
                 div.id = id;
+                
                 let content = block.textContent.trim();
-                if (!content.startsWith('graph') && !content.startsWith('flowchart') && !content.startsWith('sequenceDiagram') && !content.startsWith('classDiagram') && !content.startsWith('stateDiagram') && !content.startsWith('erDiagram') && !content.startsWith('gantt') && !content.startsWith('pie') && !content.startsWith('gitGraph') && !content.startsWith('journey')) {
+                // Basic validation and auto-fix for Mermaid content
+                if (!/^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gantt|pie|gitGraph|journey|C4Context)/i.test(content)) {
                     content = 'graph TD\n' + content;
                 }
+                
+                // Replace problematic characters
                 content = content.replace(/‑/g, '-').replace(/&quot;/g, '"');
-                div.textContent = content;
-                block.parentElement.replaceWith(div);
-                try {
-                    mermaid.render(`${id}-svg`, content).then(({svg}) => {
-                        div.innerHTML = svg;
-                    }).catch(err => {
-                        div.innerHTML = `<div class="text-xs text-red-500 p-2">Mermaid Syntax Error</div>`;
-                    });
-                } catch (e) { div.innerHTML = `<div class="text-xs text-red-500 p-2">Mermaid Render Failed</div>`; }
+                
+                pre.replaceWith(div);
+                
+                // Use a small delay to ensure DOM is ready
+                setTimeout(() => {
+                    try {
+                        mermaid.render(`${id}-svg`, content).then(({svg}) => {
+                            div.innerHTML = svg;
+                        }).catch(err => {
+                            console.error("Mermaid Render Error:", err);
+                            div.innerHTML = `<div class="text-xs text-red-500 p-2 bg-red-900/20 rounded">Mermaid Syntax Error: ${err.message || 'Check syntax'}</div>`;
+                        });
+                    } catch (e) { 
+                        div.innerHTML = `<div class="text-xs text-red-500 p-2 bg-red-900/20 rounded">Mermaid Render Failed</div>`; 
+                    }
+                }, 50);
             });
 
             // 2. Plotly
             const plotlyBlocks = container.querySelectorAll('pre code.language-plotly');
-            plotlyBlocks.forEach((block, i) => {
+            plotlyBlocks.forEach((block) => {
                 try {
                     const data = JSON.parse(block.textContent);
                     const div = document.createElement('div');
                     div.className = 'plotly-container';
                     block.parentElement.replaceWith(div);
-                    Plotly.newPlot(div, data.data || [], data.layout || {}, {responsive: true});
+                    Plotly.newPlot(div, data.data || [], data.layout || { template: 'plotly_dark' }, {responsive: true});
                 } catch (e) { console.error("Plotly error", e); }
             });
 
             // 3. Three.js
             const threeBlocks = container.querySelectorAll('pre code.language-threejs');
-            threeBlocks.forEach((block, i) => {
+            threeBlocks.forEach((block) => {
                 try {
                     const spec = JSON.parse(block.textContent);
                     const div = document.createElement('div');
@@ -464,32 +525,36 @@
 
         function renderInteractiveQuiz(container) {
             const rawText = container.getAttribute('data-raw') || "";
+            // Look for quiz sections
             const quizHeaderMatch = rawText.match(/(?:##|###)\s*(?:Quiz|Practice Problems|Test Your Knowledge)([\s\S]*)/i);
             if (!quizHeaderMatch) return;
 
             const quizContent = quizHeaderMatch[1];
             const questions = [];
             
-            // Split by numbers (1. or 1))
-            const qBlocks = quizContent.split(/\n\d+[\.\)]\s+/).filter(b => b.trim().length > 5);
+            // Extract questions and options
+            const qBlocks = quizContent.split(/\n\s*\d+[\.\)]\s+/).filter(b => b.trim().length > 5);
             
             qBlocks.forEach(block => {
                 const lines = block.split('\n').map(l => l.trim()).filter(l => l);
+                if (lines.length < 2) return;
+
                 const questionText = lines[0];
-                const options = lines.filter(l => l.match(/^[a-d][\)\.\s]/i) || l.match(/^\([a-d]\)/i));
+                const options = lines.filter(l => /^[a-d][\)\.\s]/i.test(l) || /^\([a-d]\)/i.test(l));
                 
                 if (questionText && options.length >= 2) {
                     questions.push({
                         question: questionText,
                         options: options.map(o => o.replace(/^[a-d][\)\.\s]+/i, '').replace(/^\([a-d]\)\s*/i, '').trim()),
-                        correct: 0 
+                        correct: 0,
+                        selectedIndex: null
                     });
                 }
             });
 
             if (questions.length === 0) return;
 
-            // Robust Answer Key Detection
+            // Extract Answer Key
             const answerKeyMatch = rawText.match(/(?:Answer Key|Answers):?([\s\S]*)/i);
             if (answerKeyMatch) {
                 const keySection = answerKeyMatch[1];
@@ -504,44 +569,114 @@
                 }
             }
 
-            const quizDiv = document.createElement('div');
-            quizDiv.className = 'quiz-container space-y-6 mt-8 border-t-2 border-blue-500/30 pt-6';
-            quizDiv.innerHTML = `<h3 class="text-xl font-bold text-blue-400 flex items-center gap-2 mb-4">
-                <i data-lucide="help-circle" class="w-6 h-6"></i> Interactive Knowledge Check
-            </h3>`;
+            // Create Quiz UI
+            const quizWrapper = document.createElement('div');
+            quizWrapper.className = 'quiz-container';
+            quizWrapper.innerHTML = `
+                <div class="flex items-center gap-3 mb-6 border-b border-blue-500/20 pb-4">
+                    <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                        <i data-lucide="help-circle"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Knowledge Check</h3>
+                        <p class="text-xs text-chat-muted">Test what you've just learned</p>
+                    </div>
+                </div>
+                <div id="quiz-questions-container"></div>
+                <div class="flex flex-col items-center gap-4 mt-8">
+                    <button id="quiz-submit-btn" class="quiz-submit-btn">Submit Quiz</button>
+                    <div id="quiz-overall-feedback" class="hidden text-center p-4 rounded-xl w-full"></div>
+                </div>
+            `;
+
+            const qContainer = quizWrapper.querySelector('#quiz-questions-container');
+            const submitBtn = quizWrapper.querySelector('#quiz-submit-btn');
+            const overallFeedback = quizWrapper.querySelector('#quiz-overall-feedback');
 
             questions.forEach((q, qIdx) => {
-                const qEl = document.createElement('div');
-                qEl.className = 'space-y-3 bg-chat-input/30 p-4 rounded-xl border border-chat-border';
-                qEl.innerHTML = `<p class="font-semibold text-chat-text text-lg">${qIdx + 1}. ${q.question}</p>`;
+                const qBox = document.createElement('div');
+                qBox.className = 'quiz-question-box';
+                qBox.innerHTML = `<p class="font-semibold text-chat-text mb-4"><span class="text-blue-400 mr-2">Q${qIdx+1}.</span>${q.question}</p>`;
                 
-                const optGrid = document.createElement('div');
-                optGrid.className = 'grid grid-cols-1 gap-2';
+                const optList = document.createElement('div');
+                optList.className = 'space-y-2';
                 
                 q.options.forEach((opt, oIdx) => {
-                    const btn = document.createElement('div');
-                    btn.className = 'quiz-option p-4 rounded-xl text-sm flex items-center gap-4 border border-chat-border hover:border-blue-500/50 transition-all';
-                    btn.innerHTML = `<span class="w-8 h-8 rounded-full bg-chat-bg border border-chat-border flex items-center justify-center shrink-0 text-xs font-bold">${String.fromCharCode(65 + oIdx)}</span> <span>${opt}</span>`;
+                    const optBtn = document.createElement('button');
+                    optBtn.className = 'quiz-option';
+                    optBtn.innerHTML = `
+                        <span class="w-6 h-6 rounded-full border border-chat-border flex items-center justify-center text-[10px] font-bold shrink-0 opt-indicator">${String.fromCharCode(65 + oIdx)}</span>
+                        <span class="text-sm">${opt}</span>
+                    `;
                     
-                    btn.onclick = () => {
-                        if (qEl.hasAttribute('data-answered')) return;
-                        qEl.setAttribute('data-answered', 'true');
-                        const allOpts = optGrid.querySelectorAll('.quiz-option');
-                        allOpts[q.correct].classList.add('correct');
-                        if (oIdx !== q.correct) btn.classList.add('incorrect');
-                        const feedback = document.createElement('div');
-                        feedback.className = `mt-4 text-sm p-3 rounded-lg flex items-center gap-2 ${oIdx === q.correct ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`;
-                        feedback.innerHTML = oIdx === q.correct ? '<i data-lucide="check-circle" class="w-4 h-4"></i> Correct!' : `<i data-lucide="alert-circle" class="w-4 h-4"></i> Incorrect. The correct answer is ${String.fromCharCode(65 + q.correct)}.`;
-                        qEl.appendChild(feedback);
-                        lucide.createIcons();
+                    optBtn.onclick = () => {
+                        if (submitBtn.disabled) return; // Already submitted
+                        
+                        // Clear previous selection in this question
+                        optList.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('selected'));
+                        optBtn.classList.add('selected');
+                        q.selectedIndex = oIdx;
                     };
-                    optGrid.appendChild(btn);
+                    
+                    optList.appendChild(optBtn);
                 });
-                qEl.appendChild(optGrid);
-                quizDiv.appendChild(qEl);
+                
+                qBox.appendChild(optList);
+                qContainer.appendChild(qBox);
             });
 
-            container.appendChild(quizDiv);
+            submitBtn.onclick = () => {
+                let score = 0;
+                let allAnswered = true;
+                
+                questions.forEach((q, idx) => {
+                    if (q.selectedIndex === null) allAnswered = false;
+                });
+
+                if (!allAnswered) {
+                    alert("Please answer all questions before submitting!");
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Quiz Completed";
+                
+                const qBoxes = qContainer.querySelectorAll('.quiz-question-box');
+                questions.forEach((q, idx) => {
+                    const qBox = qBoxes[idx];
+                    const opts = qBox.querySelectorAll('.quiz-option');
+                    
+                    // Show correct/incorrect
+                    opts[q.correct].classList.add('correct');
+                    if (q.selectedIndex !== q.correct) {
+                        opts[q.selectedIndex].classList.add('incorrect');
+                    } else {
+                        score++;
+                    }
+
+                    // Add explanation or correct answer text
+                    const feedback = document.createElement('div');
+                    feedback.className = `mt-4 text-xs p-3 rounded-lg ${q.selectedIndex === q.correct ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`;
+                    feedback.innerHTML = q.selectedIndex === q.correct 
+                        ? `<strong>Correct!</strong> Great job.` 
+                        : `<strong>Incorrect.</strong> The correct answer was ${String.fromCharCode(65 + q.correct)}.`;
+                    qBox.appendChild(feedback);
+                });
+
+                // Overall score
+                overallFeedback.classList.remove('hidden');
+                const percentage = Math.round((score / questions.length) * 100);
+                overallFeedback.className = `text-center p-4 rounded-xl w-full ${percentage >= 70 ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`;
+                overallFeedback.innerHTML = `
+                    <h4 class="font-bold text-lg">Your Score: ${score}/${questions.length} (${percentage}%)</h4>
+                    <p class="text-sm mt-1">${percentage >= 70 ? 'Excellent! You have a solid grasp of this topic.' : 'Good effort! Review the material to master these concepts.'}</p>
+                `;
+                
+                lucide.createIcons();
+                scrollToBottom();
+            };
+
+            container.appendChild(quizWrapper);
             lucide.createIcons();
         }
 

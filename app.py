@@ -107,7 +107,7 @@ def groq_llm() -> ChatGroq:
         api_key=getenv("GROQ_API_KEY"),
         model=getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
         temperature=float(getenv("MODEL_TEMPERATURE", "0.2")),
-        max_tokens=int(getenv("MAX_TOKENS", "8192")),
+        max_tokens=int(getenv("MAX_TOKENS", "4096")),
     )
 
 

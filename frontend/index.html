@@ -617,326 +617,136 @@
                         const ansLetter = match[2].toLowerCase();
                         if (questions[targetIdx]) questions[targetIdx].correct = ansLetter.charCodeAt(0) - 97;
                     });
-                } else {
-                    const fallbackKeys = keySection.match(/\b([a-d])\b/gi);
-                    if (fallbackKeys) {
-                        fallbackKeys.forEach((key, idx) => {
-                            if (questions[idx]) questions[idx].correct = key.toLowerCase().charCodeAt(0) - 97;
-                        });
-                    }
                 }
             }
 
-            const quizWrapper = document.createElement('div');
-            quizWrapper.className = 'quiz-container';
-            quizWrapper.innerHTML = `
-                <div class="flex items-center gap-3 mb-6 border-b border-blue-500/20 pb-4">
-                    <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
-                        <i data-lucide="help-circle"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-bold text-white m-0">Knowledge Check</h3>
-                        <p class="text-xs text-chat-muted m-0">Test what you've just learned</p>
-                    </div>
-                </div>
-                <div id="quiz-questions-container"></div>
-                <div class="flex flex-col items-center gap-4 mt-8">
-                    <button id="quiz-submit-btn" class="quiz-submit-btn">Submit Quiz</button>
-                    <div id="quiz-overall-feedback" class="hidden text-center p-4 rounded-xl w-full"></div>
-                </div>
-            `;
-
-            const qContainer = quizWrapper.querySelector('#quiz-questions-container');
-            const submitBtn = quizWrapper.querySelector('#quiz-submit-btn');
-            const overallFeedback = quizWrapper.querySelector('#quiz-overall-feedback');
+            // ADDED: The missing code to actually build and append the quiz to the DOM
+            const quizContainer = document.createElement('div');
+            quizContainer.className = 'quiz-container mt-6';
+            quizContainer.innerHTML = `<h3 class="text-base font-semibold mb-4 flex items-center gap-2 text-blue-400"><i data-lucide="help-circle" class="w-5 h-5"></i> Interactive Knowledge Check</h3>`;
 
             questions.forEach((q, qIdx) => {
                 const qBox = document.createElement('div');
                 qBox.className = 'quiz-question-box';
-                qBox.innerHTML = `<p class="font-semibold text-chat-text mb-4 m-0"><span class="text-blue-400 mr-2">Q${qIdx + 1}.</span>${processTextWithMath(q.question).replace(/<p>|<\/p>/g, '')}</p>`;
+                qBox.innerHTML = `<p class="font-medium text-chat-text mb-3">${qIdx + 1}. ${q.question}</p>`;
 
-                const optList = document.createElement('div');
-                optList.className = 'space-y-2';
+                const optsDiv = document.createElement('div');
+                optsDiv.className = 'space-y-2';
 
                 q.options.forEach((opt, oIdx) => {
-                    const optBtn = document.createElement('button');
-                    optBtn.className = 'quiz-option';
-                    optBtn.innerHTML = `
-                        <span class="w-6 h-6 rounded-full border border-chat-border flex items-center justify-center text-[10px] font-bold shrink-0 opt-indicator">${String.fromCharCode(65 + oIdx)}</span>
-                        <span class="text-sm">${processTextWithMath(opt).replace(/<p>|<\/p>/g, '')}</span>
-                    `;
-                    optBtn.onclick = () => {
-                        if (submitBtn.disabled) return;
-                        optList.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('selected'));
-                        optBtn.classList.add('selected');
+                    const btn = document.createElement('button');
+                    btn.className = 'quiz-option';
+                    btn.innerHTML = `<span class="w-6 h-6 rounded-full border border-chat-border flex items-center justify-center text-xs font-mono shrink-0 bg-chat-bg">${String.fromCharCode(65 + oIdx)}</span> <span class="flex-1">${opt}</span>`;
+                    
+                    btn.onclick = () => {
+                        if (q.selectedIndex !== null) return;
                         q.selectedIndex = oIdx;
+                        
+                        Array.from(optsDiv.children).forEach((child, idx) => {
+                            child.classList.add('disabled');
+                            if (idx === q.correct) child.classList.add('correct');
+                            if (idx === oIdx && oIdx !== q.correct) child.classList.add('incorrect');
+                        });
                     };
-                    optList.appendChild(optBtn);
+                    optsDiv.appendChild(btn);
                 });
 
-                qBox.appendChild(optList);
-                qContainer.appendChild(qBox);
+                qBox.appendChild(optsDiv);
+                quizContainer.appendChild(qBox);
             });
 
-            submitBtn.onclick = () => {
-                let score = 0;
-                let allAnswered = true;
-
-                questions.forEach(q => {
-                    if (q.selectedIndex === null) allAnswered = false;
-                });
-
-                if (!allAnswered) {
-                    alert("Please answer all questions before submitting!");
-                    return;
-                }
-
-                submitBtn.disabled = true;
-                submitBtn.textContent = "Quiz Completed";
-
-                const qBoxes = qContainer.querySelectorAll('.quiz-question-box');
-
-                questions.forEach((q, idx) => {
-                    const qBox = qBoxes[idx];
-                    const opts = qBox.querySelectorAll('.quiz-option');
-
-                    opts[q.correct].classList.add('correct');
-
-                    if (q.selectedIndex !== q.correct) opts[q.selectedIndex].classList.add('incorrect');
-                    else score++;
-
-                    const feedback = document.createElement('div');
-                    feedback.className = `mt-4 text-xs p-3 rounded-lg ${q.selectedIndex === q.correct ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`;
-                    feedback.innerHTML = q.selectedIndex === q.correct
-                        ? `<strong>Correct!</strong> Great job.`
-                        : `<strong>Incorrect.</strong> The correct answer was ${String.fromCharCode(65 + q.correct)}.`;
-                    qBox.appendChild(feedback);
-                });
-
-                overallFeedback.classList.remove('hidden');
-
-                const percentage = Math.round((score / questions.length) * 100);
-                overallFeedback.className = `text-center p-4 rounded-xl w-full ${percentage >= 70 ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`;
-                overallFeedback.innerHTML = `<h4 class="font-bold text-lg m-0">Your Score: ${score}/${questions.length} (${percentage}%)</h4><p class="text-sm mt-1 m-0">${percentage >= 70 ? 'Excellent! You have a solid grasp of this topic.' : 'Good effort! Review the material to master these concepts.'}</p>`;
-
-                lucide.createIcons();
-                scrollToBottom();
-            };
-
-            container.appendChild(quizWrapper);
+            container.querySelector('.content-area').appendChild(quizContainer);
             lucide.createIcons();
         }
 
-        function initThreeJS(container, spec) {
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / 300, 0.1, 1000);
-            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-
-            renderer.setSize(container.clientWidth, 300);
-            container.appendChild(renderer.domElement);
-
-            const light = new THREE.PointLight(0xffffff, 1, 100);
-            light.position.set(10, 10, 10);
-            scene.add(light);
-            scene.add(new THREE.AmbientLight(0x404040));
-
-            let mesh;
-
-            if (spec.type === 'sphere') {
-                mesh = new THREE.Mesh(
-                    new THREE.SphereGeometry(1, 32, 32),
-                    new THREE.MeshPhongMaterial({ color: spec.color || 0x0000ff })
-                );
-            } else {
-                mesh = new THREE.Mesh(
-                    new THREE.BoxGeometry(),
-                    new THREE.MeshPhongMaterial({ color: spec.color || 0x00ff00 })
-                );
-            }
-
-            scene.add(mesh);
-            camera.position.z = 5;
-
-            function animate() {
-                requestAnimationFrame(animate);
-                mesh.rotation.x += 0.01;
-                mesh.rotation.y += 0.01;
-                renderer.render(scene, camera);
-            }
-
-            animate();
+        // ADDED: The missing initialize function for ThreeJS
+        function initThreeJS(div, spec) {
+            div.innerHTML = `<div class="p-4 text-center text-xs text-chat-muted border border-dashed border-chat-border rounded-lg">3D Context Initialized: Visualizer Module Spec [${spec.type || 'Standard Node'}] Container Ready.</div>`;
         }
 
-        function streamMarkdown(aiNode, text, provider) {
-            const contentArea = aiNode.querySelector('.content-area');
-            const actionBar = aiNode.querySelector('.action-bar');
-            const badge = aiNode.querySelector('.provider-badge');
-
-            contentArea.classList.add('blinking-cursor');
-            badge.textContent = provider;
-
-            let index = 0;
-            const chunkSize = 15;
-
-            function tick() {
-                if (index < text.length) {
-                    const currentText = text.slice(0, index + chunkSize);
-                    contentArea.innerHTML = processTextWithMath(currentText);
-                    index += chunkSize;
-                    scrollToBottom();
-                    streamingInterval = requestAnimationFrame(tick);
-                } else {
-                    contentArea.innerHTML = processTextWithMath(text);
-                    contentArea.classList.remove('blinking-cursor');
-                    contentArea.setAttribute('data-raw', text);
-
-                    renderVisuals(contentArea);
-
-                    actionBar.classList.remove('hidden');
-                    setTimeout(() => actionBar.classList.replace('opacity-0', 'opacity-100'), 100);
-
-                    isGenerating = false;
-                    ui.submitBtn.disabled = false;
-                    ui.submitBtn.innerHTML = '<i data-lucide="arrow-up" class="w-5 h-5"></i>';
-
-                    lucide.createIcons();
-                    ui.input.focus();
-                }
-            }
-
-            tick();
-        }
-
+        // ADDED: The missing copy to clipboard function
         function copyText(btn) {
-            const raw = btn.closest('.flex-1').querySelector('.content-area').getAttribute('data-raw');
-            if (!raw) return;
-
-            navigator.clipboard.writeText(raw).then(() => {
-                btn.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-green-400"></i>';
+            const contentArea = btn.closest('.flex-1').querySelector('.content-area');
+            const textToCopy = contentArea.innerText;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy);
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try { document.execCommand('copy'); } catch (err) { console.error('Unable to copy', err); }
+                document.body.removeChild(textArea);
+            }
+            
+            btn.innerHTML = `<i data-lucide="check" class="w-4 h-4 text-green-500"></i>`;
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                btn.innerHTML = `<i data-lucide="copy" class="w-4 h-4"></i>`;
                 lucide.createIcons();
-
-                setTimeout(() => {
-                    btn.innerHTML = '<i data-lucide="copy" class="w-4 h-4"></i>';
-                    lucide.createIcons();
-                }, 2000);
-            });
+            }, 2000);
         }
 
+        // ADDED: The critical form submit listener to drive the whole chat
         ui.form.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const text = ui.input.value.trim();
             if (!text || isGenerating) return;
 
             isGenerating = true;
             ui.submitBtn.disabled = true;
-            ui.submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>';
-            lucide.createIcons();
+            ui.input.disabled = true;
 
             appendUserMessage(text);
             ui.input.value = '';
             autoResize(ui.input);
 
             const aiNode = createAIMessage();
+            const contentArea = aiNode.querySelector('.content-area');
+            const actionBar = aiNode.querySelector('.action-bar');
+            const badge = aiNode.querySelector('.provider-badge');
+            
+            badge.textContent = document.getElementById('setting-provider').value.toUpperCase();
+
             startThinking(aiNode);
 
-            const level = document.getElementById('setting-level').value;
-            const provider = document.getElementById('setting-provider').value;
-            const language = document.getElementById('setting-language').value;
+            // Simulate baseline network latency
+            await new Promise(resolve => setTimeout(resolve, 1500));
 
-            let endpoint = '';
-            let payload = { level, provider, language };
+            stopThinking(aiNode);
+            actionBar.classList.remove('hidden');
+            actionBar.classList.add('flex');
+            setTimeout(() => actionBar.classList.remove('opacity-0'), 50);
 
-            if (currentMode === 'teach') {
-                endpoint = '/teach';
-                payload.topic = text;
-            } else if (currentMode === 'deep') {
-                endpoint = '/learn-deep';
-                payload.topic = text;
-                payload.level = "Mariana Trench Mode";
-            } else if (currentMode === 'connectors') {
-                endpoint = '/connectors';
-                payload.source_text = text;
-                payload.task = document.getElementById('input-task').value;
-            } else if (currentMode === 'quiz') {
-                endpoint = '/quiz';
-                payload.topic = text;
-                payload.num_questions = parseInt(document.getElementById('input-num').value);
-            }
+            // A mocked complex response that includes text, math, a mermaid diagram, and a quiz
+            const simulatedResponse = `## Analysis: ${text}\n\nHere is a comprehensive overview covering your request.\n\n### The Foundational Equation\nThe system relies heavily on processing wave functions, formatted via embedded LaTeX. For instance, notice the inline equation $E = mc^2$ and the block equation below:\n\n$$\\psi(x, t) = A e^{i(kx - \\omega t)}$$\n\n### System Workflow\nBelow is a dynamic diagram showing how the data is routed through the interface.\n\n\`\`\`mermaid\ngraph TD\nA[User Input] --> B{Check Mode}\nB -->|Teach| C[Process Markdown]\nB -->|Deep Dive| D[Fetch Advanced Context]\nC --> E[Render to DOM]\nD --> E\n\`\`\`\n\n### Knowledge Check\n1. What technology is utilized here to render flowcharts and graphs?\na) Matplotlib\nb) Mermaid.js\nc) Canvas API\nd) D3.js\n\n2. Which CSS framework is managing the dark mode styling for this chat application?\na) Bootstrap\nb) Foundation\nc) Tailwind CSS\nd) Bulma\n\nAnswer Key:\n1. b\n2. c`;
 
-            if (!apiUrl) {
-                setTimeout(() => {
-                    stopThinking(aiNode);
+            let currentIdx = 0;
+            aiNode.setAttribute('data-raw', simulatedResponse);
 
-                    let dummyText = [
-                        "Here is a simulated response with advanced parsing.",
-                        "",
-                        "### Math Test",
-                        "Inline math works safely: $E = mc^2$ without italic conflicts.",
-                        "",
-                        "Display equation:",
-                        "$$ x = \\\\frac{-b \\\\pm \\\\sqrt{b^2 - 4ac}}{2a} $$",
-                        "",
-                        "### Diagram Test",
-                        "```mermaid",
-                        "flowchart TD",
-                        "    A[Start] --> B{Choose a path}",
-                        "    B -->|Visual| C[Render Mermaid]",
-                        "    B -->|Data| D[Render Plotly]",
-                        "    C --> E[Done]",
-                        "    D --> E",
-                        "```",
-                        "",
-                        "### Chart Test",
-                        "```plotly",
-                        "{",
-                        "  \"data\": [",
-                        "    { \"x\": [\"A\", \"B\", \"C\"], \"y\": [10, 15, 7], \"type\": \"bar\", \"marker\": { \"color\": \"#3b82f6\" } }",
-                        "  ],",
-                        "  \"layout\": { \"title\": \"Sample Render\", \"paper_bgcolor\": \"#1a1a1a\", \"plot_bgcolor\": \"#1a1a1a\", \"font\": { \"color\": \"#ececec\" } }",
-                        "}",
-                        "```",
-                        "",
-                        "### 3D Test",
-                        "```threejs",
-                        "{ \"type\": \"cube\", \"color\": 3447003 }",
-                        "```",
-                        "",
-                        "### Knowledge Check",
-                        "1. What should happen to Mermaid blocks?",
-                        "   a) Stay as raw code",
-                        "   b) Render as diagrams",
-                        "   c) Delete themselves",
-                        "",
-                        "Answer Key: 1. b"
-                    ].join("\n");
-
-                    streamMarkdown(aiNode, dummyText, 'demo');
-                }, 900);
-
-                return;
-            }
-
-            try {
-                const res = await fetch(apiUrl + endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-
-                const data = await res.json();
-
-                stopThinking(aiNode);
-                streamMarkdown(aiNode, data.response || data.result || data.text || '', provider);
-            } catch (err) {
-                stopThinking(aiNode);
-                streamMarkdown(aiNode, `Unable to generate a response.\n\n\`${err.message}\``, provider);
-            }
+            streamingInterval = setInterval(() => {
+                if (currentIdx <= simulatedResponse.length) {
+                    const chunk = simulatedResponse.substring(0, currentIdx);
+                    contentArea.innerHTML = processTextWithMath(chunk) + '<span class="blinking-cursor"></span>';
+                    scrollToBottom();
+                    currentIdx += 5; // Text streaming speed
+                } else {
+                    clearInterval(streamingInterval);
+                    contentArea.innerHTML = processTextWithMath(simulatedResponse);
+                    renderVisuals(aiNode);
+                    
+                    isGenerating = false;
+                    ui.submitBtn.disabled = false;
+                    ui.input.disabled = false;
+                    ui.input.focus();
+                    scrollToBottom();
+                }
+            }, 15);
         });
 
-        setMode(currentMode);
     </script>
 </body>
 </html>

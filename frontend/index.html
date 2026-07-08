@@ -3,865 +3,545 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DeepLearn AI - Advanced Learning Platform</title>
-
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <title>DeepLearn AI - ChatGPT Style</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        primary: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 900: '#0c4a6e' },
-                        dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155' }
+                        /* Exact ChatGPT Dark Theme Colors */
+                        chat: {
+                            bg: '#212121',
+                            sidebar: '#171717',
+                            input: '#2f2f2f',
+                            border: '#383838',
+                            hover: '#2f2f2f',
+                            user: '#2f2f2f',
+                            text: '#ececec',
+                            muted: '#b4b4b4'
+                        }
                     },
-                    animation: {
-                        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'slide-in': 'slideIn 0.3s ease-out forwards',
-                        'fade-in': 'fadeIn 0.3s ease-out forwards',
-                    },
-                    keyframes: {
-                        slideIn: { '0%': { transform: 'translateX(100%)' }, '100%': { transform: 'translateX(0)' } },
-                        fadeIn: { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
+                    typography: {
+                        DEFAULT: {
+                            css: {
+                                color: '#ececec',
+                                a: { color: '#3b82f6', '&:hover': { color: '#60a5fa' } },
+                                h1: { color: '#ececec', fontWeight: '600', marginTop: '1.5em', marginBottom: '0.5em' },
+                                h2: { color: '#ececec', fontWeight: '600', marginTop: '1.5em', marginBottom: '0.5em' },
+                                h3: { color: '#ececec', fontWeight: '600', marginTop: '1.5em', marginBottom: '0.5em' },
+                                strong: { color: '#ececec', fontWeight: '600' },
+                                code: { color: '#ececec', backgroundColor: '#2f2f2f', padding: '0.2em 0.4em', borderRadius: '0.25rem', fontSize: '0.875em' },
+                                'pre code': { backgroundColor: 'transparent', padding: '0', color: 'inherit' },
+                                pre: { backgroundColor: '#0d0d0d', padding: '1rem', borderRadius: '0.5rem', overflowX: 'auto', border: '1px solid #383838' },
+                                blockquote: { borderLeftColor: '#383838', color: '#b4b4b4', fontStyle: 'italic' },
+                                ul: { listStyleType: 'disc', paddingLeft: '1.5em', marginTop: '1em', marginBottom: '1em' },
+                                ol: { listStyleType: 'decimal', paddingLeft: '1.5em', marginTop: '1em', marginBottom: '1em' },
+                                table: { width: '100%', borderCollapse: 'collapse', marginTop: '1em', marginBottom: '1em' },
+                                th: { borderBottom: '1px solid #383838', padding: '0.5em', textAlign: 'left', fontWeight: '600' },
+                                td: { borderBottom: '1px solid #383838', padding: '0.5em', textAlign: 'left' }
+                            }
+                        }
                     }
                 }
             }
         }
     </script>
-
-    <!-- Icons (Lucide) -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Marked (Markdown Parser) -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
-    <!-- DOMPurify (Sanitization) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
-
-    <!-- KaTeX (Math Rendering) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-
-    <!-- Mermaid (Diagrams) -->
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-
     <style>
-        /* Custom Styles & Overrides */
-        body { font-family: 'Inter', sans-serif; }
-        
-        /* Smooth Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .dark ::-webkit-scrollbar-thumb { background: #475569; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        /* Glassmorphism */
-        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
-        .dark .glass { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.05); }
-        
-        /* Markdown Prose Styling */
-        .prose h1, .prose h2, .prose h3 { font-weight: 600; margin-top: 1.5em; margin-bottom: 0.5em; }
-        .prose h1 { font-size: 1.5em; }
-        .prose h2 { font-size: 1.25em; }
-        .prose p { margin-bottom: 1em; line-height: 1.6; }
-        .prose code { background-color: #f1f5f9; padding: 0.2em 0.4em; border-radius: 0.25rem; font-family: monospace; font-size: 0.9em; }
-        .dark .prose code { background-color: #334155; }
-        .prose pre { background-color: #1e293b !important; color: #f8fafc; padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin-bottom: 1em; }
-        .prose pre code { background-color: transparent; padding: 0; color: inherit; }
-        .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
-        .prose ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1em; }
-        .prose table { width: 100%; border-collapse: collapse; margin-bottom: 1em; }
-        .prose th, .prose td { border: 1px solid #e2e8f0; padding: 0.5rem; text-align: left; }
-        .dark .prose th, .dark .prose td { border-color: #475569; }
-        
-        /* Blinking Cursor for Streaming */
-        .streaming-cursor::after { content: '▋'; display: inline-block; animation: blink 1s step-start infinite; margin-left: 2px; color: #0ea5e9; }
-        @keyframes blink { 50% { opacity: 0; } }
+        ::-webkit-scrollbar-thumb { background: #565869; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #acacbe; }
 
-        /* Thinking Animation Steps */
-        .thinking-step { opacity: 0.5; transition: opacity 0.3s; }
-        .thinking-step.active { opacity: 1; color: #0ea5e9; font-weight: 500; }
-        
-        /* Details/Summary Learn Deep */
-        details.learn-deep-section { border: 1px solid #e2e8f0; border-radius: 0.75rem; margin-bottom: 0.75rem; overflow: hidden; }
-        .dark details.learn-deep-section { border-color: #334155; }
-        details.learn-deep-section summary { background: #f8fafc; padding: 0.75rem 1rem; cursor: pointer; font-weight: 500; list-style: none; display: flex; align-items: center; justify-content: space-between; }
-        .dark details.learn-deep-section summary { background: #1e293b; }
-        details.learn-deep-section summary::-webkit-details-marker { display: none; }
-        details.learn-deep-section summary::after { content: '+'; font-size: 1.25rem; transition: transform 0.2s; }
-        details[open].learn-deep-section summary::after { transform: rotate(45deg); }
-        details.learn-deep-section .content { padding: 1rem; }
+        body { background-color: #212121; color: #ececec; }
 
-        /* Auto-resizing textarea */
-        textarea { resize: none; overflow-y: hidden; min-height: 52px; max-height: 200px; }
+        /* Typography utility classes to avoid needing @tailwindcss/typography plugin */
+        .prose p { margin-bottom: 1rem; line-height: 1.7; }
+        .prose pre { margin: 1rem 0; }
+        .prose > :last-child { margin-bottom: 0; }
+
+        .blinking-cursor::after {
+            content: '●';
+            animation: blink 1s step-end infinite;
+            margin-left: 4px;
+            font-size: 0.8em;
+            color: #ececec;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* Textarea auto-resize */
+        textarea { resize: none; overflow-y: hidden; max-height: 200px; }
+        textarea::-webkit-scrollbar { display: none; }
         
-        /* Hide scrollbar for layout but allow scroll */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Details/Summary animation for thought process */
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-dark-900 text-gray-800 dark:text-gray-100 h-screen w-screen overflow-hidden flex transition-colors duration-300">
+<body class="h-screen flex font-sans overflow-hidden text-sm md:text-base">
 
-    <!-- Left Sidebar -->
-    <aside id="sidebar-left" class="w-64 h-full bg-white dark:bg-dark-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 relative z-20">
-        <div class="p-4 flex items-center justify-between">
-            <div class="flex items-center gap-2 text-primary-600 dark:text-primary-500 font-bold text-xl">
-                <i data-lucide="brain-circuit" class="w-6 h-6"></i>
-                <span>DeepLearn</span>
+    <!-- Sidebar -->
+    <aside class="w-[260px] bg-chat-sidebar border-r border-chat-border flex flex-col hidden md:flex shrink-0 transition-all duration-300 z-20">
+        <!-- New Chat Button -->
+        <div class="p-3">
+            <button onclick="location.reload()" class="w-full flex items-center gap-2 px-3 py-2 text-sm text-chat-text hover:bg-chat-hover rounded-lg transition-colors border border-chat-border group">
+                <i data-lucide="plus" class="w-4 h-4 text-chat-muted group-hover:text-chat-text"></i>
+                New lesson
+                <i data-lucide="edit" class="w-4 h-4 ml-auto text-chat-muted opacity-0 group-hover:opacity-100 transition-opacity"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-3 py-2 space-y-6 custom-scrollbar">
+            <!-- Settings Section -->
+            <div class="space-y-3">
+                <h3 class="text-xs font-semibold text-chat-muted uppercase tracking-wider px-2">Settings</h3>
+                
+                <div class="space-y-1">
+                    <label class="text-xs text-chat-muted px-2">Learner Level</label>
+                    <select id="setting-level" class="w-full bg-chat-bg border border-chat-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-500 cursor-pointer">
+                        <option value="Beginner">Beginner</option>
+                        <option value="Student" selected>Student</option>
+                        <option value="College">College</option>
+                        <option value="Engineer">Engineer</option>
+                        <option value="Researcher">Researcher</option>
+                        <option value="Mariana Trench Mode">Mariana Trench</option>
+                    </select>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-xs text-chat-muted px-2">Provider Model</label>
+                    <select id="setting-provider" class="w-full bg-chat-bg border border-chat-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-500 cursor-pointer">
+                        <option value="auto">Auto Route</option>
+                        <option value="groq">Groq (Llama)</option>
+                        <option value="glm">GLM (Zhipu)</option>
+                    </select>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-xs text-chat-muted px-2">Language</label>
+                    <input type="text" id="setting-language" value="English" class="w-full bg-chat-bg border border-chat-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-500">
+                </div>
             </div>
-            <button id="toggle-sidebar-btn" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                <i data-lucide="panel-left-close" class="w-5 h-5"></i>
-            </button>
         </div>
 
-        <div class="px-4 py-2">
-            <button onclick="startNewChat()" class="w-full flex items-center gap-2 bg-primary-600 hover:bg-primary-500 text-white py-2.5 px-4 rounded-xl font-medium transition shadow-sm hover:shadow">
-                <i data-lucide="plus" class="w-4 h-4"></i> New Chat
-            </button>
-        </div>
-
-        <nav class="flex-1 overflow-y-auto mt-4 px-3 space-y-1">
-            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2 mt-4">Features</div>
-            <a href="#" id="learn-deep-toggle" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition group">
-                <i data-lucide="waves" class="w-4 h-4 text-primary-500"></i>
-                Learn Deep Mode
-                <span id="learn-deep-status" class="ml-auto text-xs bg-gray-200 dark:bg-gray-600 px-2 py-0.5 rounded-full">Off</span>
-            </a>
-            <a href="#" onclick="toggleConnectors()" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                <i data-lucide="database" class="w-4 h-4"></i> Connectors
-            </a>
-            
-            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2 mt-6">Recent History</div>
-            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition truncate">
-                <i data-lucide="message-square" class="w-4 h-4 shrink-0"></i>
-                Quantum Entanglement basics
-            </a>
-            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition truncate">
-                <i data-lucide="message-square" class="w-4 h-4 shrink-0"></i>
-                Calculus: Derivatives
-            </a>
-        </nav>
-
-        <div class="p-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
-            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                <i data-lucide="settings" class="w-4 h-4"></i> Settings
-            </a>
+        <!-- User Profile (Static) -->
+        <div class="p-3 border-t border-chat-border">
+            <div class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-chat-hover cursor-pointer transition-colors">
+                <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white font-medium text-xs">U</div>
+                <span class="font-medium text-chat-text">User</span>
+            </div>
         </div>
     </aside>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col h-full relative w-full min-w-0 bg-white dark:bg-dark-900 transition-colors duration-300">
-        
-        <!-- Top Nav -->
-        <header class="h-14 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 glass absolute top-0 w-full z-10">
-            <div class="flex items-center gap-3">
-                <button id="mobile-sidebar-open" class="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <i data-lucide="menu" class="w-5 h-5"></i>
-                </button>
-                <div class="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-300 flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition">
-                    Model: Gemini-Pro-Edu <i data-lucide="chevron-down" class="w-3 h-3"></i>
-                </div>
-            </div>
-            
-            <div class="flex items-center gap-3">
-                <div class="flex items-center gap-1.5 px-2 py-1">
-                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                    <span class="text-xs text-gray-500 dark:text-gray-400">Connected</span>
-                </div>
-                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-500 dark:text-gray-400">
-                    <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
-                    <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
-                </button>
-                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-primary-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm cursor-pointer shadow-sm">
-                    U
-                </div>
-            </div>
+    <!-- Main Chat Area -->
+    <main class="flex-1 flex flex-col relative h-full bg-chat-bg">
+        <!-- Mobile Header -->
+        <header class="md:hidden flex items-center justify-between p-3 border-b border-chat-border text-chat-text">
+            <button class="p-2 hover:bg-chat-hover rounded-md">
+                <i data-lucide="menu" class="w-5 h-5"></i>
+            </button>
+            <span class="font-medium">DeepLearn AI</span>
+            <button onclick="location.reload()" class="p-2 hover:bg-chat-hover rounded-md">
+                <i data-lucide="plus" class="w-5 h-5"></i>
+            </button>
         </header>
 
-        <!-- Chat Container -->
-        <div id="chat-scroll-area" class="flex-1 overflow-y-auto pt-14 pb-32 px-4 md:px-8 lg:px-24 scroll-smooth">
+        <!-- Messages Container -->
+        <div id="chat-container" class="flex-1 overflow-y-auto scroll-smooth">
             
-            <!-- Welcome / Suggested Screen -->
-            <div id="welcome-screen" class="max-w-4xl mx-auto flex flex-col items-center justify-center min-h-full py-10 animate-fade-in">
-                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-400 to-blue-600 flex items-center justify-center mb-6 shadow-lg shadow-blue-500/20">
-                    <i data-lucide="brain-circuit" class="w-10 h-10 text-white"></i>
+            <!-- Empty State -->
+            <div id="empty-state" class="h-full flex flex-col items-center justify-center px-4 text-center max-w-2xl mx-auto opacity-100 transition-opacity duration-500">
+                <div class="w-16 h-16 bg-white text-black rounded-full flex items-center justify-center mb-6 shadow-lg">
+                    <i data-lucide="brain-circuit" class="w-8 h-8"></i>
                 </div>
-                <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">How can I help you learn today?</h1>
-                <p class="text-gray-500 dark:text-gray-400 mb-10">Ask a question, upload a document, or select a topic below.</p>
+                <h1 class="text-2xl font-semibold mb-8">How can I help you learn today?</h1>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
-                    <!-- Suggestion Cards -->
-                    <button onclick="fillPrompt('Explain Quantum Entanglement with math and diagrams')" class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-800 hover:border-primary-500 hover:shadow-md transition text-left group">
-                        <div class="flex items-center gap-3 mb-2 text-primary-600 dark:text-primary-400">
-                            <i data-lucide="atom" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
-                            <span class="font-semibold">Physics</span>
-                        </div>
-                        <p class="text-sm text-gray-600 dark:text-gray-300">Explain Quantum Entanglement</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
+                    <button onclick="prefill('Teach me about Quantum Entanglement', 'teach')" class="p-4 border border-chat-border rounded-xl text-left hover:bg-chat-hover transition-colors">
+                        <div class="font-medium text-sm text-chat-text">Quantum Entanglement</div>
+                        <div class="text-xs text-chat-muted mt-1">Explain the core concepts simply</div>
                     </button>
-                    
-                    <button onclick="fillPrompt('Explain how DNA Replication works step by step')" class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-800 hover:border-green-500 hover:shadow-md transition text-left group">
-                        <div class="flex items-center gap-3 mb-2 text-green-600 dark:text-green-400">
-                            <i data-lucide="dna" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
-                            <span class="font-semibold">Biology</span>
-                        </div>
-                        <p class="text-sm text-gray-600 dark:text-gray-300">Understand DNA Replication</p>
-                    </button>
-
-                    <button onclick="fillPrompt('Teach me the fundamentals of Linear Algebra')" class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-800 hover:border-purple-500 hover:shadow-md transition text-left group">
-                        <div class="flex items-center gap-3 mb-2 text-purple-600 dark:text-purple-400">
-                            <i data-lucide="function-square" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
-                            <span class="font-semibold">Mathematics</span>
-                        </div>
-                        <p class="text-sm text-gray-600 dark:text-gray-300">Master Linear Algebra</p>
-                    </button>
-                    
-                    <button onclick="fillPrompt('Write a python script to visualize a Black Hole using Plotly')" class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-800 hover:border-orange-500 hover:shadow-md transition text-left group">
-                        <div class="flex items-center gap-3 mb-2 text-orange-600 dark:text-orange-400">
-                            <i data-lucide="orbit" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
-                            <span class="font-semibold">Astrophysics</span>
-                        </div>
-                        <p class="text-sm text-gray-600 dark:text-gray-300">Visualize Black Holes</p>
+                    <button onclick="prefill('Derive the Navier-Stokes equations', 'deep')" class="p-4 border border-chat-border rounded-xl text-left hover:bg-chat-hover transition-colors">
+                        <div class="font-medium text-sm text-chat-text">Navier-Stokes</div>
+                        <div class="text-xs text-chat-muted mt-1">Deep dive with Mariana Mode</div>
                     </button>
                 </div>
             </div>
 
-            <!-- Chat Messages Area -->
-            <div id="messages-container" class="max-w-4xl mx-auto hidden flex-col gap-8 py-8">
-                <!-- Messages will be injected here -->
-            </div>
-            
-            <!-- Bottom Anchor for scrolling -->
-            <div id="chat-anchor" class="h-4"></div>
+            <!-- Chat Transcript (Dynamic) -->
+            <div id="chat-transcript" class="pb-32 pt-8 flex flex-col gap-6 w-full"></div>
         </div>
 
-        <!-- Composer / Input Area -->
-        <div class="absolute bottom-0 w-full bg-gradient-to-t from-white via-white to-transparent dark:from-dark-900 dark:via-dark-900 pt-10 pb-6 px-4 z-10">
+        <!-- Input Box Area -->
+        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-chat-bg via-chat-bg to-transparent pt-6 pb-6 px-4 md:px-8">
             <div class="max-w-3xl mx-auto relative">
-                <!-- Learn Deep Badge Indicator -->
-                <div id="learn-deep-badge" class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 shadow-sm transition-opacity duration-300 opacity-0 pointer-events-none">
-                    <i data-lucide="waves" class="w-3.5 h-3.5"></i> Learn Deep Mode Active
+                
+                <!-- Mode Selectors (Pills) -->
+                <div class="flex items-center gap-2 mb-3 overflow-x-auto pb-1 hide-scrollbar">
+                    <button onclick="setMode('teach')" id="mode-teach" class="mode-btn px-3 py-1.5 rounded-full text-xs font-medium bg-chat-input text-chat-text border border-chat-border hover:bg-gray-700 transition-colors flex items-center gap-1.5 whitespace-nowrap">
+                        <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i> Teach
+                    </button>
+                    <button onclick="setMode('deep')" id="mode-deep" class="mode-btn px-3 py-1.5 rounded-full text-xs font-medium bg-transparent text-chat-muted border border-transparent hover:bg-chat-hover transition-colors flex items-center gap-1.5 whitespace-nowrap">
+                        <i data-lucide="waves" class="w-3.5 h-3.5"></i> Mariana Dive
+                    </button>
+                    <button onclick="setMode('connectors')" id="mode-connectors" class="mode-btn px-3 py-1.5 rounded-full text-xs font-medium bg-transparent text-chat-muted border border-transparent hover:bg-chat-hover transition-colors flex items-center gap-1.5 whitespace-nowrap">
+                        <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Analyze Source
+                    </button>
+                    <button onclick="setMode('quiz')" id="mode-quiz" class="mode-btn px-3 py-1.5 rounded-full text-xs font-medium bg-transparent text-chat-muted border border-transparent hover:bg-chat-hover transition-colors flex items-center gap-1.5 whitespace-nowrap">
+                        <i data-lucide="help-circle" class="w-3.5 h-3.5"></i> Quiz Me
+                    </button>
                 </div>
 
-                <div class="bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] focus-within:ring-2 focus-within:ring-primary-500/50 transition-all p-2 flex flex-col">
-                    
-                    <textarea id="user-input" rows="1" placeholder="Ask anything about mathematics, physics, biology..." class="w-full bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2 outline-none resize-none no-scrollbar text-base"></textarea>
-                    
-                    <div class="flex items-center justify-between mt-2 px-1">
-                        <div class="flex items-center gap-1">
-                            <button class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition tooltip" title="Upload PDF/Doc">
-                                <i data-lucide="paperclip" class="w-5 h-5"></i>
-                            </button>
-                            <button class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition tooltip" title="Upload Image">
-                                <i data-lucide="image" class="w-5 h-5"></i>
-                            </button>
-                            <button class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition tooltip" title="Voice Input">
-                                <i data-lucide="mic" class="w-5 h-5"></i>
-                            </button>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button id="stop-btn" class="hidden items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 text-sm font-medium transition">
-                                <i data-lucide="square" class="w-4 h-4 fill-current"></i> Stop
-                            </button>
-                            <button id="send-btn" class="p-2 bg-primary-600 text-white rounded-xl hover:bg-primary-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
-                                <i data-lucide="arrow-up" class="w-5 h-5"></i>
-                            </button>
-                        </div>
+                <!-- Contextual Options (Hidden by default, shown based on mode) -->
+                <div id="context-options" class="hidden flex items-center gap-3 mb-2 px-1">
+                    <div id="opt-task" class="hidden flex items-center gap-2 text-xs text-chat-muted">
+                        <label>Task:</label>
+                        <select id="input-task" class="bg-chat-input border border-chat-border rounded px-2 py-1 focus:outline-none text-chat-text">
+                            <option value="summary">Summary</option>
+                            <option value="deep_explanation" selected>Deep Explanation</option>
+                            <option value="formula_extraction">Extract Formulas</option>
+                            <option value="quiz">Generate Quiz</option>
+                        </select>
+                    </div>
+                    <div id="opt-num" class="hidden flex items-center gap-2 text-xs text-chat-muted">
+                        <label>Questions:</label>
+                        <input type="number" id="input-num" min="1" max="20" value="5" class="bg-chat-input border border-chat-border rounded px-2 py-1 w-16 focus:outline-none text-chat-text">
                     </div>
                 </div>
-                <div class="text-center mt-2 text-xs text-gray-400 dark:text-gray-500">
+
+                <!-- Main Input Container -->
+                <form id="chat-form" class="relative flex items-end bg-chat-input rounded-2xl border border-chat-border shadow-lg focus-within:border-gray-500 transition-colors p-1">
+                    
+                    <textarea id="main-input" rows="1" placeholder="Enter a topic to learn..." class="w-full bg-transparent text-chat-text text-base px-4 py-3 focus:outline-none placeholder-chat-muted resize-none custom-scrollbar m-0" oninput="autoResize(this)" onkeydown="handleEnter(event)"></textarea>
+                    
+                    <button type="submit" id="submit-btn" class="mb-2 mr-2 p-2 bg-white text-black rounded-xl hover:bg-gray-200 disabled:bg-chat-border disabled:text-chat-muted transition-colors flex-shrink-0">
+                        <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                    </button>
+                </form>
+                <div class="text-center mt-2 text-[10px] text-chat-muted">
                     AI can make mistakes. Consider verifying important information.
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Connectors Panel (Right Sidebar) -->
-    <aside id="sidebar-right" class="fixed right-0 top-0 h-full w-80 bg-white dark:bg-dark-800 border-l border-gray-200 dark:border-gray-700 shadow-2xl transform translate-x-full transition-transform duration-300 z-30 flex flex-col">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between glass">
-            <h3 class="font-semibold flex items-center gap-2">
-                <i data-lucide="plug" class="w-4 h-4 text-primary-500"></i> Connectors
-            </h3>
-            <button onclick="toggleConnectors()" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
+    <!-- Message Templates -->
+    <template id="tpl-user-msg">
+        <div class="w-full max-w-3xl mx-auto px-4 flex justify-end mb-4">
+            <div class="bg-[#2f2f2f] text-chat-text rounded-2xl rounded-tr-sm px-5 py-3 max-w-[85%] whitespace-pre-wrap text-sm md:text-base border border-[#383838]"></div>
         </div>
-        
-        <div class="p-4 flex-1 overflow-y-auto">
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Connect external knowledge sources for context-aware learning.</p>
-            
-            <div class="space-y-3">
-                <!-- Connected Source Card -->
-                <div class="p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-dark-900 relative group">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-red-100 text-red-600 rounded-lg">
-                            <i data-lucide="file-text" class="w-4 h-4"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium truncate">Quantum_Computing_Ch1.pdf</p>
-                            <p class="text-xs text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Synced</p>
-                        </div>
-                    </div>
-                    <button class="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                </div>
+    </template>
 
-                <!-- Add Connection Button -->
-                <button class="w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-500 hover:text-primary-600 hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition flex flex-col items-center justify-center gap-2">
-                    <i data-lucide="link" class="w-6 h-6"></i>
-                    Connect Website or Docs
-                </button>
+    <template id="tpl-ai-msg">
+        <div class="w-full max-w-3xl mx-auto px-4 flex gap-4 mb-4">
+            <div class="w-8 h-8 rounded-full border border-chat-border flex items-center justify-center shrink-0 bg-white text-black">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+            </div>
+            <div class="flex-1 overflow-hidden">
+                <!-- Thought Process Accordion -->
+                <details class="group mb-3 border border-chat-border rounded-lg bg-[#1a1a1a] text-xs overflow-hidden hidden" id="thought-accordion">
+                    <summary class="px-3 py-2 cursor-pointer flex items-center gap-2 text-chat-muted hover:text-chat-text transition-colors">
+                        <i data-lucide="chevron-right" class="w-3 h-3 group-open:rotate-90 transition-transform"></i>
+                        <span class="font-mono" id="thought-status">Analyzing request...</span>
+                        <i data-lucide="loader-circle" class="w-3 h-3 animate-spin ml-auto" id="thought-spinner"></i>
+                    </summary>
+                    <div class="px-3 pb-3 font-mono text-chat-muted space-y-1 max-h-32 overflow-y-auto custom-scrollbar" id="thought-logs"></div>
+                </details>
+
+                <!-- Markdown Content -->
+                <div class="prose prose-invert max-w-none text-chat-text prose-sm md:prose-base content-area"></div>
+                
+                <!-- Action bar (Copy, Provider badge) -->
+                <div class="flex items-center gap-3 mt-4 opacity-0 transition-opacity action-bar hidden">
+                    <button class="text-chat-muted hover:text-chat-text transition-colors" title="Copy" onclick="copyText(this)">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                    </button>
+                    <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-chat-input text-chat-muted border border-chat-border provider-badge"></span>
+                </div>
             </div>
         </div>
-    </aside>
+    </template>
 
-    <!-- Overlay for mobile sidebars -->
-    <div id="overlay" class="fixed inset-0 bg-black/50 z-10 hidden opacity-0 transition-opacity"></div>
-
-    <!-- MAIN JAVASCRIPT LOGIC -->
     <script>
         // Initialize Icons
         lucide.createIcons();
 
-        // Application State
-        const state = {
-            isLearnDeepMode: false,
-            isGenerating: false,
-            chatHistory: [],
-            theme: localStorage.getItem('theme') || 'dark',
-            isSidebarOpen: true
+        // --- State ---
+        let currentMode = 'teach';
+        let isGenerating = false;
+        let apiUrl = 'http://localhost:8000';
+        let simulationInterval;
+        let streamingInterval;
+
+        // --- DOM Elements ---
+        const ui = {
+            input: document.getElementById('main-input'),
+            form: document.getElementById('chat-form'),
+            submitBtn: document.getElementById('submit-btn'),
+            transcript: document.getElementById('chat-transcript'),
+            emptyState: document.getElementById('empty-state'),
+            contextOptions: document.getElementById('context-options'),
+            optTask: document.getElementById('opt-task'),
+            optNum: document.getElementById('opt-num')
         };
 
-        // DOM Elements
-        const DOM = {
-            input: document.getElementById('user-input'),
-            sendBtn: document.getElementById('send-btn'),
-            stopBtn: document.getElementById('stop-btn'),
-            messagesContainer: document.getElementById('messages-container'),
-            welcomeScreen: document.getElementById('welcome-screen'),
-            chatScrollArea: document.getElementById('chat-scroll-area'),
-            chatAnchor: document.getElementById('chat-anchor'),
-            themeToggle: document.getElementById('theme-toggle'),
-            learnDeepToggle: document.getElementById('learn-deep-toggle'),
-            learnDeepStatus: document.getElementById('learn-deep-status'),
-            learnDeepBadge: document.getElementById('learn-deep-badge'),
-            sidebarLeft: document.getElementById('sidebar-left'),
-            sidebarRight: document.getElementById('sidebar-right'),
-            overlay: document.getElementById('overlay')
-        };
-
-        // --- Setup Libraries ---
-        
-        // Configure Marked (Markdown)
-        marked.setOptions({
-            breaks: true,
-            gfm: true,
-            highlight: function(code, lang) {
-                // Return code as-is; rely on basic pre/code styling or add highlight.js later if needed
-                return code;
-            }
-        });
-
-        // Initialize Mermaid
-        mermaid.initialize({ startOnLoad: false, theme: state.theme === 'dark' ? 'dark' : 'default' });
-
-        // --- Theme Management ---
-        function applyTheme(theme) {
-            if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-            localStorage.setItem('theme', theme);
-            // Re-init mermaid theme if needed
-            mermaid.initialize({ theme: theme === 'dark' ? 'dark' : 'default' });
+        // --- Auto-resize Textarea ---
+        function autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
         }
         
-        DOM.themeToggle.addEventListener('click', () => {
-            state.theme = state.theme === 'dark' ? 'light' : 'dark';
-            applyTheme(state.theme);
-        });
-
-        applyTheme(state.theme);
-
-        // --- UI Interactions ---
-
-        // Auto-resize textarea
-        DOM.input.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 200) + 'px';
-            
-            // Toggle send button state
-            if (this.value.trim().length > 0) {
-                DOM.sendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            } else {
-                DOM.sendBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-        });
-
-        // Handle Enter to send (Shift+Enter for new line)
-        DOM.input.addEventListener('keydown', (e) => {
+        function handleEnter(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                if (DOM.input.value.trim().length > 0 && !state.isGenerating) {
-                    handleSendMessage();
-                }
-            }
-        });
-
-        DOM.sendBtn.addEventListener('click', () => {
-            if (DOM.input.value.trim().length > 0 && !state.isGenerating) {
-                handleSendMessage();
-            }
-        });
-
-        // Toggle Learn Deep Mode
-        DOM.learnDeepToggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            state.isLearnDeepMode = !state.isLearnDeepMode;
-            if(state.isLearnDeepMode) {
-                DOM.learnDeepStatus.textContent = 'On';
-                DOM.learnDeepStatus.classList.replace('bg-gray-200', 'bg-primary-500');
-                DOM.learnDeepStatus.classList.replace('dark:bg-gray-600', 'bg-primary-500');
-                DOM.learnDeepStatus.classList.add('text-white');
-                DOM.learnDeepBadge.classList.remove('opacity-0', 'pointer-events-none');
-            } else {
-                DOM.learnDeepStatus.textContent = 'Off';
-                DOM.learnDeepStatus.classList.replace('bg-primary-500', 'bg-gray-200');
-                DOM.learnDeepStatus.classList.replace('bg-primary-500', 'dark:bg-gray-600');
-                DOM.learnDeepStatus.classList.remove('text-white');
-                DOM.learnDeepBadge.classList.add('opacity-0', 'pointer-events-none');
-            }
-        });
-
-        // Sidebar Toggles
-        document.getElementById('toggle-sidebar-btn').addEventListener('click', () => {
-            DOM.sidebarLeft.classList.toggle('-translate-x-full');
-            DOM.sidebarLeft.classList.toggle('w-0');
-        });
-
-        document.getElementById('mobile-sidebar-open').addEventListener('click', () => {
-            DOM.sidebarLeft.classList.remove('-translate-x-full', 'hidden');
-            DOM.overlay.classList.remove('hidden');
-            setTimeout(() => DOM.overlay.classList.remove('opacity-0'), 10);
-        });
-
-        function toggleConnectors() {
-            DOM.sidebarRight.classList.toggle('translate-x-full');
-            if (!DOM.sidebarRight.classList.contains('translate-x-full') && window.innerWidth < 768) {
-                DOM.overlay.classList.remove('hidden');
-                setTimeout(() => DOM.overlay.classList.remove('opacity-0'), 10);
+                ui.form.dispatchEvent(new Event('submit'));
             }
         }
 
-        DOM.overlay.addEventListener('click', () => {
-            if (window.innerWidth < 768) {
-                DOM.sidebarLeft.classList.add('-translate-x-full');
+        // --- Mode Switching ---
+        function setMode(mode) {
+            if(isGenerating) return;
+            currentMode = mode;
+            
+            // Reset button styles
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.className = 'mode-btn px-3 py-1.5 rounded-full text-xs font-medium bg-transparent text-chat-muted border border-transparent hover:bg-chat-hover transition-colors flex items-center gap-1.5 whitespace-nowrap';
+            });
+            
+            // Set active button style
+            const active = document.getElementById(`mode-${mode}`);
+            active.className = 'mode-btn px-3 py-1.5 rounded-full text-xs font-medium bg-chat-input text-chat-text border border-chat-border transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-sm';
+            
+            // Adjust input and context options
+            ui.contextOptions.classList.add('hidden');
+            ui.optTask.classList.add('hidden');
+            ui.optNum.classList.add('hidden');
+            
+            if (mode === 'teach') {
+                ui.input.placeholder = "Enter a topic to learn (e.g. Black Holes)...";
+            } else if (mode === 'deep') {
+                ui.input.placeholder = "Enter advanced topic for Mariana Mode...";
+            } else if (mode === 'connectors') {
+                ui.input.placeholder = "Paste source text here for analysis...";
+                ui.contextOptions.classList.remove('hidden');
+                ui.optTask.classList.remove('hidden');
+            } else if (mode === 'quiz') {
+                ui.input.placeholder = "Enter topic for the quiz...";
+                ui.contextOptions.classList.remove('hidden');
+                ui.optNum.classList.remove('hidden');
             }
-            DOM.sidebarRight.classList.add('translate-x-full');
-            DOM.overlay.classList.add('opacity-0');
-            setTimeout(() => DOM.overlay.classList.add('hidden'), 300);
-        });
-
-        function fillPrompt(text) {
-            DOM.input.value = text;
-            DOM.input.style.height = 'auto';
-            DOM.sendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            DOM.input.focus();
+            ui.input.focus();
         }
 
-        function startNewChat() {
-            DOM.messagesContainer.innerHTML = '';
-            DOM.messagesContainer.classList.add('hidden');
-            DOM.welcomeScreen.classList.remove('hidden');
-            state.chatHistory = [];
+        // --- Pre-fill from Empty State ---
+        function prefill(text, mode) {
+            setMode(mode);
+            ui.input.value = text;
+            autoResize(ui.input);
+            ui.form.dispatchEvent(new Event('submit'));
+        }
+
+        // --- Chat UI Rendering ---
+        function appendUserMessage(text) {
+            ui.emptyState.classList.add('hidden');
+            const tpl = document.getElementById('tpl-user-msg').content.cloneNode(true);
+            tpl.querySelector('div > div').textContent = text;
+            ui.transcript.appendChild(tpl);
+            scrollToBottom();
+        }
+
+        function createAIMessage() {
+            ui.emptyState.classList.add('hidden');
+            const tpl = document.getElementById('tpl-ai-msg').content.cloneNode(true);
+            const container = document.createElement('div'); // Wrapper to return reference
+            container.appendChild(tpl);
+            ui.transcript.appendChild(container.firstElementChild);
+            lucide.createIcons();
+            scrollToBottom();
+            return ui.transcript.lastElementChild;
         }
 
         function scrollToBottom() {
-            DOM.chatAnchor.scrollIntoView({ behavior: "smooth" });
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        // --- Chat & Rendering Logic ---
-
-        function handleSendMessage() {
-            const text = DOM.input.value.trim();
-            DOM.input.value = '';
-            DOM.input.style.height = 'auto';
-            DOM.sendBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        // --- Simulation & Streaming Logic ---
+        function startThinking(aiNode) {
+            const accordion = aiNode.querySelector('#thought-accordion');
+            const logs = aiNode.querySelector('#thought-logs');
+            const status = aiNode.querySelector('#thought-status');
             
-            // Hide welcome screen
-            if (DOM.welcomeScreen.classList.contains('hidden') === false) {
-                DOM.welcomeScreen.classList.add('hidden');
-                DOM.messagesContainer.classList.remove('hidden');
-                DOM.messagesContainer.classList.add('flex');
-            }
-
-            // Append User Message
-            appendUserMessage(text);
-            scrollToBottom();
-
-            // Setup Generation State
-            state.isGenerating = true;
-            DOM.sendBtn.classList.add('hidden');
-            DOM.stopBtn.classList.remove('hidden');
-            DOM.stopBtn.classList.add('flex');
-
-            // Start Mock Backend API Call
-            triggerAIGeneration(text);
-        }
-
-        function appendUserMessage(text) {
-            const msgHtml = `
-                <div class="flex justify-end w-full animate-fade-in">
-                    <div class="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-3xl rounded-tr-sm px-5 py-3 max-w-[85%] sm:max-w-[75%] text-base shadow-sm">
-                        ${DOMPurify.sanitize(text)}
-                    </div>
-                </div>
-            `;
-            DOM.messagesContainer.insertAdjacentHTML('beforeend', msgHtml);
-        }
-
-        async function triggerAIGeneration(userPrompt) {
-            // Create AI Message Container
-            const msgId = 'msg-' + Date.now();
-            const aiMsgHtml = `
-                <div id="${msgId}" class="flex flex-col w-full animate-fade-in mb-4">
-                    <div class="flex items-start gap-4">
-                        <div class="w-8 h-8 shrink-0 rounded-full bg-gradient-to-br from-primary-400 to-blue-600 flex items-center justify-center mt-1 shadow-sm">
-                            <i data-lucide="brain-circuit" class="w-4 h-4 text-white"></i>
-                        </div>
-                        <div class="flex-1 min-w-0 flex flex-col gap-3">
-                            <!-- Thinking Container -->
-                            <div id="${msgId}-thinking" class="bg-gray-50 dark:bg-dark-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-sm font-mono text-gray-500 overflow-hidden transition-all duration-500 ease-in-out">
-                                <div class="flex items-center gap-2 text-primary-500 mb-2 font-sans font-semibold">
-                                    <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Thinking Process
-                                </div>
-                                <ul id="${msgId}-steps" class="space-y-1.5 ml-6 list-disc marker:text-gray-300 dark:marker:text-gray-600">
-                                    <!-- Steps injected here -->
-                                </ul>
-                            </div>
-                            <!-- Response Container -->
-                            <div id="${msgId}-content" class="prose dark:prose-invert max-w-none text-[15px] leading-relaxed w-full hidden">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            DOM.messagesContainer.insertAdjacentHTML('beforeend', aiMsgHtml);
-            lucide.createIcons({root: document.getElementById(msgId)});
-            scrollToBottom();
-
-            const thinkingContainer = document.getElementById(`${msgId}-thinking`);
-            const stepsContainer = document.getElementById(`${msgId}-steps`);
-            const contentContainer = document.getElementById(`${msgId}-content`);
-
-            // 1. Simulate Claude-style Thinking
-            await simulateThinkingProcess(stepsContainer);
-
-            // Collapse Thinking Process
-            thinkingContainer.innerHTML = `
-                <details class="group cursor-pointer">
-                    <summary class="flex items-center gap-2 text-gray-500 text-xs font-semibold hover:text-gray-700 dark:hover:text-gray-300 list-none">
-                        <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i>
-                        Thought Process Completed
-                        <i data-lucide="chevron-down" class="w-3 h-3 group-open:rotate-180 transition-transform"></i>
-                    </summary>
-                    <div class="mt-2 text-xs text-gray-400 pl-6 border-l-2 border-gray-200 dark:border-gray-700 ml-2 py-1">
-                        Analyzed context, generated structured educational framework, resolved mathematical equations, formulated visualizations.
-                    </div>
-                </details>
-            `;
-            lucide.createIcons({root: thinkingContainer});
+            accordion.classList.remove('hidden');
+            accordion.open = true; // Open by default while thinking
             
-            // 2. Simulate Token Streaming & Rendering
-            contentContainer.classList.remove('hidden');
-            contentContainer.classList.add('streaming-cursor');
-            
-            const mockResponseText = getMockResponse(userPrompt, state.isLearnDeepMode);
-            
-            await streamText(contentContainer, mockResponseText);
-            
-            // 3. Finalize Rendering (Markdown, Math, Mermaid)
-            contentContainer.classList.remove('streaming-cursor');
-            renderRichContent(contentContainer, mockResponseText);
-
-            // Reset UI
-            state.isGenerating = false;
-            DOM.stopBtn.classList.add('hidden');
-            DOM.stopBtn.classList.remove('flex');
-            DOM.sendBtn.classList.remove('hidden');
-            scrollToBottom();
-        }
-
-        // --- Mocking the Backend API Behavior ---
-
-        function simulateThinkingProcess(ulElement) {
             const steps = [
-                "Understanding query semantics...",
-                "Retrieving conceptual relationships...",
-                "Formulating mathematical proofs...",
-                "Designing pedagogical structure...",
-                "Generating diagrammatic representations..."
+                "Initializing API request...",
+                "Formatting pedagogical structure...",
+                "Selecting optimal inference model...",
+                "Generating structural abstractions...",
+                "Retrieving domain logic...",
+                "Awaiting final response stream..."
             ];
             
-            return new Promise(resolve => {
-                let stepIndex = 0;
-                
-                function nextStep() {
-                    if (stepIndex > 0 && ulElement.children.length > 0) {
-                        ulElement.children[stepIndex-1].classList.remove('active');
-                    }
-                    if (stepIndex < steps.length) {
-                        const li = document.createElement('li');
-                        li.className = 'thinking-step active animate-slide-in';
-                        li.textContent = steps[stepIndex];
-                        ulElement.appendChild(li);
-                        scrollToBottom();
-                        
-                        stepIndex++;
-                        // Random delay between 400ms and 1200ms
-                        setTimeout(nextStep, Math.random() * 800 + 400); 
-                    } else {
-                        setTimeout(resolve, 500);
-                    }
+            let i = 0;
+            simulationInterval = setInterval(() => {
+                if (i < steps.length) {
+                    const log = document.createElement('div');
+                    log.textContent = `> ${steps[i]}`;
+                    logs.appendChild(log);
+                    status.textContent = steps[i];
+                    logs.scrollTop = logs.scrollHeight;
+                    i++;
                 }
-                nextStep();
-            });
+            }, 800);
         }
 
-        function streamText(container, fullText) {
-            return new Promise(resolve => {
-                let i = 0;
-                // Chunk size simulates token groupings arriving over network
-                const chunkSize = 3; 
-                
-                function addToken() {
-                    if (!state.isGenerating) {
-                        resolve(); // User pressed Stop
-                        return;
-                    }
-                    
-                    if (i < fullText.length) {
-                        let textChunk = fullText.slice(i, i + chunkSize);
-                        // Very naive streaming injection just to show text appearing. 
-                        // It won't parse HTML perfectly mid-stream, but creates the illusion.
-                        // We replace newlines with <br> temporarily for the visual effect.
-                        const safeChunk = textChunk.replace(/\n/g, '<br>');
-                        container.innerHTML += safeChunk;
-                        
-                        i += chunkSize;
-                        
-                        if(i % 15 === 0) scrollToBottom();
-                        
-                        // Fast streaming (10ms per chunk)
-                        setTimeout(addToken, 5); 
-                    } else {
-                        resolve();
-                    }
-                }
-                addToken();
-            });
+        function stopThinking(aiNode) {
+            clearInterval(simulationInterval);
+            const accordion = aiNode.querySelector('#thought-accordion');
+            const spinner = aiNode.querySelector('#thought-spinner');
+            const status = aiNode.querySelector('#thought-status');
+            
+            spinner.classList.remove('animate-spin');
+            spinner.setAttribute('data-lucide', 'check-circle');
+            status.textContent = "Generation complete";
+            accordion.open = false; // Collapse when done
+            lucide.createIcons();
         }
 
-        function renderRichContent(container, rawMarkdown) {
-            // If Learn Deep mode, parse custom structure
-            let htmlContent = '';
+        function streamMarkdown(aiNode, text, provider) {
+            const contentArea = aiNode.querySelector('.content-area');
+            const actionBar = aiNode.querySelector('.action-bar');
+            const badge = aiNode.querySelector('.provider-badge');
             
-            if (state.isLearnDeepMode) {
-                // Wrap in structured details tags based on headers
-                htmlContent = createLearnDeepHTML(rawMarkdown);
-            } else {
-                // Normal Markdown Parse
-                htmlContent = marked.parse(rawMarkdown);
-            }
+            contentArea.classList.add('blinking-cursor');
+            badge.textContent = provider;
             
-            // Sanitize
-            container.innerHTML = DOMPurify.sanitize(htmlContent, {
-                ADD_TAGS: ['details', 'summary', 'iframe', 'div', 'span', 'pre', 'code'],
-                ADD_ATTR: ['class', 'style', 'id', 'open']
-            });
+            let index = 0;
+            const chunkSize = 4; // characters per tick
 
-            // Post-processing logic (Math, Diagrams, Code)
-            
-            // 1. Render MathJax/KaTeX
-            renderMathInElement(container, {
-                delimiters: [
-                    {left: '$$', right: '$$', display: true},
-                    {left: '$', right: '$', display: false},
-                    {left: '\\(', right: '\\)', display: false},
-                    {left: '\\[', right: '\\]', display: true}
-                ],
-                throwOnError: false
-            });
-
-            // 2. Render Mermaid Diagrams
-            // Marked puts mermaid in `<pre><code class="language-mermaid">`
-            const mermaidBlocks = container.querySelectorAll('code.language-mermaid');
-            mermaidBlocks.forEach((block, index) => {
-                const graphDefinition = block.textContent;
-                const parentPre = block.parentElement;
-                
-                const diagramId = `mermaid-diag-${Date.now()}-${index}`;
-                const div = document.createElement('div');
-                div.className = 'mermaid my-6 flex justify-center bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700';
-                div.id = diagramId;
-                div.textContent = graphDefinition;
-                
-                parentPre.replaceWith(div);
-            });
-            
-            // Run mermaid initialization on newly injected divs
-            if (mermaidBlocks.length > 0) {
-                mermaid.init(undefined, document.querySelectorAll('.mermaid'));
-            }
-
-            // 3. Create Visualization Tabs (Simulation)
-            // If code contains word "visualization" or specific markers, inject a simulated viewer
-            if(rawMarkdown.includes('%%VISUALIZATION_TAB%%')) {
-                injectVisualizationArea(container);
-            }
-
-            scrollToBottom();
-        }
-
-        function createLearnDeepHTML(markdown) {
-            // A basic parser to convert H2 sections into `<details>` elements for Learn Deep mode
-            const tokens = marked.lexer(markdown);
-            let resultHTML = '';
-            let currentSection = '';
-            let inSection = false;
-            let title = '';
-
-            tokens.forEach(token => {
-                if (token.type === 'heading' && token.depth === 2) {
-                    if (inSection) {
-                        // Close previous section
-                        resultHTML += `
-                            <details class="learn-deep-section animate-fade-in" open>
-                                <summary><span class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4"></i> ${title}</span></summary>
-                                <div class="content">${marked.parser(marked.lexer(currentSection))}</div>
-                            </details>
-                        `;
-                    }
-                    inSection = true;
-                    title = token.text;
-                    currentSection = '';
-                } else if (inSection) {
-                    currentSection += token.raw;
+            function tick() {
+                if (index < text.length) {
+                    contentArea.innerHTML = marked.parse(text.slice(0, index + chunkSize));
+                    index += chunkSize;
+                    scrollToBottom();
+                    streamingInterval = requestAnimationFrame(tick);
                 } else {
-                    // Content before the first H2
-                    resultHTML += marked.parse(token.raw);
+                    // Done
+                    contentArea.innerHTML = marked.parse(text);
+                    contentArea.classList.remove('blinking-cursor');
+                    actionBar.classList.remove('hidden');
+                    setTimeout(() => actionBar.classList.replace('opacity-0', 'opacity-100'), 100);
+                    
+                    // Store raw text for copying
+                    contentArea.setAttribute('data-raw', text);
+                    
+                    isGenerating = false;
+                    ui.submitBtn.disabled = false;
+                    ui.submitBtn.innerHTML = '<i data-lucide="arrow-up" class="w-5 h-5"></i>';
+                    lucide.createIcons();
+                    ui.input.focus();
                 }
+            }
+            tick();
+        }
+
+        function copyText(btn) {
+            const raw = btn.closest('.flex-1').querySelector('.content-area').getAttribute('data-raw');
+            navigator.clipboard.writeText(raw).then(() => {
+                btn.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-green-400"></i>';
+                lucide.createIcons();
+                setTimeout(() => {
+                    btn.innerHTML = '<i data-lucide="copy" class="w-4 h-4"></i>';
+                    lucide.createIcons();
+                }, 2000);
             });
+        }
 
-            // Close last section
-            if (inSection) {
-                 resultHTML += `
-                    <details class="learn-deep-section animate-fade-in" open>
-                        <summary><span class="flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4"></i> ${title}</span></summary>
-                        <div class="content prose dark:prose-invert max-w-none">${marked.parser(marked.lexer(currentSection))}</div>
-                    </details>
-                `;
-            }
+        // --- Form Submission ---
+        ui.form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = ui.input.value.trim();
+            if(!text || isGenerating) return;
+
+            // Lock UI
+            isGenerating = true;
+            ui.submitBtn.disabled = true;
+            ui.submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>';
+            lucide.createIcons();
             
-            return resultHTML;
-        }
+            // Render User Input
+            appendUserMessage(text);
+            ui.input.value = '';
+            autoResize(ui.input);
+            
+            // Prepare AI message node
+            const aiNode = createAIMessage();
+            startThinking(aiNode);
 
-        function injectVisualizationArea(container) {
-            const vizHtml = `
-                <div class="mt-6 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-dark-800 shadow-sm">
-                    <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-dark-900 px-2 pt-2">
-                        <button class="px-4 py-2 text-sm font-medium border-b-2 border-primary-500 text-primary-600 dark:text-primary-400 bg-white dark:bg-dark-800 rounded-t-lg flex items-center gap-2">
-                            <i data-lucide="bar-chart-2" class="w-4 h-4"></i> Plotly Chart
-                        </button>
-                        <button class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-2">
-                            <i data-lucide="box" class="w-4 h-4"></i> 3D Viewer
-                        </button>
-                    </div>
-                    <div class="p-8 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 min-h-[300px]">
-                        <div class="w-16 h-16 mb-4 rounded-full border-4 border-gray-200 border-t-primary-500 animate-spin"></div>
-                        <p class="text-sm text-gray-500">Interactive Visualization Loaded (Simulated)</p>
-                        <p class="text-xs text-gray-400 mt-2 text-center max-w-md">In a production environment, Plotly.js or Three.js instances would be mounted in this container using JSON data returned from the backend.</p>
-                    </div>
-                </div>
-            `;
-            // Replace the marker with actual HTML
-            container.innerHTML = container.innerHTML.replace('%%VISUALIZATION_TAB%%', vizHtml);
-            setTimeout(() => { lucide.createIcons({root: container}); }, 100);
-        }
+            // Construct Payload
+            const level = document.getElementById('setting-level').value;
+            const provider = document.getElementById('setting-provider').value;
+            const language = document.getElementById('setting-language').value;
+            
+            let endpoint = '';
+            let payload = { level, provider, language };
 
-        // Stop Button Logic
-        DOM.stopBtn.addEventListener('click', () => {
-            state.isGenerating = false;
+            if (currentMode === 'teach') {
+                endpoint = '/teach';
+                payload.topic = text;
+            } else if (currentMode === 'deep') {
+                endpoint = '/learn-deep';
+                payload.topic = text;
+                payload.level = "Mariana Trench Mode"; // Override
+            } else if (currentMode === 'connectors') {
+                endpoint = '/connectors';
+                payload.source_text = text;
+                payload.task = document.getElementById('input-task').value;
+            } else if (currentMode === 'quiz') {
+                endpoint = '/quiz';
+                payload.topic = text;
+                payload.num_questions = parseInt(document.getElementById('input-num').value);
+            }
+
+            try {
+                const response = await fetch(`${apiUrl}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(JSON.stringify(err.detail) || 'API Error');
+                }
+
+                const data = await response.json();
+                
+                stopThinking(aiNode);
+                streamMarkdown(aiNode, data.answer || "No response received.", data.provider_used || provider);
+
+            } catch (error) {
+                stopThinking(aiNode);
+                aiNode.querySelector('.content-area').innerHTML = `
+                    <div class="p-3 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-sm">
+                        <strong>Connection Error:</strong> ${error.message}
+                    </div>`;
+                
+                isGenerating = false;
+                ui.submitBtn.disabled = false;
+                ui.submitBtn.innerHTML = '<i data-lucide="arrow-up" class="w-5 h-5"></i>';
+                lucide.createIcons();
+            }
         });
-
-        // --- Mock Data Generator ---
-
-        function getMockResponse(prompt, isDeep) {
-            const lcPrompt = prompt.toLowerCase();
-            
-            let mathBlock = `The state of a Bell pair is mathematically described as:
-$$|\\Phi^+\\rangle = \\frac{1}{\\sqrt{2}} (|0\\rangle_A \\otimes |0\\rangle_B + |1\\rangle_A \\otimes |1\\rangle_B)$$`;
-
-            let diagramBlock = `
-\`\`\`mermaid
-graph LR
-    A((Particle A)) <-->|Instantaneous Correlation| B((Particle B))
-    style A fill:#4b6bfb,stroke:#333,stroke-width:2px,color:#fff
-    style B fill:#ef4444,stroke:#333,stroke-width:2px,color:#fff
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px;
-\`\`\`
-`;
-            
-            let vizMarker = `%%VISUALIZATION_TAB%%`;
-
-            if (isDeep) {
-                return `Based on your request regarding "${prompt}", here is a comprehensive breakdown.
-
-## Fundamentals
-Quantum entanglement is a physical phenomenon that occurs when a group of particles is generated, interact, or share spatial proximity in a way such that the quantum state of each particle of the group cannot be described independently of the state of the others, including when the particles are separated by a large distance.
-
-## Mathematics
-To truly understand it, we look at the tensor product of Hilbert spaces.
-${mathBlock}
-Where $|0\\rangle$ and $|1\\rangle$ represent the standard basis states (e.g., spin up and spin down). If we measure particle A and find it in state $|0\\rangle$, the superposition collapses, and particle B is instantaneously known to be in state $|0\\rangle$ as well, regardless of the distance between them.
-
-## Visualizations
-Below is a conceptual map of the entanglement generation process:
-${diagramBlock}
-${vizMarker}
-
-## Summary & Applications
-* **Quantum Cryptography:** Ensures secure communication (e.g., Quantum Key Distribution).
-* **Quantum Computing:** Provides exponential speedups for specific algorithms (like Shor's algorithm).
-* **Quantum Teleportation:** Transferring quantum information between distant nodes.
-
-Would you like to explore the EPR Paradox next?`;
-            } else {
-                return `Quantum entanglement is a fascinating principle of quantum mechanics where two or more particles become connected in such a way that the state of one instantly influences the state of the other, no matter how far apart they are in the universe. Albert Einstein famously referred to this as *"spooky action at a distance"*.
-
-${diagramBlock}
-
-Here is the mathematical representation of an entangled pair (a Bell state):
-${mathBlock}
-
-### Why is this important?
-Entanglement is the foundational concept driving modern **Quantum Computing** and **Quantum Cryptography**. By utilizing entangled qubits, quantum computers can process complex parallel calculations exponentially faster than classical supercomputers.
-
-${vizMarker}
-
-Let me know if you want to dive deeper into the mathematics or view an interactive 3D simulation of electron spins!`;
-            }
-        }
 
     </script>
 </body>

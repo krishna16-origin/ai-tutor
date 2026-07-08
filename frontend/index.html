@@ -478,55 +478,54 @@
             lucide.createIcons();
         }
 
-        function processTextWithMath(text) {
-            const mathBlocks = [];
-            let counter = 0;
+       function processTextWithMath(text) {
+    const mathBlocks = [];
+    let counter = 0;
 
-            text = text.replace(/\$\$([\s\S]+?)\$\$/g, (match, p1) => {
-                const id = `__MATH_BLOCK_${counter}__`;
-                mathBlocks.push({ id, math: p1, display: true });
-                counter++;
-                return id;
+    text = text.replace(/\$\$([\s\S]+?)\$\$/g, (match, p1) => {
+        const id = `MATHBLOCKPLACEHOLDER${counter}ENDPLACEHOLDER`;
+        mathBlocks.push({ id, math: p1, display: true });
+        counter++;
+        return id;
+    });
+
+    text = text.replace(/\\\[([\s\S]+?)\\\]/g, (match, p1) => {
+        const id = `MATHBLOCKPLACEHOLDER${counter}ENDPLACEHOLDER`;
+        mathBlocks.push({ id, math: p1, display: true });
+        counter++;
+        return id;
+    });
+
+    text = text.replace(/(?<!\$)\$([^\s$](?:[^$]*?[^\s$])?)\$(?!\$)/g, (match, p1) => {
+        const id = `MATHBLOCKPLACEHOLDER${counter}ENDPLACEHOLDER`;
+        mathBlocks.push({ id, math: p1, display: false });
+        counter++;
+        return id;
+    });
+
+    text = text.replace(/\\\(([\s\S]+?)\\\)/g, (match, p1) => {
+        const id = `MATHBLOCKPLACEHOLDER${counter}ENDPLACEHOLDER`;
+        mathBlocks.push({ id, math: p1, display: false });
+        counter++;
+        return id;
+    });
+
+    let html = marked.parse(text);
+
+    mathBlocks.forEach(block => {
+        try {
+            const mathHtml = katex.renderToString(block.math, {
+                displayMode: block.display,
+                throwOnError: false
             });
-
-            text = text.replace(/\\\[([\s\S]+?)\\\]/g, (match, p1) => {
-                const id = `__MATH_BLOCK_${counter}__`;
-                mathBlocks.push({ id, math: p1, display: true });
-                counter++;
-                return id;
-            });
-
-            text = text.replace(/(?<!\$)\$([^\s$](?:[^$]*?[^\s$])?)\$(?!\$)/g, (match, p1) => {
-                const id = `__MATH_BLOCK_${counter}__`;
-                mathBlocks.push({ id, math: p1, display: false });
-                counter++;
-                return id;
-            });
-
-            text = text.replace(/\\\(([\s\S]+?)\\\)/g, (match, p1) => {
-                const id = `__MATH_BLOCK_${counter}__`;
-                mathBlocks.push({ id, math: p1, display: false });
-                counter++;
-                return id;
-            });
-
-            let html = marked.parse(text);
-
-            mathBlocks.forEach(block => {
-                try {
-                    const mathHtml = katex.renderToString(block.math, {
-                        displayMode: block.display,
-                        throwOnError: false
-                    });
-                    html = html.replace(block.id, mathHtml);
-                } catch (e) {
-                    html = html.replace(block.id, `<span class="text-red-500 font-mono">${block.math}</span>`);
-                }
-            });
-
-            return html;
+            html = html.split(block.id).join(mathHtml);
+        } catch (e) {
+            html = html.split(block.id).join(`<span class="text-red-500 font-mono">${block.math}</span>`);
         }
+    });
 
+    return html;
+}
         function renderVisuals(container) {
             const blocks = container.querySelectorAll('pre code');
 

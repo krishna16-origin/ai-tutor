@@ -583,17 +583,21 @@
                        } catch (e) {
                          pre.innerHTML = `<div class="text-xs text-red-500 font-mono">3D Spec Error: ${e.message}</div>`;
                            }
-                     } else if (lang.includes('svg-spec') || (content.trim().startsWith('{') && content.includes('"elements"'))) {
+                    } else if (lang.includes('svg-spec') || (content.trim().startsWith('{') && content.includes('"elements"'))) {
                     try {
                         const spec = JSON.parse(content);
                         const div = document.createElement('div');
-                          div.className = 'threejs-container';
-                         pre.replaceWith(div);
-                          renderSvgSpec(div, spec);
+                        div.className = 'threejs-container';
+                        pre.replaceWith(div);
+                        renderSvgSpec(div, spec);
                     } catch (e) {
-                         pre.innerHTML = `<div class="text-xs text-red-500 font-mono">SVG Spec Error: ${e.message}</div>`;
-                             }
-                        }
+                        pre.innerHTML = `<div class="text-xs text-red-500 font-mono">SVG Spec Error: ${e.message}</div>`;
+                    }
+                }
+            });
+
+            renderInteractiveQuiz(container);
+        }
             renderInteractiveQuiz(container);
         }
 

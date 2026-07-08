@@ -573,17 +573,27 @@
                     } catch (e) {
                         if (lang.includes('plotly')) pre.innerHTML = `<div class="text-xs text-red-500 font-mono">Plotly Data Error</div>`;
                     }
-                } else if (lang.includes('threejs') || (content.includes('"type"') && content.includes('"color"'))) {
+                } else if (lang.includes('threejs') || (content.includes('"type"') && content.includes('"color"') && content.includes('"objects"'))) {
+                    try {
+                       const spec = JSON.parse(content);
+                       const div = document.createElement('div');
+                        div.className = 'threejs-container';
+                         pre.replaceWith(div);
+                        initThreeJS(div, spec);
+                       } catch (e) {
+                         pre.innerHTML = `<div class="text-xs text-red-500 font-mono">3D Spec Error: ${e.message}</div>`;
+                           }
+                     } else if (lang.includes('svg-spec') || (content.trim().startsWith('{') && content.includes('"elements"'))) {
                     try {
                         const spec = JSON.parse(content);
                         const div = document.createElement('div');
-                        div.className = 'threejs-container';
-                        pre.replaceWith(div);
-                        initThreeJS(div, spec);
-                    } catch (e) {}
-                }
-            });
-
+                          div.className = 'threejs-container';
+                         pre.replaceWith(div);
+                          renderSvgSpec(div, spec);
+                    } catch (e) {
+                         pre.innerHTML = `<div class="text-xs text-red-500 font-mono">SVG Spec Error: ${e.message}</div>`;
+                             }
+                        }
             renderInteractiveQuiz(container);
         }
 
@@ -671,8 +681,163 @@
         }
 
         function initThreeJS(div, spec) {
-            div.innerHTML = `<div class="p-4 text-center text-xs text-chat-muted border border-dashed border-chat-border rounded-lg">3D Context Initialized: Visualizer Module Spec [${spec.type || 'Standard Node'}] Container Ready.</div>`;
+        div.innerHTML = '';
+        const width = div.clientWidth || 600;
+        const height = 300;
+
+        const scene = new THREE.Scene();
+        scene.background = null;
+
+        const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
+        camera.position.set(0, 0, spec.cameraDistance || 6);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(window.devicePixelRatio || 1);
+        div.appendChild(renderer.domElement);
+
+        const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambient);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(5, 5, 5);
+        scene.add(dirLight);
+
+        const objects = [];
+        const shapes = spec.objects || spec.elements || [spec];
+
+        shapes.forEach(obj => {
+        let geometry;
+        const type = (obj.type || 'sphere').toLowerCase();
+        const size = obj.size || 1;
+
+        if (type.includes('box') || type.includes('cube')) {
+            geometry = new THREE.BoxGeometry(size, size, size);
+        } else if (type.includes('sphere')) {
+            geometry = new THREE.SphereGeometry(size * 0.6, 32, 32);
+        } else if (type.includes('cylinder')) {
+            geometry = new THREE.CylinderGeometry(size * 0.5, size * 0.5, size, 32);
+        } else if (type.includes('cone')) {
+            geometry = new THREE.ConeGeometry(size * 0.5, size, 32);
+        } else if (type.includes('torus')) {
+            geometry = new THREE.TorusGeometry(size * 0.5, size * 0.2, 16, 100);
+        } else if (type.includes('plane')) {
+            geometry = new THREE.PlaneGeometry(size, size);
+        } else {
+            geometry = new THREE.SphereGeometry(size * 0.6, 32, 32);
         }
+
+        const color = obj.color ? new THREE.Color(obj.color) : new THREE.Color(0x60a5fa);
+        const material = new THREE.MeshStandardMaterial({
+            color,
+            metalness: 0.2,
+            roughness: 0.5,
+            wireframe: !!obj.wireframe
+        });
+
+        const mesh = new THREE.Mesh(geometry, material);
+        if (obj.position) {
+            mesh.position.set(obj.position.x || 0, obj.position.y || 0, obj.position.z || 0);
+        } else if (obj.x !== undefined) {
+            mesh.position.set((obj.x - 300) / 60, -(obj.y - 200) / 60, 0);
+        }
+        scene.add(mesh);
+        objects.push(mesh);
+        });
+
+        if (objects.length === 0) {
+        const geo = new THREE.SphereGeometry(1.2, 32, 32);
+        const mat = new THREE.MeshStandardMaterial({ color: 0x60a5fa, roughness: 0.4 });
+        const mesh = new THREE.Mesh(geo, mat);
+        scene.add(mesh);
+        objects.push(mesh);
+        }
+
+        let frameId;
+        function animate() {
+        frameId = requestAnimationFrame(animate);
+        objects.forEach(o => { o.rotation.y += 0.006; o.rotation.x += 0.002; });
+        renderer.render(scene, camera);
+        }
+        animate();
+
+        const observer = new MutationObserver(() => {
+        if (!document.body.contains(div)) {
+            cancelAnimationFrame(frameId);
+            renderer.dispose();
+            observer.disconnect();
+        }
+         });
+        observer.observe(document.body, { childList: true, subtree: true });
+          }
+
+        function renderSvgSpec(div, spec) {
+         const w = spec.width || 600;
+         const h = spec.height || 400;
+         const ns = 'http://www.w3.org/2000/svg';
+         const svg = document.createElementNS(ns, 'svg');
+         svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+         svg.setAttribute('width', '100%');
+         svg.style.maxHeight = '420px';
+
+        (spec.elements || []).forEach(el => {
+        let node;
+        const type = (el.type || '').toLowerCase();
+
+        if (type === 'ellipse') {
+            node = document.createElementNS(ns, 'ellipse');
+            node.setAttribute('cx', el.cx); node.setAttribute('cy', el.cy);
+            node.setAttribute('rx', el.rx); node.setAttribute('ry', el.ry);
+        } else if (type === 'circle') {
+            node = document.createElementNS(ns, 'circle');
+            node.setAttribute('cx', el.cx); node.setAttribute('cy', el.cy);
+            node.setAttribute('r', el.r);
+        } else if (type === 'rect') {
+            node = document.createElementNS(ns, 'rect');
+            node.setAttribute('x', el.x); node.setAttribute('y', el.y);
+            node.setAttribute('width', el.width); node.setAttribute('height', el.height);
+            node.setAttribute('rx', el.rx || 0);
+        } else if (type === 'path') {
+            node = document.createElementNS(ns, 'path');
+            node.setAttribute('d', el.d);
+        } else if (type === 'line') {
+            node = document.createElementNS(ns, 'line');
+            node.setAttribute('x1', el.x1); node.setAttribute('y1', el.y1);
+            node.setAttribute('x2', el.x2); node.setAttribute('y2', el.y2);
+        } else if (type === 'text') {
+            node = document.createElementNS(ns, 'text');
+            node.setAttribute('x', el.x); node.setAttribute('y', el.y);
+            node.setAttribute('font-size', el.fontSize || 14);
+            node.setAttribute('fill', el.fill || '#ececec');
+            node.textContent = el.content || el.label || '';
+            svg.appendChild(node);
+            return;
+        } else {
+            return;
+        }
+
+        if (el.stroke) node.setAttribute('stroke', el.stroke);
+        if (el.fill) node.setAttribute('fill', el.fill); else if (type !== 'path') node.setAttribute('fill', 'none');
+        if (el.strokeWidth) node.setAttribute('stroke-width', el.strokeWidth);
+        if (type === 'path' && !el.fill) node.setAttribute('fill', 'none');
+        svg.appendChild(node);
+
+        if (el.label && type !== 'text') {
+            const label = document.createElementNS(ns, 'text');
+            const lx = el.cx !== undefined ? el.cx : (el.x !== undefined ? el.x + (el.width || 0) / 2 : w / 2);
+            const ly = el.cy !== undefined ? el.cy - (el.ry || el.r || 0) - 8 : (el.y !== undefined ? el.y - 8 : h / 2);
+            label.setAttribute('x', lx);
+            label.setAttribute('y', ly);
+            label.setAttribute('font-size', 12);
+            label.setAttribute('fill', el.fill && el.fill !== 'none' ? el.fill : '#ececec');
+            label.setAttribute('text-anchor', 'middle');
+            label.textContent = el.label;
+            svg.appendChild(label);
+                }
+                });
+
+         div.innerHTML = '';
+         div.appendChild(svg);
+            }    
 
         function copyText(btn) {
             const contentArea = btn.closest('.flex-1').querySelector('.content-area');

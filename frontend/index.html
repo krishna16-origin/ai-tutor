@@ -1,827 +1,868 @@
 <!DOCTYPE html>
-<html lang="en" class="light">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DeepLearn AI - Pro Research & Reasoning Chat</title>
+    <title>DeepLearn AI - Advanced Learning Platform</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Marked.js for Markdown parsing -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
-    <!-- MathJax for high-fidelity LaTeX/Math rendering -->
-    <script>
-        window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']],
-                processEscapes: true
-            },
-            options: {
-                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-            }
-        };
-    </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
-    <!-- Phosphor Icons -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        brand: {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            500: '#10b981',
-                            600: '#059669',
-                            700: '#047857',
-                            900: '#064e3b',
-                        },
-                        neutral: {
-                            850: '#151a2a',
-                            900: '#0f1423',
-                            950: '#0a0f1d'
-                        }
+                        primary: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 900: '#0c4a6e' },
+                        dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155' }
+                    },
+                    animation: {
+                        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'slide-in': 'slideIn 0.3s ease-out forwards',
+                        'fade-in': 'fadeIn 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        slideIn: { '0%': { transform: 'translateX(100%)' }, '100%': { transform: 'translateX(0)' } },
+                        fadeIn: { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
                     }
                 }
             }
         }
     </script>
+
+    <!-- Icons (Lucide) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Marked (Markdown Parser) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- DOMPurify (Sanitization) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+
+    <!-- KaTeX (Math Rendering) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <!-- Mermaid (Diagrams) -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+
     <style>
-        /* Modern Scrollbars */
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        /* Custom Styles & Overrides */
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Smooth Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
-        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
-        .dark ::-webkit-scrollbar-thumb { background: #334155; }
-        .dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Glassmorphism */
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .dark .glass { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.05); }
+        
+        /* Markdown Prose Styling */
+        .prose h1, .prose h2, .prose h3 { font-weight: 600; margin-top: 1.5em; margin-bottom: 0.5em; }
+        .prose h1 { font-size: 1.5em; }
+        .prose h2 { font-size: 1.25em; }
+        .prose p { margin-bottom: 1em; line-height: 1.6; }
+        .prose code { background-color: #f1f5f9; padding: 0.2em 0.4em; border-radius: 0.25rem; font-family: monospace; font-size: 0.9em; }
+        .dark .prose code { background-color: #334155; }
+        .prose pre { background-color: #1e293b !important; color: #f8fafc; padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin-bottom: 1em; }
+        .prose pre code { background-color: transparent; padding: 0; color: inherit; }
+        .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
+        .prose ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1em; }
+        .prose table { width: 100%; border-collapse: collapse; margin-bottom: 1em; }
+        .prose th, .prose td { border: 1px solid #e2e8f0; padding: 0.5rem; text-align: left; }
+        .dark .prose th, .dark .prose td { border-color: #475569; }
+        
+        /* Blinking Cursor for Streaming */
+        .streaming-cursor::after { content: '▋'; display: inline-block; animation: blink 1s step-start infinite; margin-left: 2px; color: #0ea5e9; }
+        @keyframes blink { 50% { opacity: 0; } }
 
-        /* Custom Typographical Hierarchy & Markdown Styles inside Prose */
-        .prose h3 { font-size: 1.2rem; font-weight: 700; margin-top: 1.75rem; margin-bottom: 0.75rem; color: #0f172a; border-left: 3px solid #10b981; padding-left: 0.75rem; transition: color 0.3s; }
-        .prose p { margin-bottom: 1.15rem; line-height: 1.75; color: #334155; transition: color 0.3s; }
-        .prose ul { list-style-type: none; padding-left: 0; margin-bottom: 1.25rem; }
-        .prose ul li { position: relative; padding-left: 1.5rem; margin-bottom: 0.5rem; color: #334155; transition: color 0.3s; }
-        .prose ul li::before { content: "→"; position: absolute; left: 0.25rem; color: #10b981; font-weight: bold; }
-        .prose strong { color: #0f172a; font-weight: 700; transition: color 0.3s; }
-        .prose em { color: #64748b; font-style: italic; }
-        .prose code { background: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.85em; color: #0f172a; border: 1px solid #e2e8f0; transition: all 0.3s; }
-        .prose pre { background: #0f172a; color: #f8fafc; padding: 1rem; border-radius: 0.75rem; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; overflow-x: auto; margin-bottom: 1.25rem; transition: background 0.3s; }
-        .prose pre code { background: transparent; padding: 0; border: none; color: inherit; font-size: inherit; }
+        /* Thinking Animation Steps */
+        .thinking-step { opacity: 0.5; transition: opacity 0.3s; }
+        .thinking-step.active { opacity: 1; color: #0ea5e9; font-weight: 500; }
+        
+        /* Details/Summary Learn Deep */
+        details.learn-deep-section { border: 1px solid #e2e8f0; border-radius: 0.75rem; margin-bottom: 0.75rem; overflow: hidden; }
+        .dark details.learn-deep-section { border-color: #334155; }
+        details.learn-deep-section summary { background: #f8fafc; padding: 0.75rem 1rem; cursor: pointer; font-weight: 500; list-style: none; display: flex; align-items: center; justify-content: space-between; }
+        .dark details.learn-deep-section summary { background: #1e293b; }
+        details.learn-deep-section summary::-webkit-details-marker { display: none; }
+        details.learn-deep-section summary::after { content: '+'; font-size: 1.25rem; transition: transform 0.2s; }
+        details[open].learn-deep-section summary::after { transform: rotate(45deg); }
+        details.learn-deep-section .content { padding: 1rem; }
 
-        /* Dark Mode Prose Overrides */
-        .dark .prose h3 { color: #f8fafc; }
-        .dark .prose p { color: #cbd5e1; }
-        .dark .prose ul li { color: #cbd5e1; }
-        .dark .prose strong { color: #f8fafc; }
-        .dark .prose em { color: #94a3b8; }
-        .dark .prose code { background: #1e293b; color: #e2e8f0; border-color: #334155; }
-        .dark .prose pre { background: #020617; }
-
-        /* Selection and Focus Highlights */
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
-        }
-
-        /* Streaming Typing Cursor effect */
-        .streaming-cursor::after {
-            content: '▋';
-            display: inline-block;
-            animation: cursorBlink 1s step-end infinite;
-            color: #10b981;
-            margin-left: 3px;
-        }
-        @keyframes cursorBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
-        /* Custom Toggle State */
-        .toggle-checkbox:checked { right: 2px; border-color: #10b981; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #10b981; }
-
-        /* Animation Keyframes */
-        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Hide details marker */
-        details summary::-webkit-details-marker { display: none; }
+        /* Auto-resizing textarea */
+        textarea { resize: none; overflow-y: hidden; min-height: 52px; max-height: 200px; }
+        
+        /* Hide scrollbar for layout but allow scroll */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-white dark:bg-neutral-950 text-slate-800 dark:text-slate-200 flex h-screen overflow-hidden font-sans transition-colors duration-300">
+<body class="bg-gray-50 dark:bg-dark-900 text-gray-800 dark:text-gray-100 h-screen w-screen overflow-hidden flex transition-colors duration-300">
 
-    <!-- Left Drawer/Sidebar: Settings & Chats History -->
-    <aside id="sidebar" class="w-[280px] bg-slate-50 dark:bg-neutral-900 border-r border-slate-200 dark:border-neutral-800 flex flex-col h-full shrink-0 transition-all duration-300 md:translate-x-0 -translate-x-full absolute md:relative z-40">
-        <!-- Sidebar Brand Header -->
-        <div class="h-16 flex items-center justify-between px-5 border-b border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 transition-colors duration-300">
-            <div class="flex items-center gap-2.5 text-brand-600 dark:text-brand-500">
-                <i class="ph-fill ph-brain text-2xl"></i>
-                <h1 class="text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100 uppercase">DeepLearn Suite</h1>
+    <!-- Left Sidebar -->
+    <aside id="sidebar-left" class="w-64 h-full bg-white dark:bg-dark-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 relative z-20">
+        <div class="p-4 flex items-center justify-between">
+            <div class="flex items-center gap-2 text-primary-600 dark:text-primary-500 font-bold text-xl">
+                <i data-lucide="brain-circuit" class="w-6 h-6"></i>
+                <span>DeepLearn</span>
             </div>
-            <button class="md:hidden text-slate-500 hover:bg-slate-100 dark:hover:bg-neutral-800 p-1.5 rounded-lg transition" onclick="toggleSidebar()">
-                <i class="ph ph-x text-lg"></i>
+            <button id="toggle-sidebar-btn" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                <i data-lucide="panel-left-close" class="w-5 h-5"></i>
             </button>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-4 space-y-6">
-            <!-- Dynamic Actions -->
-            <button onclick="startNewChat()" class="w-full bg-white dark:bg-neutral-950 hover:bg-slate-100/50 dark:hover:bg-neutral-800 text-slate-800 dark:text-slate-200 text-xs font-semibold py-2.5 px-4 rounded-xl border border-slate-200 dark:border-neutral-700 flex items-center justify-between shadow-sm transition group">
-                <span class="flex items-center gap-2">
-                    <i class="ph ph-plus-circle text-base text-brand-600 dark:text-brand-500 group-hover:scale-110 transition-transform"></i> New session
-                </span>
-                <span class="text-[10px] bg-slate-100 dark:bg-neutral-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded">⌘N</span>
+        <div class="px-4 py-2">
+            <button onclick="startNewChat()" class="w-full flex items-center gap-2 bg-primary-600 hover:bg-primary-500 text-white py-2.5 px-4 rounded-xl font-medium transition shadow-sm hover:shadow">
+                <i data-lucide="plus" class="w-4 h-4"></i> New Chat
             </button>
-
-            <!-- Conversation Threads history -->
-            <div>
-                <div class="flex items-center justify-between mb-2 px-1">
-                    <h2 class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Recent Sessions</h2>
-                    <button onclick="clearHistory()" class="text-[10px] text-slate-400 hover:text-red-500 dark:hover:text-red-400 flex items-center gap-1 transition">
-                        <i class="ph ph-trash"></i> clear
-                    </button>
-                </div>
-                <div id="history-list" class="space-y-1 max-h-40 overflow-y-auto pr-1">
-                    <!-- Loaded dynamically via JS -->
-                </div>
-            </div>
-
-            <hr class="border-slate-200/60 dark:border-neutral-800">
-
-            <!-- Vector / Document Context -->
-            <section class="space-y-3">
-                <h2 class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1">Context Vault (RAG)</h2>
-                <div class="space-y-2 bg-white dark:bg-neutral-950 p-3.5 rounded-xl border border-slate-200/80 dark:border-neutral-800 shadow-sm transition-colors duration-300">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1">LOCAL PDF PATHS</label>
-                        <input type="text" id="pdf-paths" placeholder="/docs/quantum_notes.pdf..." class="w-full bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 text-slate-800 dark:text-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:bg-white dark:focus:bg-neutral-800 transition placeholder-slate-400 dark:placeholder-slate-600">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1">ARXIV INDICES / QUERIES</label>
-                        <input type="text" id="arxiv-queries" placeholder="2403.01234, deep learning..." class="w-full bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 text-slate-800 dark:text-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:bg-white dark:focus:bg-neutral-800 transition placeholder-slate-400 dark:placeholder-slate-600">
-                    </div>
-                    <button onclick="simulateRAGIndex(this)" class="w-full bg-slate-900 dark:bg-brand-600 hover:bg-slate-800 dark:hover:bg-brand-500 text-white text-xs font-medium py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition mt-1">
-                        <i class="ph ph-hash"></i> Index New Context
-                    </button>
-                </div>
-            </section>
         </div>
 
-        <!-- Sidebar Footer with Status indicators -->
-        <div class="p-4 border-t border-slate-200/80 dark:border-neutral-800 flex items-center justify-between bg-white dark:bg-neutral-900 transition-colors duration-300">
-            <div class="flex items-center gap-2.5">
-                <div class="relative">
-                    <div class="w-8 h-8 rounded-full bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 border border-brand-100 dark:border-brand-800 flex items-center justify-center text-xs font-bold">
-                        AI
-                    </div>
-                    <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-neutral-900 rounded-full"></div>
-                </div>
-                <div>
-                    <p class="text-xs font-bold text-slate-800 dark:text-slate-200">DeepLearn Core</p>
-                    <p class="text-[10px] text-slate-400 dark:text-slate-500">Status: Fully Operational</p>
-                </div>
-            </div>
-            <div class="flex gap-1">
-                <button onclick="toggleTheme()" class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-neutral-800 transition" title="Toggle Theme">
-                    <i id="theme-icon" class="ph ph-moon text-lg"></i>
-                </button>
-                <button onclick="showThemeToast()" class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-neutral-800 transition" title="Settings">
-                    <i class="ph ph-gear text-lg"></i>
-                </button>
-            </div>
+        <nav class="flex-1 overflow-y-auto mt-4 px-3 space-y-1">
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2 mt-4">Features</div>
+            <a href="#" id="learn-deep-toggle" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition group">
+                <i data-lucide="waves" class="w-4 h-4 text-primary-500"></i>
+                Learn Deep Mode
+                <span id="learn-deep-status" class="ml-auto text-xs bg-gray-200 dark:bg-gray-600 px-2 py-0.5 rounded-full">Off</span>
+            </a>
+            <a href="#" onclick="toggleConnectors()" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                <i data-lucide="database" class="w-4 h-4"></i> Connectors
+            </a>
+            
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2 mt-6">Recent History</div>
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition truncate">
+                <i data-lucide="message-square" class="w-4 h-4 shrink-0"></i>
+                Quantum Entanglement basics
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition truncate">
+                <i data-lucide="message-square" class="w-4 h-4 shrink-0"></i>
+                Calculus: Derivatives
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                <i data-lucide="settings" class="w-4 h-4"></i> Settings
+            </a>
         </div>
     </aside>
 
-    <!-- Overlay for Sidebar on Mobile -->
-    <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/30 dark:bg-black/50 backdrop-blur-sm z-30 hidden md:hidden" onclick="toggleSidebar()"></div>
-
-    <!-- Main Workspace Area -->
-    <main class="flex-1 flex flex-col h-full bg-white dark:bg-neutral-950 relative transition-colors duration-300">
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-full relative w-full min-w-0 bg-white dark:bg-dark-900 transition-colors duration-300">
         
-        <!-- Header Model Switcher -->
-        <header class="h-14 border-b border-slate-100 dark:border-neutral-800 flex items-center justify-between px-4 md:px-6 shrink-0 bg-white dark:bg-neutral-950 transition-colors duration-300 z-10">
+        <!-- Top Nav -->
+        <header class="h-14 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 glass absolute top-0 w-full z-10">
             <div class="flex items-center gap-3">
-                <button class="md:hidden text-slate-500 hover:bg-slate-100 dark:hover:bg-neutral-800 p-1.5 rounded-lg transition" onclick="toggleSidebar()">
-                    <i class="ph ph-list text-xl"></i>
+                <button id="mobile-sidebar-open" class="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
-                
-                <!-- Model Indicator / Selector Interface -->
-                <div class="inline-flex bg-slate-100/80 dark:bg-neutral-900 p-0.5 rounded-xl border border-slate-200/40 dark:border-neutral-800">
-                    <button onclick="switchModeHeader('core')" id="header-btn-core" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-neutral-800 text-slate-800 dark:text-slate-100 shadow-sm transition flex items-center gap-1.5">
-                        <i class="ph ph-cpu text-brand-600 dark:text-brand-500"></i> Core Mode
-                    </button>
-                    <button onclick="switchModeHeader('reasoning')" id="header-btn-reasoning" class="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition flex items-center gap-1.5">
-                        <i class="ph ph-brain"></i> Pro Reasoning
-                    </button>
+                <div class="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-300 flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    Model: Gemini-Pro-Edu <i data-lucide="chevron-down" class="w-3 h-3"></i>
                 </div>
             </div>
-
-            <!-- Workspace Status Badge -->
-            <div class="flex items-center gap-2">
-                <div id="model-badge" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 rounded-full border border-brand-100/40 dark:border-brand-800/40 uppercase">
-                    <i class="ph ph-circuit-board"></i> Routing: Auto
+            
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5 px-2 py-1">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">Connected</span>
                 </div>
-                <div class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-500 dark:text-gray-400">
+                    <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                    <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+                </button>
+                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-primary-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm cursor-pointer shadow-sm">
+                    U
+                </div>
             </div>
         </header>
 
-        <!-- Conversational Flow Screen -->
-        <div id="chat-history" class="flex-1 overflow-y-auto scroll-smooth pb-36">
+        <!-- Chat Container -->
+        <div id="chat-scroll-area" class="flex-1 overflow-y-auto pt-14 pb-32 px-4 md:px-8 lg:px-24 scroll-smooth">
             
-            <!-- Default Dashboard/Welcome Panel -->
-            <div id="welcome-screen" class="h-full flex flex-col items-center justify-center p-6 text-center max-w-2xl mx-auto">
-                <div class="w-14 h-14 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-brand-100/50 dark:border-brand-800/50">
-                    <i class="ph ph-sparkle text-2xl"></i>
+            <!-- Welcome / Suggested Screen -->
+            <div id="welcome-screen" class="max-w-4xl mx-auto flex flex-col items-center justify-center min-h-full py-10 animate-fade-in">
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-400 to-blue-600 flex items-center justify-center mb-6 shadow-lg shadow-blue-500/20">
+                    <i data-lucide="brain-circuit" class="w-10 h-10 text-white"></i>
                 </div>
-                <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Master Any Topic Deeply</h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mb-8 max-w-md leading-relaxed">
-                    Choose one of the core academic models below, or supply your custom thesis. Our synthesis engine will break down your request systematically.
-                </p>
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">How can I help you learn today?</h1>
+                <p class="text-gray-500 dark:text-gray-400 mb-10">Ask a question, upload a document, or select a topic below.</p>
                 
-                <!-- Advanced Suggestions (Cards rather than tags) -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full text-left">
-                    <button onclick="triggerConceptLaunch('Derive the mathematics of Backpropagation')" class="p-4 bg-slate-50 dark:bg-neutral-900 hover:bg-slate-100/40 dark:hover:bg-neutral-800 border border-slate-200/80 dark:border-neutral-800 hover:border-brand-500/40 rounded-xl transition flex gap-3 text-left shadow-sm group">
-                        <div class="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center justify-center shrink-0 border border-emerald-100/50 dark:border-emerald-800/30">
-                            <i class="ph ph-function text-xl"></i>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
+                    <!-- Suggestion Cards -->
+                    <button onclick="fillPrompt('Explain Quantum Entanglement with math and diagrams')" class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-800 hover:border-primary-500 hover:shadow-md transition text-left group">
+                        <div class="flex items-center gap-3 mb-2 text-primary-600 dark:text-primary-400">
+                            <i data-lucide="atom" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                            <span class="font-semibold">Physics</span>
                         </div>
-                        <div>
-                            <p class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand-600 transition-colors">Neural Backpropagation</p>
-                            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Explore multivariable chain-rule and matrices derivations.</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">Explain Quantum Entanglement</p>
+                    </button>
+                    
+                    <button onclick="fillPrompt('Explain how DNA Replication works step by step')" class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-800 hover:border-green-500 hover:shadow-md transition text-left group">
+                        <div class="flex items-center gap-3 mb-2 text-green-600 dark:text-green-400">
+                            <i data-lucide="dna" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                            <span class="font-semibold">Biology</span>
                         </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">Understand DNA Replication</p>
                     </button>
 
-                    <button onclick="triggerConceptLaunch('Quantum Entanglement and Bell\\'s Theorem')" class="p-4 bg-slate-50 dark:bg-neutral-900 hover:bg-slate-100/40 dark:hover:bg-neutral-800 border border-slate-200/80 dark:border-neutral-800 hover:border-brand-500/40 rounded-xl transition flex gap-3 text-left shadow-sm group">
-                        <div class="w-10 h-10 bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 rounded-xl flex items-center justify-center shrink-0 border border-teal-100/50 dark:border-teal-800/30">
-                            <i class="ph ph-atom text-xl"></i>
+                    <button onclick="fillPrompt('Teach me the fundamentals of Linear Algebra')" class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-800 hover:border-purple-500 hover:shadow-md transition text-left group">
+                        <div class="flex items-center gap-3 mb-2 text-purple-600 dark:text-purple-400">
+                            <i data-lucide="function-square" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                            <span class="font-semibold">Mathematics</span>
                         </div>
-                        <div>
-                            <p class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand-600 transition-colors">Quantum Mechanics</p>
-                            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Analyze non-locality, Dirac notations, and quantum state vectors.</p>
-                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">Master Linear Algebra</p>
                     </button>
-
-                    <button onclick="triggerConceptLaunch('The Attention Mechanism inside Transformers')" class="p-4 bg-slate-50 dark:bg-neutral-900 hover:bg-slate-100/40 dark:hover:bg-neutral-800 border border-slate-200/80 dark:border-neutral-800 hover:border-brand-500/40 rounded-xl transition flex gap-3 text-left shadow-sm group">
-                        <div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl flex items-center justify-center shrink-0 border border-indigo-100/50 dark:border-indigo-800/30">
-                            <i class="ph ph-cpu text-xl"></i>
+                    
+                    <button onclick="fillPrompt('Write a python script to visualize a Black Hole using Plotly')" class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-800 hover:border-orange-500 hover:shadow-md transition text-left group">
+                        <div class="flex items-center gap-3 mb-2 text-orange-600 dark:text-orange-400">
+                            <i data-lucide="orbit" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                            <span class="font-semibold">Astrophysics</span>
                         </div>
-                        <div>
-                            <p class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand-600 transition-colors">Attention & Self-Attention</p>
-                            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Break down $Q$, $K$, $V$ projection matrices and dot product scaling.</p>
-                        </div>
-                    </button>
-
-                    <button onclick="triggerConceptLaunch('CRISPR gene editing mechanisms')" class="p-4 bg-slate-50 dark:bg-neutral-900 hover:bg-slate-100/40 dark:hover:bg-neutral-800 border border-slate-200/80 dark:border-neutral-800 hover:border-brand-500/40 rounded-xl transition flex gap-3 text-left shadow-sm group">
-                        <div class="w-10 h-10 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl flex items-center justify-center shrink-0 border border-rose-100/50 dark:border-rose-800/30">
-                            <i class="ph ph-dna text-xl"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand-600 transition-colors">Genetic Medicine</p>
-                            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Explore Cas9 nucleases, guide RNAs, and double-strand break repair.</p>
-                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">Visualize Black Holes</p>
                     </button>
                 </div>
             </div>
 
+            <!-- Chat Messages Area -->
+            <div id="messages-container" class="max-w-4xl mx-auto hidden flex-col gap-8 py-8">
+                <!-- Messages will be injected here -->
+            </div>
+            
+            <!-- Bottom Anchor for scrolling -->
+            <div id="chat-anchor" class="h-4"></div>
         </div>
 
-        <!-- Chat Input Bar -->
-        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white/95 dark:from-neutral-950 dark:via-neutral-950/95 to-transparent pt-8 pb-6 px-4 md:px-12 z-10 shrink-0">
-            <div class="max-w-3xl mx-auto relative flex flex-col">
-                <div class="relative flex items-end bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-md focus-within:ring-2 focus-within:ring-brand-500/10 focus-within:border-brand-500 transition-all">
+        <!-- Composer / Input Area -->
+        <div class="absolute bottom-0 w-full bg-gradient-to-t from-white via-white to-transparent dark:from-dark-900 dark:via-dark-900 pt-10 pb-6 px-4 z-10">
+            <div class="max-w-3xl mx-auto relative">
+                <!-- Learn Deep Badge Indicator -->
+                <div id="learn-deep-badge" class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 shadow-sm transition-opacity duration-300 opacity-0 pointer-events-none">
+                    <i data-lucide="waves" class="w-3.5 h-3.5"></i> Learn Deep Mode Active
+                </div>
+
+                <div class="bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] focus-within:ring-2 focus-within:ring-primary-500/50 transition-all p-2 flex flex-col">
                     
-                    <!-- Settings / Parameters Popover Trigger -->
-                    <div class="relative flex items-center shrink-0">
-                        <button class="p-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" onclick="toggleEngineParams(event)" title="Engine Parameters">
-                            <i class="ph ph-sliders-horizontal text-xl"></i>
-                        </button>
-
-                        <!-- Attachments / Parameters Popover -->
-                        <div id="engine-params-popup" class="absolute bottom-full left-0 mb-3 w-72 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-2xl p-4 hidden flex-col gap-4 z-50 origin-bottom-left transition-all">
-                            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-neutral-800">
-                                <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">Engine Settings</h3>
-                                <button onclick="toggleEngineParams(event)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-                                    <i class="ph ph-x"></i>
-                                </button>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-tight">Teaching Level</label>
-                                <select id="teaching-level" class="w-full bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-700 text-slate-800 dark:text-slate-200 rounded-lg p-2 text-xs font-medium cursor-pointer transition">
-                                    <option value="auto">Auto-adapt Context</option>
-                                    <option value="beginner">Beginner (Analogies)</option>
-                                    <option value="student">High School Student</option>
-                                    <option value="college">College Core</option>
-                                    <option value="researcher">PhD Researcher</option>
-                                    <option value="professor">Socratic Professor</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-tight">Model Pipeline</label>
-                                <select id="model-policy" class="w-full bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-700 text-slate-800 dark:text-slate-200 rounded-lg p-2 text-xs font-medium cursor-pointer transition" onchange="updateModelHeaderBadge()">
-                                    <option value="auto">Auto Router (Smart)</option>
-                                    <option value="fast">Llama-3 (Fast Speed)</option>
-                                    <option value="deep">Gemini 2.5 Pro (Deep)</option>
-                                    <option value="hybrid">Hybrid Synthesizer</option>
-                                </select>
-                            </div>
-
-                            <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-neutral-800">
-                                <div>
-                                    <span class="block text-xs font-bold text-slate-700 dark:text-slate-300">Learn Deep (RAG)</span>
-                                    <span class="block text-[10px] text-slate-400 dark:text-slate-500">Enable 13 dimensions</span>
-                                </div>
-                                <div class="relative inline-block w-8 align-middle select-none">
-                                    <input type="checkbox" id="learn-deep" checked class="toggle-checkbox absolute block w-4.5 h-4.5 rounded-full bg-white border border-slate-200 dark:border-neutral-600 appearance-none cursor-pointer z-10 transition-all top-0.5 left-0.5"/>
-                                    <label for="learn-deep" class="toggle-label block overflow-hidden h-5.5 rounded-full bg-slate-200 dark:bg-neutral-700 cursor-pointer transition-colors"></label>
-                                </div>
-                            </div>
+                    <textarea id="user-input" rows="1" placeholder="Ask anything about mathematics, physics, biology..." class="w-full bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2 outline-none resize-none no-scrollbar text-base"></textarea>
+                    
+                    <div class="flex items-center justify-between mt-2 px-1">
+                        <div class="flex items-center gap-1">
+                            <button class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition tooltip" title="Upload PDF/Doc">
+                                <i data-lucide="paperclip" class="w-5 h-5"></i>
+                            </button>
+                            <button class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition tooltip" title="Upload Image">
+                                <i data-lucide="image" class="w-5 h-5"></i>
+                            </button>
+                            <button class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition tooltip" title="Voice Input">
+                                <i data-lucide="mic" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="stop-btn" class="hidden items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 text-sm font-medium transition">
+                                <i data-lucide="square" class="w-4 h-4 fill-current"></i> Stop
+                            </button>
+                            <button id="send-btn" class="p-2 bg-primary-600 text-white rounded-xl hover:bg-primary-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+                                <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                            </button>
                         </div>
                     </div>
-                    
-                    <textarea 
-                        id="chat-input" 
-                        rows="1"
-                        placeholder="Master anything. Ask a concept, derivation, or problem..." 
-                        class="w-full bg-transparent border-none focus:ring-0 resize-none py-4 text-[14px] leading-relaxed text-slate-700 dark:text-slate-200 max-h-48 overflow-y-auto outline-none"
-                        oninput="autoResizeTextarea(this)"
-                        onkeydown="handleTextareaKeydown(event)"></textarea>
-                    
-                    <div class="flex items-center gap-1.5 px-3 py-2.5 shrink-0">
-                        <button 
-                            id="deep-think-quick-toggle"
-                            onclick="toggleQuickThinkBtn()"
-                            title="Toggle Deep Reasoning Model"
-                            class="p-2 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 border border-transparent hover:border-slate-200 dark:hover:border-neutral-700 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-xl transition-all flex items-center gap-1 text-xs font-semibold">
-                            <i class="ph ph-brain text-lg"></i> <span class="hidden sm:inline">Think</span>
-                        </button>
-                        
-                        <button 
-                            id="submit-btn"
-                            onclick="handleQueryExecution()"
-                            class="p-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl flex items-center justify-center transition shadow-sm disabled:opacity-40 disabled:bg-slate-300 disabled:dark:bg-neutral-700 disabled:text-slate-500">
-                            <i class="ph-fill ph-arrow-up text-base"></i>
-                        </button>
-                    </div>
                 </div>
-                <div class="text-center mt-2.5">
-                    <span class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">DeepLearn models synthesize multiple expert vectors simultaneously.</span>
+                <div class="text-center mt-2 text-xs text-gray-400 dark:text-gray-500">
+                    AI can make mistakes. Consider verifying important information.
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Custom Floating Toast Notifications System -->
-    <div id="toast" class="fixed bottom-24 right-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 transform translate-y-10 opacity-0 transition-all duration-300 z-50">
-        <i id="toast-icon" class="ph-fill ph-check-circle text-brand-500 text-base"></i>
-        <span id="toast-msg" class="font-medium">Context synchronised!</span>
-    </div>
-
-    <!-- Core App Engine Script -->
-    <script>
-        const inputField = document.getElementById('chat-input');
-        const chatHistory = document.getElementById('chat-history');
-        const welcomeScreen = document.getElementById('welcome-screen');
-        const submitBtn = document.getElementById('submit-btn');
-        const toast = document.getElementById('toast');
-        const toastMsg = document.getElementById('toast-msg');
-        const toastIcon = document.getElementById('toast-icon');
-        const engineParamsPopup = document.getElementById('engine-params-popup');
+    <!-- Connectors Panel (Right Sidebar) -->
+    <aside id="sidebar-right" class="fixed right-0 top-0 h-full w-80 bg-white dark:bg-dark-800 border-l border-gray-200 dark:border-gray-700 shadow-2xl transform translate-x-full transition-transform duration-300 z-30 flex flex-col">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between glass">
+            <h3 class="font-semibold flex items-center gap-2">
+                <i data-lucide="plug" class="w-4 h-4 text-primary-500"></i> Connectors
+            </h3>
+            <button onclick="toggleConnectors()" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
         
-        let isGenerating = false;
-        let isDeepReasoningActive = false;
-        let activeHeaderMode = "core"; 
-        let sessionHistory = [
-            { id: 1, topic: "Backpropagation chain rule" },
-            { id: 2, topic: "Quantum non-locality" }
-        ];
+        <div class="p-4 flex-1 overflow-y-auto">
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Connect external knowledge sources for context-aware learning.</p>
+            
+            <div class="space-y-3">
+                <!-- Connected Source Card -->
+                <div class="p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-dark-900 relative group">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-red-100 text-red-600 rounded-lg">
+                            <i data-lucide="file-text" class="w-4 h-4"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium truncate">Quantum_Computing_Ch1.pdf</p>
+                            <p class="text-xs text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Synced</p>
+                        </div>
+                    </div>
+                    <button class="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
 
-        // Init App States
-        window.addEventListener('DOMContentLoaded', () => {
-            renderSessionHistory();
-            updateModelHeaderBadge();
-            autoResizeTextarea(inputField);
+                <!-- Add Connection Button -->
+                <button class="w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-500 hover:text-primary-600 hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition flex flex-col items-center justify-center gap-2">
+                    <i data-lucide="link" class="w-6 h-6"></i>
+                    Connect Website or Docs
+                </button>
+            </div>
+        </div>
+    </aside>
 
-            // Auto-detect system dark mode preference
-            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    <!-- Overlay for mobile sidebars -->
+    <div id="overlay" class="fixed inset-0 bg-black/50 z-10 hidden opacity-0 transition-opacity"></div>
+
+    <!-- MAIN JAVASCRIPT LOGIC -->
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Application State
+        const state = {
+            isLearnDeepMode: false,
+            isGenerating: false,
+            chatHistory: [],
+            theme: localStorage.getItem('theme') || 'dark',
+            isSidebarOpen: true
+        };
+
+        // DOM Elements
+        const DOM = {
+            input: document.getElementById('user-input'),
+            sendBtn: document.getElementById('send-btn'),
+            stopBtn: document.getElementById('stop-btn'),
+            messagesContainer: document.getElementById('messages-container'),
+            welcomeScreen: document.getElementById('welcome-screen'),
+            chatScrollArea: document.getElementById('chat-scroll-area'),
+            chatAnchor: document.getElementById('chat-anchor'),
+            themeToggle: document.getElementById('theme-toggle'),
+            learnDeepToggle: document.getElementById('learn-deep-toggle'),
+            learnDeepStatus: document.getElementById('learn-deep-status'),
+            learnDeepBadge: document.getElementById('learn-deep-badge'),
+            sidebarLeft: document.getElementById('sidebar-left'),
+            sidebarRight: document.getElementById('sidebar-right'),
+            overlay: document.getElementById('overlay')
+        };
+
+        // --- Setup Libraries ---
+        
+        // Configure Marked (Markdown)
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            highlight: function(code, lang) {
+                // Return code as-is; rely on basic pre/code styling or add highlight.js later if needed
+                return code;
+            }
+        });
+
+        // Initialize Mermaid
+        mermaid.initialize({ startOnLoad: false, theme: state.theme === 'dark' ? 'dark' : 'default' });
+
+        // --- Theme Management ---
+        function applyTheme(theme) {
+            if (theme === 'dark') {
                 document.documentElement.classList.add('dark');
-                document.getElementById('theme-icon').classList.replace('ph-moon', 'ph-sun');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            localStorage.setItem('theme', theme);
+            // Re-init mermaid theme if needed
+            mermaid.initialize({ theme: theme === 'dark' ? 'dark' : 'default' });
+        }
+        
+        DOM.themeToggle.addEventListener('click', () => {
+            state.theme = state.theme === 'dark' ? 'light' : 'dark';
+            applyTheme(state.theme);
+        });
+
+        applyTheme(state.theme);
+
+        // --- UI Interactions ---
+
+        // Auto-resize textarea
+        DOM.input.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+            
+            // Toggle send button state
+            if (this.value.trim().length > 0) {
+                DOM.sendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                DOM.sendBtn.classList.add('opacity-50', 'cursor-not-allowed');
             }
         });
 
-        // Theme Toggler
-        function toggleTheme() {
-            const html = document.documentElement;
-            const icon = document.getElementById('theme-icon');
-            if (html.classList.contains('dark')) {
-                html.classList.remove('dark');
-                icon.classList.replace('ph-sun', 'ph-moon');
-            } else {
-                html.classList.add('dark');
-                icon.classList.replace('ph-moon', 'ph-sun');
-            }
-        }
-
-        // Close engine parameters popup when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!engineParamsPopup.contains(e.target) && !e.target.closest('button[onclick="toggleEngineParams(event)"]')) {
-                engineParamsPopup.classList.add('hidden');
-                engineParamsPopup.classList.remove('flex');
+        // Handle Enter to send (Shift+Enter for new line)
+        DOM.input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (DOM.input.value.trim().length > 0 && !state.isGenerating) {
+                    handleSendMessage();
+                }
             }
         });
 
-        function toggleEngineParams(e) {
-            e.stopPropagation();
-            if (engineParamsPopup.classList.contains('hidden')) {
-                engineParamsPopup.classList.remove('hidden');
-                engineParamsPopup.classList.add('flex');
+        DOM.sendBtn.addEventListener('click', () => {
+            if (DOM.input.value.trim().length > 0 && !state.isGenerating) {
+                handleSendMessage();
+            }
+        });
+
+        // Toggle Learn Deep Mode
+        DOM.learnDeepToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            state.isLearnDeepMode = !state.isLearnDeepMode;
+            if(state.isLearnDeepMode) {
+                DOM.learnDeepStatus.textContent = 'On';
+                DOM.learnDeepStatus.classList.replace('bg-gray-200', 'bg-primary-500');
+                DOM.learnDeepStatus.classList.replace('dark:bg-gray-600', 'bg-primary-500');
+                DOM.learnDeepStatus.classList.add('text-white');
+                DOM.learnDeepBadge.classList.remove('opacity-0', 'pointer-events-none');
             } else {
-                engineParamsPopup.classList.add('hidden');
-                engineParamsPopup.classList.remove('flex');
+                DOM.learnDeepStatus.textContent = 'Off';
+                DOM.learnDeepStatus.classList.replace('bg-primary-500', 'bg-gray-200');
+                DOM.learnDeepStatus.classList.replace('bg-primary-500', 'dark:bg-gray-600');
+                DOM.learnDeepStatus.classList.remove('text-white');
+                DOM.learnDeepBadge.classList.add('opacity-0', 'pointer-events-none');
+            }
+        });
+
+        // Sidebar Toggles
+        document.getElementById('toggle-sidebar-btn').addEventListener('click', () => {
+            DOM.sidebarLeft.classList.toggle('-translate-x-full');
+            DOM.sidebarLeft.classList.toggle('w-0');
+        });
+
+        document.getElementById('mobile-sidebar-open').addEventListener('click', () => {
+            DOM.sidebarLeft.classList.remove('-translate-x-full', 'hidden');
+            DOM.overlay.classList.remove('hidden');
+            setTimeout(() => DOM.overlay.classList.remove('opacity-0'), 10);
+        });
+
+        function toggleConnectors() {
+            DOM.sidebarRight.classList.toggle('translate-x-full');
+            if (!DOM.sidebarRight.classList.contains('translate-x-full') && window.innerWidth < 768) {
+                DOM.overlay.classList.remove('hidden');
+                setTimeout(() => DOM.overlay.classList.remove('opacity-0'), 10);
             }
         }
 
-        // Toast Helper
-        function triggerToast(message, type = "success") {
-            toastMsg.innerText = message;
-            if (type === "success") {
-                toastIcon.className = "ph-fill ph-check-circle text-emerald-500 text-base";
-            } else if (type === "info") {
-                toastIcon.className = "ph ph-info text-blue-500 text-base";
-            } else {
-                toastIcon.className = "ph ph-warning-circle text-rose-500 text-base";
+        DOM.overlay.addEventListener('click', () => {
+            if (window.innerWidth < 768) {
+                DOM.sidebarLeft.classList.add('-translate-x-full');
             }
-            toast.className = "fixed bottom-24 right-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 transform translate-y-0 opacity-100 transition-all duration-300 z-50";
-            setTimeout(() => {
-                toast.className = "fixed bottom-24 right-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 transform translate-y-10 opacity-0 transition-all duration-300 z-50";
-            }, 3000);
-        }
+            DOM.sidebarRight.classList.add('translate-x-full');
+            DOM.overlay.classList.add('opacity-0');
+            setTimeout(() => DOM.overlay.classList.add('hidden'), 300);
+        });
 
-        // Render past sessions lists in sidebar
-        function renderSessionHistory() {
-            const list = document.getElementById('history-list');
-            list.innerHTML = '';
-            if (sessionHistory.length === 0) {
-                list.innerHTML = `<p class="text-[11px] text-slate-400 dark:text-slate-500 italic px-2">No past sessions</p>`;
-                return;
-            }
-            sessionHistory.forEach(item => {
-                const btn = document.createElement('button');
-                btn.className = "w-full text-left px-2.5 py-2 rounded-lg hover:bg-white dark:hover:bg-neutral-800 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white truncate flex items-center gap-2 transition border border-transparent hover:border-slate-200/60 dark:hover:border-neutral-700/60";
-                btn.onclick = () => loadPastSession(item.topic);
-                btn.innerHTML = `<i class="ph ph-chat-centered-text text-slate-400 dark:text-slate-500"></i> ${item.topic}`;
-                list.appendChild(btn);
-            });
-        }
-
-        function clearHistory() {
-            sessionHistory = [];
-            renderSessionHistory();
-            triggerToast("Conversation history cleared", "info");
+        function fillPrompt(text) {
+            DOM.input.value = text;
+            DOM.input.style.height = 'auto';
+            DOM.sendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            DOM.input.focus();
         }
 
         function startNewChat() {
-            chatHistory.innerHTML = '';
-            chatHistory.appendChild(welcomeScreen);
-            welcomeScreen.classList.remove('hidden');
-            welcomeScreen.classList.remove('opacity-0');
-            welcomeScreen.style.display = 'flex';
-            inputField.value = '';
-            autoResizeTextarea(inputField);
-            triggerToast("New workspace loaded", "success");
+            DOM.messagesContainer.innerHTML = '';
+            DOM.messagesContainer.classList.add('hidden');
+            DOM.welcomeScreen.classList.remove('hidden');
+            state.chatHistory = [];
         }
 
-        function loadPastSession(topic) {
-            triggerConceptLaunch(topic);
+        function scrollToBottom() {
+            DOM.chatAnchor.scrollIntoView({ behavior: "smooth" });
         }
 
-        // Sidebar drawer toggles
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
-        }
+        // --- Chat & Rendering Logic ---
 
-        // Toggle Quick Think inside input bar
-        function toggleQuickThinkBtn() {
-            const btn = document.getElementById('deep-think-quick-toggle');
-            isDeepReasoningActive = !isDeepReasoningActive;
-            if (isDeepReasoningActive) {
-                btn.className = "p-2 text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/30 border border-brand-200 dark:border-brand-800/50 hover:bg-brand-100 dark:hover:bg-brand-900/50 rounded-xl transition-all flex items-center gap-1 text-xs font-bold";
-                switchModeHeader('reasoning');
-                triggerToast("Deep Reasoning Model engaged", "success");
-            } else {
-                btn.className = "p-2 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 border border-transparent hover:border-slate-200 dark:hover:border-neutral-700 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-xl transition-all flex items-center gap-1 text-xs font-semibold";
-                switchModeHeader('core');
-                triggerToast("Core Mode returned", "info");
-            }
-        }
-
-        // Swaps core vs reasoning headers
-        function switchModeHeader(mode) {
-            activeHeaderMode = mode;
-            const coreBtn = document.getElementById('header-btn-core');
-            const reasoningBtn = document.getElementById('header-btn-reasoning');
-            const quickThinkBtn = document.getElementById('deep-think-quick-toggle');
-
-            if (mode === "core") {
-                coreBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-neutral-800 text-slate-800 dark:text-slate-100 shadow-sm transition flex items-center gap-1.5";
-                reasoningBtn.className = "px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition flex items-center gap-1.5";
-                isDeepReasoningActive = false;
-                quickThinkBtn.className = "p-2 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 border border-transparent hover:border-slate-200 dark:hover:border-neutral-700 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-xl transition-all flex items-center gap-1 text-xs font-semibold";
-            } else {
-                reasoningBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-neutral-800 text-slate-800 dark:text-slate-100 shadow-sm transition flex items-center gap-1.5";
-                coreBtn.className = "px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition flex items-center gap-1.5";
-                isDeepReasoningActive = true;
-                quickThinkBtn.className = "p-2 text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/30 border border-brand-200 dark:border-brand-800/50 hover:bg-brand-100 dark:hover:bg-brand-900/50 rounded-xl transition-all flex items-center gap-1 text-xs font-bold";
-            }
-            updateModelHeaderBadge();
-        }
-
-        function updateModelHeaderBadge() {
-            const badge = document.getElementById('model-badge');
-            const policy = document.getElementById('model-policy').value;
-            badge.innerHTML = `<i class="ph ph-circuit-board"></i> PIPELINE: ${policy.toUpperCase()}`;
-            badge.classList.remove('hidden');
-        }
-
-        // Auto growing input textbox
-        function autoResizeTextarea(el) {
-            el.style.height = 'auto';
-            el.style.height = (el.scrollHeight) + 'px';
-            submitBtn.disabled = el.value.trim() === '';
-        }
-
-        function handleTextareaKeydown(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleQueryExecution();
-            }
-        }
-
-        function simulateRAGIndex(btn = null) {
-            const target = btn || document.querySelector('button[onclick*="simulateRAGIndex"]');
-            const origText = target.innerHTML;
-            target.disabled = true;
-            target.innerHTML = `<i class="ph ph-spinner animate-spin"></i> Embedding vectors...`;
+        function handleSendMessage() {
+            const text = DOM.input.value.trim();
+            DOM.input.value = '';
+            DOM.input.style.height = 'auto';
+            DOM.sendBtn.classList.add('opacity-50', 'cursor-not-allowed');
             
-            setTimeout(() => {
-                target.disabled = false;
-                target.innerHTML = origText;
-                triggerToast("Indexed files in vector memory successfully", "success");
-            }, 1400);
+            // Hide welcome screen
+            if (DOM.welcomeScreen.classList.contains('hidden') === false) {
+                DOM.welcomeScreen.classList.add('hidden');
+                DOM.messagesContainer.classList.remove('hidden');
+                DOM.messagesContainer.classList.add('flex');
+            }
+
+            // Append User Message
+            appendUserMessage(text);
+            scrollToBottom();
+
+            // Setup Generation State
+            state.isGenerating = true;
+            DOM.sendBtn.classList.add('hidden');
+            DOM.stopBtn.classList.remove('hidden');
+            DOM.stopBtn.classList.add('flex');
+
+            // Start Mock Backend API Call
+            triggerAIGeneration(text);
         }
 
-        function triggerConceptLaunch(topic) {
-            inputField.value = topic;
-            autoResizeTextarea(inputField);
-            handleQueryExecution();
-        }
-
-        // Execute user query and route pipeline simulating reasoning models
-        async function handleQueryExecution() {
-            const text = inputField.value.trim();
-            if (!text || isGenerating) return;
-
-            // Save to sidebar history list
-            if (!sessionHistory.some(h => h.topic.toLowerCase() === text.toLowerCase())) {
-                sessionHistory.unshift({ id: Date.now(), topic: text });
-                renderSessionHistory();
-            }
-
-            // Prep Canvas
-            inputField.value = '';
-            autoResizeTextarea(inputField);
-            isGenerating = true;
-
-            if (welcomeScreen) {
-                welcomeScreen.style.display = 'none';
-            }
-
-            // 1. Post user question
-            appendUserQueryBubble(text);
-
-            // 2. Prep AI bubble with collapsed thought block
-            const aiBubble = appendAIConsolidationContainer();
-            scrollToThreadBottom();
-
-            // Simulate multi-stage thought logs
-            const microThoughtLog = aiBubble.querySelector('.thought-micro-steps');
-            const mainContentSpace = aiBubble.querySelector('.response-payload');
-            const detailsElement = aiBubble.querySelector('details');
-            const summaryTime = aiBubble.querySelector('.thought-timer');
-
-            // Thought stream logs
-            const microStepsList = [
-                { text: "Scanning local database vectors and PDF vaults...", delay: 500 },
-                { text: `Analyzing model policies (Using ${document.getElementById('model-policy').value.toUpperCase()} setting)...`, delay: 600 },
-                { text: `Calibrating output profile to ${document.getElementById('teaching-level').value.toUpperCase()} specifications...`, delay: 700 },
-                { text: "Generating custom equations, visual models, and interactive quiz blocks...", delay: 600 }
-            ];
-
-            let cumulativeTime = 0;
-            for (let index = 0; index < microStepsList.length; index++) {
-                const step = microStepsList[index];
-                await delay(step.delay);
-                cumulativeTime += (step.delay / 1000);
-                
-                const div = document.createElement('div');
-                div.className = "flex items-center gap-2 text-slate-500 dark:text-slate-400 fade-in";
-                div.innerHTML = `<i class="ph ph-check text-brand-600 dark:text-brand-500"></i> <span>${step.text}</span>`;
-                microThoughtLog.appendChild(div);
-                summaryTime.innerText = `Thought process: ${cumulativeTime.toFixed(1)}s`;
-                scrollToThreadBottom();
-            }
-
-            // Collapse thoughts or keep them visually clean
-            await delay(400);
-            summaryTime.innerText = `Thought process: ${cumulativeTime.toFixed(1)}s (complete)`;
-            detailsElement.removeAttribute('open'); // visually collapse to mimic clean ChatGPT layout
-
-            // Stream rich educational output
-            mainContentSpace.classList.remove('hidden');
-            mainContentSpace.classList.add('streaming-cursor');
-
-            const contentMarkdown = await compileComprehensiveSynthesis(text);
-            await streamPayloadMarkdown(contentMarkdown, mainContentSpace);
-
-            mainContentSpace.classList.remove('streaming-cursor');
-            
-            // Format Math equations
-            if (window.MathJax) {
-                MathJax.typesetPromise([mainContentSpace]).catch(err => console.error(err));
-            }
-
-            // Inject interactive quiz mechanics
-            bindQuizEventListeners(mainContentSpace);
-
-            isGenerating = false;
-        }
-
-        // Custom render of user query
-        function appendUserQueryBubble(text) {
-            const row = document.createElement('div');
-            row.className = "w-full px-4 md:px-12 py-6 border-b border-slate-100/50 dark:border-neutral-800/50 flex justify-end bg-slate-50/50 dark:bg-neutral-900/50 fade-in transition-colors duration-300";
-            row.innerHTML = `
-                <div class="max-w-2xl bg-slate-900 dark:bg-brand-900 text-white text-[14px] leading-relaxed px-5 py-4 rounded-2xl rounded-tr-sm shadow-sm transition-colors duration-300">
-                    ${escapeHtml(text)}
+        function appendUserMessage(text) {
+            const msgHtml = `
+                <div class="flex justify-end w-full animate-fade-in">
+                    <div class="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-3xl rounded-tr-sm px-5 py-3 max-w-[85%] sm:max-w-[75%] text-base shadow-sm">
+                        ${DOMPurify.sanitize(text)}
+                    </div>
                 </div>
             `;
-            chatHistory.appendChild(row);
+            DOM.messagesContainer.insertAdjacentHTML('beforeend', msgHtml);
         }
 
-        // Consolidation element mapping the 13 deep learning properties
-        function appendAIConsolidationContainer() {
-            const container = document.createElement('div');
-            container.className = "w-full px-4 md:px-12 py-8 bg-white dark:bg-neutral-950 border-b border-slate-100 dark:border-neutral-800 flex fade-in transition-colors duration-300";
-            container.innerHTML = `
-                <div class="max-w-3xl mx-auto w-full flex gap-4 md:gap-6">
-                    <div class="w-9 h-9 rounded-full bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 border border-brand-100 dark:border-brand-800/50 flex items-center justify-center shrink-0">
-                        <i class="ph-fill ph-sparkle text-lg"></i>
-                    </div>
-                    
-                    <div class="flex-1 min-w-0">
-                        <!-- Reasoning Details Header (Gemini o1 style) -->
-                        <details open class="group bg-slate-50 dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 rounded-xl p-3.5 mb-5 transition-all">
-                            <summary class="list-none flex items-center justify-between cursor-pointer">
-                                <span class="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                                    <i class="ph ph-brain text-brand-600 dark:text-brand-400 text-base animate-pulse"></i>
-                                    <span class="thought-timer">Thinking...</span>
-                                </span>
-                                <i class="ph ph-caret-down group-open:rotate-180 text-slate-400 transition-transform"></i>
-                            </summary>
-                            <div class="thought-micro-steps mt-3 text-xs space-y-1.5 border-l-2 border-slate-200 dark:border-neutral-700 pl-3 text-slate-600 dark:text-slate-300">
-                                <!-- Streamed steps -->
+        async function triggerAIGeneration(userPrompt) {
+            // Create AI Message Container
+            const msgId = 'msg-' + Date.now();
+            const aiMsgHtml = `
+                <div id="${msgId}" class="flex flex-col w-full animate-fade-in mb-4">
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 shrink-0 rounded-full bg-gradient-to-br from-primary-400 to-blue-600 flex items-center justify-center mt-1 shadow-sm">
+                            <i data-lucide="brain-circuit" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <div class="flex-1 min-w-0 flex flex-col gap-3">
+                            <!-- Thinking Container -->
+                            <div id="${msgId}-thinking" class="bg-gray-50 dark:bg-dark-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-sm font-mono text-gray-500 overflow-hidden transition-all duration-500 ease-in-out">
+                                <div class="flex items-center gap-2 text-primary-500 mb-2 font-sans font-semibold">
+                                    <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Thinking Process
+                                </div>
+                                <ul id="${msgId}-steps" class="space-y-1.5 ml-6 list-disc marker:text-gray-300 dark:marker:text-gray-600">
+                                    <!-- Steps injected here -->
+                                </ul>
                             </div>
-                        </details>
-
-                        <!-- Response Area -->
-                        <div class="response-payload prose max-w-none text-slate-700 dark:text-slate-200 hidden text-[14px] leading-relaxed"></div>
-                        
-                        <!-- Toolbar feedback -->
-                        <div class="mt-6 pt-4 border-t border-slate-100/80 dark:border-neutral-800 flex items-center gap-2 opacity-0 transition-opacity duration-300 toolbar">
-                            <button class="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-lg transition" onclick="copyMessagePayload(this)" title="Copy Text">
-                                <i class="ph ph-copy text-lg"></i>
-                            </button>
-                            <button class="p-1.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition" onclick="triggerToast('Thank you for your feedback!', 'success')" title="Good Response">
-                                <i class="ph ph-thumbs-up text-lg"></i>
-                            </button>
-                            <button class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition" onclick="triggerToast('Logged response feedback', 'info')" title="Poor Response">
-                                <i class="ph ph-thumbs-down text-lg"></i>
-                            </button>
+                            <!-- Response Container -->
+                            <div id="${msgId}-content" class="prose dark:prose-invert max-w-none text-[15px] leading-relaxed w-full hidden">
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
-            chatHistory.appendChild(container);
-            return container;
+            DOM.messagesContainer.insertAdjacentHTML('beforeend', aiMsgHtml);
+            lucide.createIcons({root: document.getElementById(msgId)});
+            scrollToBottom();
+
+            const thinkingContainer = document.getElementById(`${msgId}-thinking`);
+            const stepsContainer = document.getElementById(`${msgId}-steps`);
+            const contentContainer = document.getElementById(`${msgId}-content`);
+
+            // 1. Simulate Claude-style Thinking
+            await simulateThinkingProcess(stepsContainer);
+
+            // Collapse Thinking Process
+            thinkingContainer.innerHTML = `
+                <details class="group cursor-pointer">
+                    <summary class="flex items-center gap-2 text-gray-500 text-xs font-semibold hover:text-gray-700 dark:hover:text-gray-300 list-none">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i>
+                        Thought Process Completed
+                        <i data-lucide="chevron-down" class="w-3 h-3 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="mt-2 text-xs text-gray-400 pl-6 border-l-2 border-gray-200 dark:border-gray-700 ml-2 py-1">
+                        Analyzed context, generated structured educational framework, resolved mathematical equations, formulated visualizations.
+                    </div>
+                </details>
+            `;
+            lucide.createIcons({root: thinkingContainer});
+            
+            // 2. Simulate Token Streaming & Rendering
+            contentContainer.classList.remove('hidden');
+            contentContainer.classList.add('streaming-cursor');
+            
+            const mockResponseText = getMockResponse(userPrompt, state.isLearnDeepMode);
+            
+            await streamText(contentContainer, mockResponseText);
+            
+            // 3. Finalize Rendering (Markdown, Math, Mermaid)
+            contentContainer.classList.remove('streaming-cursor');
+            renderRichContent(contentContainer, mockResponseText);
+
+            // Reset UI
+            state.isGenerating = false;
+            DOM.stopBtn.classList.add('hidden');
+            DOM.stopBtn.classList.remove('flex');
+            DOM.sendBtn.classList.remove('hidden');
+            scrollToBottom();
         }
 
-        // FastAPI Backend Configuration
-        const FASTAPI_BASE_URL = "http://localhost:8000";
+        // --- Mocking the Backend API Behavior ---
 
-        // Fetch response from backend
-        async function compileComprehensiveSynthesis(topic) {
-            const userMessage = chatInput.value.trim() || topic;
+        function simulateThinkingProcess(ulElement) {
+            const steps = [
+                "Understanding query semantics...",
+                "Retrieving conceptual relationships...",
+                "Formulating mathematical proofs...",
+                "Designing pedagogical structure...",
+                "Generating diagrammatic representations..."
+            ];
             
-            const response = await fetch(`${FASTAPI_BASE_URL}/api/chat`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: userMessage, topic: topic })
+            return new Promise(resolve => {
+                let stepIndex = 0;
+                
+                function nextStep() {
+                    if (stepIndex > 0 && ulElement.children.length > 0) {
+                        ulElement.children[stepIndex-1].classList.remove('active');
+                    }
+                    if (stepIndex < steps.length) {
+                        const li = document.createElement('li');
+                        li.className = 'thinking-step active animate-slide-in';
+                        li.textContent = steps[stepIndex];
+                        ulElement.appendChild(li);
+                        scrollToBottom();
+                        
+                        stepIndex++;
+                        // Random delay between 400ms and 1200ms
+                        setTimeout(nextStep, Math.random() * 800 + 400); 
+                    } else {
+                        setTimeout(resolve, 500);
+                    }
+                }
+                nextStep();
+            });
+        }
+
+        function streamText(container, fullText) {
+            return new Promise(resolve => {
+                let i = 0;
+                // Chunk size simulates token groupings arriving over network
+                const chunkSize = 3; 
+                
+                function addToken() {
+                    if (!state.isGenerating) {
+                        resolve(); // User pressed Stop
+                        return;
+                    }
+                    
+                    if (i < fullText.length) {
+                        let textChunk = fullText.slice(i, i + chunkSize);
+                        // Very naive streaming injection just to show text appearing. 
+                        // It won't parse HTML perfectly mid-stream, but creates the illusion.
+                        // We replace newlines with <br> temporarily for the visual effect.
+                        const safeChunk = textChunk.replace(/\n/g, '<br>');
+                        container.innerHTML += safeChunk;
+                        
+                        i += chunkSize;
+                        
+                        if(i % 15 === 0) scrollToBottom();
+                        
+                        // Fast streaming (10ms per chunk)
+                        setTimeout(addToken, 5); 
+                    } else {
+                        resolve();
+                    }
+                }
+                addToken();
+            });
+        }
+
+        function renderRichContent(container, rawMarkdown) {
+            // If Learn Deep mode, parse custom structure
+            let htmlContent = '';
+            
+            if (state.isLearnDeepMode) {
+                // Wrap in structured details tags based on headers
+                htmlContent = createLearnDeepHTML(rawMarkdown);
+            } else {
+                // Normal Markdown Parse
+                htmlContent = marked.parse(rawMarkdown);
+            }
+            
+            // Sanitize
+            container.innerHTML = DOMPurify.sanitize(htmlContent, {
+                ADD_TAGS: ['details', 'summary', 'iframe', 'div', 'span', 'pre', 'code'],
+                ADD_ATTR: ['class', 'style', 'id', 'open']
+            });
+
+            // Post-processing logic (Math, Diagrams, Code)
+            
+            // 1. Render MathJax/KaTeX
+            renderMathInElement(container, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
+            });
+
+            // 2. Render Mermaid Diagrams
+            // Marked puts mermaid in `<pre><code class="language-mermaid">`
+            const mermaidBlocks = container.querySelectorAll('code.language-mermaid');
+            mermaidBlocks.forEach((block, index) => {
+                const graphDefinition = block.textContent;
+                const parentPre = block.parentElement;
+                
+                const diagramId = `mermaid-diag-${Date.now()}-${index}`;
+                const div = document.createElement('div');
+                div.className = 'mermaid my-6 flex justify-center bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700';
+                div.id = diagramId;
+                div.textContent = graphDefinition;
+                
+                parentPre.replaceWith(div);
             });
             
-            const data = await response.json();
-            return data.response;
+            // Run mermaid initialization on newly injected divs
+            if (mermaidBlocks.length > 0) {
+                mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+            }
+
+            // 3. Create Visualization Tabs (Simulation)
+            // If code contains word "visualization" or specific markers, inject a simulated viewer
+            if(rawMarkdown.includes('%%VISUALIZATION_TAB%%')) {
+                injectVisualizationArea(container);
+            }
+
+            scrollToBottom();
         }
 
-        // Custom parser rendering Quiz into actual interactive HTML inputs
-        function bindQuizEventListeners(container) {
-            const quizBox = container.querySelector('#interactive-quiz');
-            if (!quizBox) return;
+        function createLearnDeepHTML(markdown) {
+            // A basic parser to convert H2 sections into `<details>` elements for Learn Deep mode
+            const tokens = marked.lexer(markdown);
+            let resultHTML = '';
+            let currentSection = '';
+            let inSection = false;
+            let title = '';
 
-            const submitBtn = quizBox.querySelector('.quiz-submit-btn');
-            const feedback = quizBox.querySelector('.quiz-feedback');
-
-            submitBtn.addEventListener('click', () => {
-                const selected = quizBox.querySelector('input[name="quiz-opt"]:checked');
-                if (!selected) {
-                    triggerToast("Select an option first", "warning");
-                    return;
-                }
-
-                if (selected.value === 'B') {
-                    feedback.className = "quiz-feedback text-xs font-bold p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 mt-2 fade-in transition-colors";
-                    feedback.innerHTML = " Correct! The regularization component prevents weights from exploding, stabilizing the general model outputs.";
-                    feedback.classList.remove('hidden');
+            tokens.forEach(token => {
+                if (token.type === 'heading' && token.depth === 2) {
+                    if (inSection) {
+                        // Close previous section
+                        resultHTML += `
+                            <details class="learn-deep-section animate-fade-in" open>
+                                <summary><span class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4"></i> ${title}</span></summary>
+                                <div class="content">${marked.parser(marked.lexer(currentSection))}</div>
+                            </details>
+                        `;
+                    }
+                    inSection = true;
+                    title = token.text;
+                    currentSection = '';
+                } else if (inSection) {
+                    currentSection += token.raw;
                 } else {
-                    feedback.className = "quiz-feedback text-xs font-bold p-2.5 rounded-lg bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400 mt-2 fade-in transition-colors";
-                    feedback.innerHTML = " Incorrect. Try again! Think about the effect of weight scale on parameter sensitivity.";
-                    feedback.classList.remove('hidden');
+                    // Content before the first H2
+                    resultHTML += marked.parse(token.raw);
                 }
             });
-        }
 
-        // Stream parsed markdown
-        async function streamPayloadMarkdown(markdownText, container) {
-            // Split by section changes or empty lines
-            const chunks = markdownText.split(/(?=### )|(?=\n\n)/g);
-            let cumulativeHTML = "";
-            for (let i = 0; i < chunks.length; i++) {
-                cumulativeHTML += chunks[i];
-                container.innerHTML = marked.parse(cumulativeHTML);
-                scrollToThreadBottom();
-                await delay(Math.random() * 80 + 35);
+            // Close last section
+            if (inSection) {
+                 resultHTML += `
+                    <details class="learn-deep-section animate-fade-in" open>
+                        <summary><span class="flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4"></i> ${title}</span></summary>
+                        <div class="content prose dark:prose-invert max-w-none">${marked.parser(marked.lexer(currentSection))}</div>
+                    </details>
+                `;
             }
-            // Show tool bar
-            container.nextElementSibling.classList.remove('opacity-0');
+            
+            return resultHTML;
         }
 
-        function copyMessagePayload(button) {
-            const rawText = button.parentElement.previousElementSibling.innerText;
-            // Clipboard fallback logic
-            const textarea = document.createElement('textarea');
-            textarea.value = rawText;
-            document.body.appendChild(textarea);
-            textarea.select();
-            try {
-                document.execCommand('copy');
-                triggerToast("Response text copied to clipboard!", "success");
-            } catch (err) {
-                console.error("Clipboard copy failed: ", err);
+        function injectVisualizationArea(container) {
+            const vizHtml = `
+                <div class="mt-6 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-dark-800 shadow-sm">
+                    <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-dark-900 px-2 pt-2">
+                        <button class="px-4 py-2 text-sm font-medium border-b-2 border-primary-500 text-primary-600 dark:text-primary-400 bg-white dark:bg-dark-800 rounded-t-lg flex items-center gap-2">
+                            <i data-lucide="bar-chart-2" class="w-4 h-4"></i> Plotly Chart
+                        </button>
+                        <button class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-2">
+                            <i data-lucide="box" class="w-4 h-4"></i> 3D Viewer
+                        </button>
+                    </div>
+                    <div class="p-8 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 min-h-[300px]">
+                        <div class="w-16 h-16 mb-4 rounded-full border-4 border-gray-200 border-t-primary-500 animate-spin"></div>
+                        <p class="text-sm text-gray-500">Interactive Visualization Loaded (Simulated)</p>
+                        <p class="text-xs text-gray-400 mt-2 text-center max-w-md">In a production environment, Plotly.js or Three.js instances would be mounted in this container using JSON data returned from the backend.</p>
+                    </div>
+                </div>
+            `;
+            // Replace the marker with actual HTML
+            container.innerHTML = container.innerHTML.replace('%%VISUALIZATION_TAB%%', vizHtml);
+            setTimeout(() => { lucide.createIcons({root: container}); }, 100);
+        }
+
+        // Stop Button Logic
+        DOM.stopBtn.addEventListener('click', () => {
+            state.isGenerating = false;
+        });
+
+        // --- Mock Data Generator ---
+
+        function getMockResponse(prompt, isDeep) {
+            const lcPrompt = prompt.toLowerCase();
+            
+            let mathBlock = `The state of a Bell pair is mathematically described as:
+$$|\\Phi^+\\rangle = \\frac{1}{\\sqrt{2}} (|0\\rangle_A \\otimes |0\\rangle_B + |1\\rangle_A \\otimes |1\\rangle_B)$$`;
+
+            let diagramBlock = `
+\`\`\`mermaid
+graph LR
+    A((Particle A)) <-->|Instantaneous Correlation| B((Particle B))
+    style A fill:#4b6bfb,stroke:#333,stroke-width:2px,color:#fff
+    style B fill:#ef4444,stroke:#333,stroke-width:2px,color:#fff
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px;
+\`\`\`
+`;
+            
+            let vizMarker = `%%VISUALIZATION_TAB%%`;
+
+            if (isDeep) {
+                return `Based on your request regarding "${prompt}", here is a comprehensive breakdown.
+
+## Fundamentals
+Quantum entanglement is a physical phenomenon that occurs when a group of particles is generated, interact, or share spatial proximity in a way such that the quantum state of each particle of the group cannot be described independently of the state of the others, including when the particles are separated by a large distance.
+
+## Mathematics
+To truly understand it, we look at the tensor product of Hilbert spaces.
+${mathBlock}
+Where $|0\\rangle$ and $|1\\rangle$ represent the standard basis states (e.g., spin up and spin down). If we measure particle A and find it in state $|0\\rangle$, the superposition collapses, and particle B is instantaneously known to be in state $|0\\rangle$ as well, regardless of the distance between them.
+
+## Visualizations
+Below is a conceptual map of the entanglement generation process:
+${diagramBlock}
+${vizMarker}
+
+## Summary & Applications
+* **Quantum Cryptography:** Ensures secure communication (e.g., Quantum Key Distribution).
+* **Quantum Computing:** Provides exponential speedups for specific algorithms (like Shor's algorithm).
+* **Quantum Teleportation:** Transferring quantum information between distant nodes.
+
+Would you like to explore the EPR Paradox next?`;
+            } else {
+                return `Quantum entanglement is a fascinating principle of quantum mechanics where two or more particles become connected in such a way that the state of one instantly influences the state of the other, no matter how far apart they are in the universe. Albert Einstein famously referred to this as *"spooky action at a distance"*.
+
+${diagramBlock}
+
+Here is the mathematical representation of an entangled pair (a Bell state):
+${mathBlock}
+
+### Why is this important?
+Entanglement is the foundational concept driving modern **Quantum Computing** and **Quantum Cryptography**. By utilizing entangled qubits, quantum computers can process complex parallel calculations exponentially faster than classical supercomputers.
+
+${vizMarker}
+
+Let me know if you want to dive deeper into the mathematics or view an interactive 3D simulation of electron spins!`;
             }
-            document.body.removeChild(textarea);
         }
 
-        function showThemeToast() {
-            triggerToast("Settings profile saved successfully", "info");
-        }
-
-        function scrollToThreadBottom() {
-            chatHistory.scrollTop = chatHistory.scrollHeight;
-        }
-
-        function delay(ms) {
-            return new Promise(res => setTimeout(res, ms));
-        }
-
-        function escapeHtml(unsafe) {
-            return unsafe
-                 .replace(/&/g, "&amp;")
-                 .replace(/</g, "&lt;")
-                 .replace(/>/g, "&gt;")
-                 .replace(/"/g, "&quot;")
-                 .replace(/'/g, "&#039;");
-        }
     </script>
 </body>
 </html>

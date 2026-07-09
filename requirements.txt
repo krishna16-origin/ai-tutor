@@ -9,5 +9,5 @@ langchain-openai
 plotly
 pyvista
 vtk
-3dmol
+py3dmol
 manim

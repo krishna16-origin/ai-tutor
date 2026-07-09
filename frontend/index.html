@@ -413,20 +413,33 @@
             document.getElementById('msg-count-display').textContent = conversationHistory.length;
         }
 
+        // ─── Splash screen: guaranteed to hide no matter what else fails ───
+        function hideSplash() {
+            const splash = document.getElementById('splash-screen');
+            if (splash) splash.classList.add('splash-hidden');
+        }
+
         // ─── Init on DOM ready ───
         document.addEventListener("DOMContentLoaded", () => {
-            lucide.createIcons();
-            sessionStorage.setItem('scribe_session_id', generateSessionId());
-            updateSessionDisplay();
+            // Schedule this FIRST, before anything risky runs
+            setTimeout(hideSplash, 1800);
 
-            // Splash Screen Logic
-            setTimeout(() => {
-                const splash = document.getElementById('splash-screen');
-                if (splash) {
-                    splash.classList.add('splash-hidden');
-                }
-            }, 1800);
+            try {
+                lucide.createIcons();
+            } catch (e) {
+                console.error('lucide.createIcons failed:', e);
+            }
+
+            try {
+                sessionStorage.setItem('scribe_session_id', generateSessionId());
+                updateSessionDisplay();
+            } catch (e) {
+                console.error('session init failed:', e);
+            }
         });
+
+        // Safety net in case DOMContentLoaded is delayed or something upstream breaks
+        window.addEventListener('load', hideSplash);
 
         // ─── Library config (runs immediately, safe outside DOMContentLoaded) ───
         mermaid.initialize({
@@ -774,7 +787,7 @@
 
                 // ─── 3Dmol.js (for molecular structures) ───
                 } else if (lang.includes('3dmol') || lang.includes('3dmol-js') || (content.includes('"type"') && content.includes('"pdb"'))) {
-
+                    try {
                         const spec = JSON.parse(content);
                         const div = document.createElement('div');
                         div.className = 'threedmol-container';

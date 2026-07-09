@@ -387,54 +387,18 @@
     </template>
 
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            lucide.createIcons();
-
-            // Generate a session ID for conversational memory
-            sessionStorage.setItem('scribe_session_id', generateSessionId());
-            updateSessionDisplay();
-
-            // Splash Screen Logic
-            setTimeout(() => {
-                const splash = document.getElementById('splash-screen');
-                if (splash) {
-                    splash.classList.add('splash-hidden');
-                }
-            }, 1800);
-        });
-
-       mermaid.initialize({
-       startOnLoad: false,
-       theme: 'dark',
-       securityLevel: 'loose',
-       suppressErrorRendering: true,
-       flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
-       });
-
-        if (window.markedGfmHeadingId) {
-            marked.use(window.markedGfmHeadingId.gfmHeadingId());
-        }
-
-        marked.setOptions({
-            gfm: true,
-            breaks: true,
-            mangle: false,
-            headerIds: false
-        });
-
+        // ─── GLOBAL STATE (defined first so they're available everywhere) ───
         let currentMode = 'teach';
         let isGenerating = false;
-        let chatStarted = false;  // tracks if the user has sent at least one message
+        let chatStarted = false;
 
-        // --- ACTUAL BACKEND API URL ---
-        let apiUrl = 'https://ai-tutor-mhua.onrender.com'; 
+        let apiUrl = 'https://ai-tutor-mhua.onrender.com';
 
-        // Conversational memory: store conversation history
-        let conversationHistory = [];  // [{role: 'user'|'assistant', content: '...'}]
+        let conversationHistory = [];
 
         let streamingInterval;
 
-        // ─── Session ID Helpers ───
+        // ─── Session ID Helpers (defined before any usage) ───
         function generateSessionId() {
             return 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
         }
@@ -448,6 +412,41 @@
             document.getElementById('session-id-display').textContent = sid.substring(0, 16) + '...';
             document.getElementById('msg-count-display').textContent = conversationHistory.length;
         }
+
+        // ─── Init on DOM ready ───
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            sessionStorage.setItem('scribe_session_id', generateSessionId());
+            updateSessionDisplay();
+
+            // Splash Screen Logic
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                if (splash) {
+                    splash.classList.add('splash-hidden');
+                }
+            }, 1800);
+        });
+
+        // ─── Library config (runs immediately, safe outside DOMContentLoaded) ───
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark',
+            securityLevel: 'loose',
+            suppressErrorRendering: true,
+            flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+        });
+
+        if (window.markedGfmHeadingId) {
+            marked.use(window.markedGfmHeadingId.gfmHeadingId());
+        }
+
+        marked.setOptions({
+            gfm: true,
+            breaks: true,
+            mangle: false,
+            headerIds: false
+        });
 
         function newChat() {
             // Clear conversation history and generate new session ID

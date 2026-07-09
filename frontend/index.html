@@ -773,8 +773,8 @@
                     }
 
                 // ─── 3Dmol.js (for molecular structures) ───
-                } else if (lang.includes('3dmol') || lang.includes('3dmol-js') || (content.includes('"type"') && content.includes('"pdb")')) {
-                    try {
+                } else if (lang.includes('3dmol') || lang.includes('3dmol-js') || (content.includes('"type"') && content.includes('"pdb"'))) {
+
                         const spec = JSON.parse(content);
                         const div = document.createElement('div');
                         div.className = 'threedmol-container';

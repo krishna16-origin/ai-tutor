@@ -741,7 +741,7 @@ async def teach(request: TeachRequest) -> AIResponse:
     return response
 
 
-@app.post("/learn-deep", response_model=AIResponse)
+@app.post("/Mariana Dive", response_model=AIResponse)
 async def learn_deep(request: DeepRequest) -> AIResponse:
     mode = "deep"
 
@@ -790,7 +790,7 @@ async def learn_deep(request: DeepRequest) -> AIResponse:
     return response
 
 
-@app.post("/connectors", response_model=AIResponse)
+@app.post("/Analyze Source", response_model=AIResponse)
 async def connectors(request: SourceRequest) -> AIResponse:
     values = {
         "level": request.level.value,
@@ -808,7 +808,7 @@ async def connectors(request: SourceRequest) -> AIResponse:
     )
 
 
-@app.post("/quiz", response_model=AIResponse)
+@app.post("/Quiz Me", response_model=AIResponse)
 async def quiz(request: QuizRequest) -> AIResponse:
     if request.use_context and request.session_id:
         # Quiz based on previous conversation context

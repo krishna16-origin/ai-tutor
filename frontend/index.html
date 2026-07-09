@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cortex AI - Learn Anything</title>
+    <title>Scribe - Learn Anything</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -44,6 +44,24 @@
         ::-webkit-scrollbar-thumb:hover { background: #acacbe; }
 
         body { background-color: #212121; color: #ececec; }
+
+        /* Splash Screen Animations */
+        #splash-screen {
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out, visibility 0.6s ease-out;
+        }
+        #splash-screen.splash-hidden {
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(1.02);
+            pointer-events: none;
+        }
+        .splash-content {
+            animation: splashPop 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes splashPop {
+            0% { transform: scale(0.85); opacity: 0; filter: blur(4px); }
+            100% { transform: scale(1); opacity: 1; filter: blur(0px); }
+        }
 
         .prose p { margin-bottom: 1rem; line-height: 1.7; }
         .prose pre { margin: 1rem 0; background-color: #0d0d0d; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; border: 1px solid #383838; }
@@ -129,7 +147,23 @@
     </style>
 </head>
 
-<body class="h-screen flex font-sans overflow-hidden text-sm md:text-base">
+<body class="h-screen flex font-sans overflow-hidden text-sm md:text-base relative">
+
+    <!-- SPLASH SCREEN / OPENING SCENE -->
+    <div id="splash-screen" class="fixed inset-0 z-[100] bg-chat-bg flex flex-col items-center justify-center">
+        <div class="splash-content flex flex-col items-center gap-5">
+            <div class="flex items-center justify-center text-white">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="w-24 h-24 animate-[spin_6s_linear_infinite]">
+                    <ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(45 12 12)"></ellipse>
+                    <ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(-45 12 12)"></ellipse>
+                    <ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(90 12 12)"></ellipse>
+                    <ellipse cx="12" cy="12" rx="10" ry="3.5"></ellipse>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-semibold tracking-tight text-white">Scribe</h1>
+        </div>
+    </div>
+
     <div id="sidebar-backdrop" class="fixed inset-0 bg-black/60 z-20 hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
 
     <aside id="sidebar" class="bg-chat-sidebar border-r border-chat-border flex flex-col shrink-0 transition-all duration-300 ease-in-out z-30 fixed md:relative h-full w-[260px] -translate-x-full md:translate-x-0 overflow-hidden">
@@ -190,8 +224,13 @@
                     <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
                 <div class="flex items-center gap-2 ml-1">
-                    <i data-lucide="brain" class="w-5 h-5 text-blue-500"></i>
-                    <span class="font-medium tracking-tight">Cortex AI</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-blue-500 animate-[spin_6s_linear_infinite]">
+                        <ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(45 12 12)"></ellipse>
+                        <ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(-45 12 12)"></ellipse>
+                        <ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(90 12 12)"></ellipse>
+                        <ellipse cx="12" cy="12" rx="10" ry="3.5"></ellipse>
+                    </svg>
+                    <span class="font-medium tracking-tight">Scribe</span>
                 </div>
             </div>
             <button onclick="location.reload()" class="p-2 hover:bg-chat-hover rounded-md text-chat-muted hover:text-chat-text md:hidden">
@@ -201,8 +240,13 @@
 
         <div id="chat-container" class="flex-1 overflow-y-auto scroll-smooth">
             <div id="empty-state" class="h-full flex flex-col items-center justify-center px-4 text-center max-w-2xl mx-auto opacity-100 transition-opacity duration-500 min-h-[60vh]">
-                <div class="w-16 h-16 bg-white text-black rounded-full flex items-center justify-center mb-6 shadow-lg">
-                    <i data-lucide="brain-circuit" class="w-8 h-8"></i>
+                <div class="mb-6 flex items-center justify-center text-blue-500">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="w-20 h-20 animate-[spin_6s_linear_infinite]">
+                        <ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(45 12 12)"></ellipse>
+                        <ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(-45 12 12)"></ellipse>
+                        <ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(90 12 12)"></ellipse>
+                        <ellipse cx="12" cy="12" rx="10" ry="3.5"></ellipse>
+                    </svg>
                 </div>
                 <h1 class="text-2xl font-semibold mb-8">How can I help you learn today?</h1>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
@@ -270,17 +314,22 @@
 
     <template id="tpl-ai-msg">
         <div class="w-full max-w-3xl mx-auto px-4 flex gap-4 mb-4">
-            <div class="w-8 h-8 rounded-full border border-chat-border flex items-center justify-center shrink-0 bg-white text-black">
-                <i data-lucide="sparkles" class="w-4 h-4"></i>
+            <div class="w-8 h-8 flex items-center justify-center shrink-0 text-blue-500 mt-1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 ai-logo-svg transition-transform duration-300">
+                    <ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(45 12 12)"></ellipse>
+                    <ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(-45 12 12)"></ellipse>
+                    <ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(90 12 12)"></ellipse>
+                    <ellipse cx="12" cy="12" rx="10" ry="3.5"></ellipse>
+                </svg>
             </div>
             <div class="flex-1 min-w-0">
                 <details class="group mb-3 border border-chat-border rounded-lg bg-[#1a1a1a] text-xs overflow-hidden hidden" id="thought-accordion">
                     <summary class="px-3 py-2 cursor-pointer flex items-center gap-2 text-chat-muted hover:text-chat-text transition-colors">
                         <i data-lucide="chevron-right" class="w-3 h-3 group-open:rotate-90 transition-transform"></i>
-                        <span class="font-mono" id="thought-status">Analyzing request...</span>
+                        <span class="font-mono" id="thought-status">Thinking...</span>
                         <i data-lucide="loader-circle" class="w-3 h-3 animate-spin ml-auto" id="thought-spinner"></i>
                     </summary>
-                    <div class="px-3 pb-3 font-mono text-chat-muted space-y-1 max-h-32 overflow-y-auto custom-scrollbar" id="thought-logs"></div>
+                    <div class="px-3 pb-3 font-mono text-chat-muted whitespace-pre-wrap break-words max-h-48 overflow-y-auto custom-scrollbar" id="thought-logs"></div>
                 </details>
                 <div class="prose prose-invert max-w-none text-chat-text prose-sm md:prose-base content-area"></div>
                 <div class="flex items-center gap-3 mt-4 mb-2 opacity-0 transition-opacity action-bar hidden">
@@ -296,6 +345,14 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
+
+            // Splash Screen Logic
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                if (splash) {
+                    splash.classList.add('splash-hidden');
+                }
+            }, 1800); // Wait 1.8 seconds before fading out for a premium feel
         });
 
        mermaid.initialize({
@@ -323,7 +380,6 @@
         // --- ADD YOUR ACTUAL BACKEND API URL HERE ---
         let apiUrl = 'https://ai-tutor-mhua.onrender.com'; 
         
-        let simulationInterval;
         let streamingInterval;
 
         const ui = {
@@ -445,36 +501,32 @@
             const accordion = aiNode.querySelector('#thought-accordion');
             const logs = aiNode.querySelector('#thought-logs');
             const status = aiNode.querySelector('#thought-status');
+            const logo = aiNode.querySelector('.ai-logo-svg');
 
-            accordion.classList.remove('hidden');
+            if (logo) logo.classList.add('animate-[spin_6s_linear_infinite]');
+
+            // Start hidden; only reveal if backend actually streams reasoning/thoughts
+            accordion.classList.add('hidden');
             accordion.open = true;
-
-            const steps = ["Initializing connection...", "Routing payload...", "Awaiting backend response..."];
-            let i = 0;
-
-            simulationInterval = setInterval(() => {
-                if (i < steps.length) {
-                    const log = document.createElement('div');
-                    log.textContent = `> ${steps[i]}`;
-                    logs.appendChild(log);
-                    status.textContent = steps[i];
-                    logs.scrollTop = logs.scrollHeight;
-                    i++;
-                }
-            }, 500);
+            status.textContent = "Thinking...";
+            logs.textContent = "";
         }
 
         function stopThinking(aiNode) {
-            clearInterval(simulationInterval);
-
             const accordion = aiNode.querySelector('#thought-accordion');
             const spinner = aiNode.querySelector('#thought-spinner');
             const status = aiNode.querySelector('#thought-status');
+            const logo = aiNode.querySelector('.ai-logo-svg');
+
+            if (logo) logo.classList.remove('animate-[spin_6s_linear_infinite]');
 
             spinner.classList.remove('animate-spin');
             spinner.setAttribute('data-lucide', 'check-circle');
-            status.textContent = "Generation complete";
-            accordion.open = false;
+            
+            if (!accordion.classList.contains('hidden')) {
+                status.textContent = "Thought process finished";
+                accordion.open = false; // Collapse to save space like Claude
+            }
 
             lucide.createIcons();
         }
@@ -839,7 +891,7 @@
 
          div.innerHTML = '';
          div.appendChild(svg);
-            }    
+            }   
 
         function copyText(btn) {
             const contentArea = btn.closest('.flex-1').querySelector('.content-area');
@@ -951,6 +1003,8 @@
 
                 const contentType = response.headers.get('content-type');
                 let fullResponse = '';
+                let reasoningResponse = '';
+                let displayMain = '';
 
                 // Handle Server-Sent Events (SSE) streaming
                 if (contentType && contentType.includes('text/event-stream')) {
@@ -968,11 +1022,15 @@
                             if (line.startsWith('data: ') && !line.includes('[DONE]')) {
                                 try {
                                     const data = JSON.parse(line.slice(6));
-                                    // Map this to your backend's streamed object property
+                                    
+                                    // Map to JSON reasoning_content (e.g. DeepSeek APIs)
+                                    const rToken = data.choices?.[0]?.delta?.reasoning_content || '';
+                                    if (rToken) reasoningResponse += rToken;
+
+                                    // Map to JSON message content
                                     const textToken = data.choices?.[0]?.delta?.content || data.text || data.message || '';
                                     fullResponse += textToken;
                                 } catch (e) {
-                                    // Fallback to raw line reading if not JSON format
                                     fullResponse += line.slice(6).replace(/^"|"$/g, '');
                                 }
                             } else if (line.trim() && !line.startsWith('data:') && !line.startsWith(':')) {
@@ -980,39 +1038,84 @@
                             }
                         }
                         
-                        aiNode.setAttribute('data-raw', fullResponse);
-                        contentArea.innerHTML = processTextWithMath(fullResponse) + '<span class="blinking-cursor"></span>';
+                        displayMain = fullResponse;
+                        let displayThoughts = reasoningResponse;
+
+                        // Fallback: If backend sends thoughts via text tags <think>...</think>
+                        if (!reasoningResponse && fullResponse.includes('<think>')) {
+                            const thinkStart = fullResponse.indexOf('<think>');
+                            const thinkEnd = fullResponse.indexOf('</think>');
+                            
+                            if (thinkEnd !== -1) {
+                                displayThoughts = fullResponse.substring(thinkStart + 7, thinkEnd);
+                                displayMain = fullResponse.substring(0, thinkStart) + fullResponse.substring(thinkEnd + 8);
+                            } else {
+                                displayThoughts = fullResponse.substring(thinkStart + 7);
+                                displayMain = fullResponse.substring(0, thinkStart);
+                            }
+                        }
+
+                        // Update Thought Box
+                        const logs = aiNode.querySelector('#thought-logs');
+                        const accordion = aiNode.querySelector('#thought-accordion');
+                        if (displayThoughts.trim()) {
+                            accordion.classList.remove('hidden');
+                            logs.textContent = displayThoughts.trimStart();
+                            logs.scrollTop = logs.scrollHeight;
+                        }
+
+                        aiNode.setAttribute('data-raw', displayMain);
+                        contentArea.innerHTML = processTextWithMath(displayMain) + '<span class="blinking-cursor"></span>';
                         scrollToBottom();
                     }
 
-                    finalizeResponse();
+                    finalizeResponse(displayMain);
                 
                 } else {
-                    // Handle standard non-streaming JSON or text response
                     const data = await response.json().catch(async () => ({ text: await response.text() }));
                     
-                    // Map this to your backend's static object property
                     fullResponse = data.choices?.[0]?.message?.content || data.reply || data.response || data.answer || data.message || data.text || JSON.stringify(data);
+                    reasoningResponse = data.choices?.[0]?.message?.reasoning_content || '';
                     
-                    aiNode.setAttribute('data-raw', fullResponse);
+                    displayMain = fullResponse;
+                    let displayThoughts = reasoningResponse;
+
+                    // Fallback: If backend sends thoughts via text tags <think>...</think>
+                    if (!reasoningResponse && fullResponse.includes('<think>')) {
+                        const thinkStart = fullResponse.indexOf('<think>');
+                        const thinkEnd = fullResponse.indexOf('</think>');
+                        
+                        if (thinkEnd !== -1) {
+                            displayThoughts = fullResponse.substring(thinkStart + 7, thinkEnd);
+                            displayMain = fullResponse.substring(0, thinkStart) + fullResponse.substring(thinkEnd + 8);
+                        }
+                    }
+
+                    const logs = aiNode.querySelector('#thought-logs');
+                    const accordion = aiNode.querySelector('#thought-accordion');
+                    if (displayThoughts.trim()) {
+                        accordion.classList.remove('hidden');
+                        logs.textContent = displayThoughts.trimStart();
+                    }
+
+                    aiNode.setAttribute('data-raw', displayMain);
                     
-                    // Simulate streaming effect locally so the UI still looks cool
                     let currentIdx = 0;
                     streamingInterval = setInterval(() => {
-                        if (currentIdx <= fullResponse.length) {
-                            const chunk = fullResponse.substring(0, currentIdx);
+                        if (currentIdx <= displayMain.length) {
+                            const chunk = displayMain.substring(0, currentIdx);
                             contentArea.innerHTML = processTextWithMath(chunk) + '<span class="blinking-cursor"></span>';
                             scrollToBottom();
                             currentIdx += 4;
                         } else {
                             clearInterval(streamingInterval);
-                            finalizeResponse();
+                            finalizeResponse(displayMain);
                         }
                     }, 15);
                 }
 
-                function finalizeResponse() {
-                    contentArea.innerHTML = processTextWithMath(fullResponse);
+                function finalizeResponse(finalText) {
+                    contentArea.innerHTML = processTextWithMath(finalText);
                     renderVisuals(aiNode);
                     isGenerating = false;
                     ui.submitBtn.disabled = false;

@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Literal, Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_groq import ChatGroq
@@ -29,6 +29,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ─── Conversational Memory Store (session-based) ───
+conversation_store: Dict[str, List[BaseMessage]] = {}
 
 
 class Level(str, Enum):
@@ -62,6 +65,8 @@ class TeachRequest(BaseModel):
     language: str = "English"
     connected_source: Optional[str] = None
     history: List[ChatTurn] = Field(default_factory=list)
+    session_id: str = ""  # for conversational memory
+    new_session: bool = False  # True = fresh start, False = continue existing
 
 
 class QuizRequest(BaseModel):
@@ -70,6 +75,8 @@ class QuizRequest(BaseModel):
     provider: Provider = Provider.auto
     language: str = "English"
     num_questions: int = Field(default=10, ge=1, le=50)
+    session_id: str = ""
+    use_context: bool = False  # True = quiz about previous conversation, False = standalone
 
 
 class SourceRequest(BaseModel):
@@ -87,6 +94,18 @@ class SourceRequest(BaseModel):
     level: Level = Level.student
     provider: Provider = Provider.auto
     language: str = "English"
+
+
+class DeepRequest(BaseModel):
+    topic: str = Field(..., min_length=1)
+    question: Optional[str] = None
+    level: Level = Level.mariana
+    provider: Provider = Provider.glm
+    language: str = "English"
+    connected_source: Optional[str] = None
+    history: List[ChatTurn] = Field(default_factory=list)
+    session_id: str = ""
+    new_session: bool = False
 
 
 class AIResponse(BaseModel):
@@ -124,6 +143,71 @@ def glm_llm() -> ChatOpenAI:
         max_tokens=int(getenv("MAX_TOKENS", "8192")),
     )
 
+
+# ─── Conversational Memory Helpers ───
+
+def get_session_messages(session_id: str) -> List[BaseMessage]:
+    """Retrieve stored messages for a session, or empty list for new session."""
+    if not session_id:
+        return []
+    return conversation_store.get(session_id, [])
+
+
+def save_session_messages(session_id: str, messages: List[BaseMessage]):
+    """Persist conversation history for a session."""
+    if session_id:
+        conversation_store[session_id] = messages
+
+
+def clear_session(session_id: str):
+    """Clear conversation memory for a session."""
+    if session_id and session_id in conversation_store:
+        del conversation_store[session_id]
+
+
+def build_messages_with_context(
+    history: List[ChatTurn],
+    session_id: str,
+    new_session: bool,
+    topic: str,
+    mode: str = "teach",
+) -> List[BaseMessage]:
+    """
+    Build message list combining:
+    - Fresh context when new_session=True (start clean)
+    - Previous conversation memory when new_session=False (continue chat)
+    """
+    messages: List[BaseMessage] = []
+
+    if new_session or not session_id:
+        # Fresh chat: only use the explicit history from the request
+        for turn in history:
+            if turn.role == "user":
+                messages.append(HumanMessage(content=turn.content))
+            else:
+                messages.append(AIMessage(content=turn.content))
+    else:
+        # Continue chat: load stored session memory + new history
+        stored = get_session_messages(session_id)
+        messages.extend(stored)
+
+        # Add any new explicit history turns
+        for turn in history:
+            messages.append(HumanMessage(content=turn.content))
+
+    return messages
+
+
+def update_session(session_id: str, user_msg: str, ai_msg: str):
+    """Append user and AI messages to session store."""
+    if session_id:
+        if session_id not in conversation_store:
+            conversation_store[session_id] = []
+        conversation_store[session_id].append(HumanMessage(content=user_msg))
+        conversation_store[session_id].append(AIMessage(content=ai_msg))
+
+
+# ─── Updated System Prompt (Visual Libraries: plotly, pyvista/VTK, Three.js, 3Dmol.js, Manim) ───
 
 SYSTEM_PROMPT = """
 You are DeepLearn AI, a backend-only adaptive education engine.
@@ -168,7 +252,6 @@ Supported domains include (but are not limited to):
 
 • Backend only.
 • Never generate frontend code.
-• Never claim that graphs, animations, simulations, or 3D models were rendered.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CONTEXT AWARENESS
@@ -185,7 +268,7 @@ Include:
 - Formula derivations
 - Proofs
 - Graphs
-- Plotly
+- Plotly visualizations
 - Geometry diagrams
 - Worked examples
 
@@ -250,44 +333,50 @@ VISUAL INTELLIGENCE
 
 Generate visual specifications ONLY if they genuinely improve understanding.
 
-Supported outputs:
+Supported outputs (MUST use these libraries):
 
 • Mermaid
 • MathJax
 • KaTeX
-• Plotly JSON
+• Plotly JSON (for data visualizations, graphs, charts)
+• PyVista / VTK JSON (for 3D scientific visualizations)
+• Three.js Scene Specification (for 3D spatial understanding)
+• 3Dmol.js Specification (for molecular structures, chemistry)
+• Manim Animation Script (for mathematical animations)
 • SVG Description
-• D3 Dataset
-• Three.js Scene Specification
-• Simulation Pseudocode
 
 Examples
 
 Calculus
-→ Function Graph
-→ Tangent Animation
-→ Derivative Visualization
+→ Function Graph (Plotly)
+→ Tangent Animation (Manim)
+→ Derivative Visualization (Plotly)
 
 Physics
-→ Force Diagram
-→ Motion Animation
-→ Velocity Graph
+→ Force Diagram (SVG/Mermaid)
+→ Motion Animation (Manim)
+→ Velocity Graph (Plotly)
 
 Botany
 → Plant Cell SVG
-→ Photosynthesis Pathway
-→ Xylem & Phloem Diagram
+→ Photosynthesis Pathway (Mermaid)
+→ Xylem & Phloem Diagram (SVG)
 
 Chemistry
-→ Molecular Model
-→ Reaction Energy Graph
-→ Orbital Diagram
+→ Molecular Model (3Dmol.js)
+→ Reaction Energy Graph (Plotly)
+→ Orbital Diagram (PyVista)
 
 Computer Science
-→ Flowchart
-→ Tree Diagram
-→ Network Topology
-→ Algorithm Animation
+→ Flowchart (Mermaid)
+→ Tree Diagram (Mermaid)
+→ Network Topology (SVG)
+→ Algorithm Animation (Manim)
+
+Astronomy
+→ Orbital Mechanics (PyVista 3D)
+→ Planetary System (Three.js)
+→ Stellar Evolution (Plotly)
 
 Never generate:
 - Plotly graphs that don't make sense.
@@ -342,23 +431,24 @@ Possible sections:
 13. Mermaid Diagram
 14. MathJax Equations
 15. Plotly Graph Specification (if meaningful)
-16. SVG Diagram Specification
-17. D3 Data Specification
+16. PyVista/VTK 3D Visualization (for spatial/scientific topics)
+17. SVG Diagram Specification
 18. Three.js Scene Specification (only if spatial understanding benefits)
-19. Interactive Simulation Specification
-20. Animation Specification
-21. Real World Applications
-22. Historical Background (if relevant)
-23. Scientists Behind the Discovery (if relevant)
-24. Modern Research (if relevant)
-25. Common Mistakes
-26. Exam Perspective
-27. Interview Questions (if relevant)
-28. Practice Problems
-29. Project Ideas (if relevant)
-30. Further Reading
-31. Summary
-32. Quiz
+19. 3Dmol.js Molecular Specification (for chemistry/molecular topics)
+20. Manim Animation Script (for mathematical animations)
+21. Interactive Simulation Specification
+22. Real World Applications
+23. Historical Background (if relevant)
+24. Scientists Behind the Discovery (if relevant)
+25. Modern Research (if relevant)
+26. Common Mistakes
+27. Exam Perspective
+28. Interview Questions (if relevant)
+29. Practice Problems
+30. Project Ideas (if relevant)
+31. Further Reading
+32. Summary
+33. Quiz
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 VISUAL RELEVANCE RULES
@@ -369,48 +459,48 @@ Every visualization must directly correspond to the user's topic.
 Examples:
 
 Calculus
-→ Function plots
-→ Tangent lines
-→ Derivative graph
-→ Integral area visualization
+→ Function plots (Plotly)
+→ Tangent lines (Manim)
+→ Derivative graph (Plotly)
+→ Integral area visualization (Manim)
 
 Linear Algebra
-→ Matrix transformation
-→ Vector spaces
-→ Eigenvector visualization
+→ Matrix transformation (Plotly)
+→ Vector spaces (PyVista)
+→ Eigenvector visualization (Plotly)
 
 Mechanics
-→ Free-body diagrams
-→ Motion trajectories
-→ Velocity & acceleration graphs
+→ Free-body diagrams (Mermaid)
+→ Motion trajectories (Plotly)
+→ Velocity & acceleration graphs (Plotly)
 
 Electric Circuits
-→ Circuit schematic
-→ Current flow
-→ Voltage graph
+→ Circuit schematic (Mermaid)
+→ Current flow (SVG)
+→ Voltage graph (Plotly)
 
 Botany
-→ Plant anatomy
-→ Cell structure
-→ Tissue organization
-→ Photosynthesis pathway
+→ Plant anatomy (SVG)
+→ Cell structure (SVG)
+→ Tissue organization (Mermaid)
+→ Photosynthesis pathway (Mermaid)
 
 Chemistry
-→ Molecular geometry
-→ Reaction coordinate diagram
-→ Electron orbitals
+→ Molecular geometry (3Dmol.js)
+→ Reaction coordinate diagram (Plotly)
+→ Electron orbitals (PyVista)
 
 Astronomy
-→ Orbital mechanics
-→ Planetary system
-→ Stellar evolution
+→ Orbital mechanics (PyVista)
+→ Planetary system (Three.js)
+→ Stellar evolution (Plotly)
 
 Computer Science
-→ Flowcharts
-→ AST
-→ State machine
-→ Network topology
-→ Algorithm execution
+→ Flowcharts (Mermaid)
+→ AST (Mermaid)
+→ State machine (Mermaid)
+→ Network topology (SVG)
+→ Algorithm execution (Manim)
 
 
 FINAL RULE
@@ -438,7 +528,10 @@ Question: {question}
 Connected source:
 {connected_source}
 
+Mode: {mode}
+
 Teach this topic using the required structure.
+If this is a continuation of a previous conversation, reference the prior discussion context.
 """,
         ),
     ]
@@ -447,6 +540,7 @@ Teach this topic using the required structure.
 QUIZ_PROMPT = ChatPromptTemplate.from_messages(
     [
         ("system", SYSTEM_PROMPT),
+        MessagesPlaceholder("context_messages"),
         (
             "human",
             """
@@ -454,6 +548,8 @@ Create a quiz for:
 
 Topic: {topic}
 Number of questions: {num_questions}
+
+{quiz_context}
 
 Include:
 - mixed difficulty questions
@@ -599,18 +695,34 @@ def health() -> Dict[str, Any]:
 
 @app.post("/teach", response_model=AIResponse)
 async def teach(request: TeachRequest) -> AIResponse:
+    mode = "teach"
+
+    # Build conversation context using memory store
+    messages = build_messages_with_context(
+        history=request.history,
+        session_id=request.session_id,
+        new_session=request.new_session,
+        topic=request.topic,
+        mode=mode,
+    )
+
+    # If no messages at all, use empty placeholder
+    if not messages:
+        messages = convert_history(request.history)
+
     values = {
         "level": request.level.value,
         "language": request.language,
-        "history": convert_history(request.history),
+        "history": messages,
         "topic": request.topic,
         "question": request.question or "Teach this topic comprehensively.",
         "connected_source": request.connected_source or "None",
+        "mode": mode,
     }
 
     routing_text = f"{request.topic}\n{request.question or ''}\n{request.connected_source or ''}"
 
-    return await run_routed(
+    response = await run_routed(
         request.provider,
         TEACH_PROMPT,
         values,
@@ -618,15 +730,64 @@ async def teach(request: TeachRequest) -> AIResponse:
         request.level,
     )
 
+    # Save to conversational memory
+    if request.session_id:
+        update_session(
+            request.session_id,
+            request.question or request.topic,
+            response.answer,
+        )
+
+    return response
+
 
 @app.post("/learn-deep", response_model=AIResponse)
-async def learn_deep(request: TeachRequest) -> AIResponse:
+async def learn_deep(request: DeepRequest) -> AIResponse:
+    mode = "deep"
+
     request.level = Level.mariana
     request.question = request.question or "Teach this topic in maximum possible depth."
     if request.provider == Provider.auto:
         request.provider = Provider.glm
 
-    return await teach(request)
+    # Build conversation context using memory store
+    messages = build_messages_with_context(
+        history=request.history,
+        session_id=request.session_id,
+        new_session=request.new_session,
+        topic=request.topic,
+        mode=mode,
+    )
+
+    values = {
+        "level": request.level.value,
+        "language": request.language,
+        "history": messages,
+        "topic": request.topic,
+        "question": request.question or "Teach this topic comprehensively.",
+        "connected_source": request.connected_source or "None",
+        "mode": mode,
+    }
+
+    routing_text = f"{request.topic}\n{request.question or ''}\n{request.connected_source or ''}"
+
+    response = await run_routed(
+        request.provider,
+        TEACH_PROMPT,
+        values,
+        routing_text,
+        request.level,
+    )
+
+    # Save to conversational memory
+    if request.session_id:
+        update_session(
+            request.session_id,
+            request.question or request.topic,
+            response.answer,
+        )
+
+    return response
 
 
 @app.post("/connectors", response_model=AIResponse)
@@ -649,11 +810,22 @@ async def connectors(request: SourceRequest) -> AIResponse:
 
 @app.post("/quiz", response_model=AIResponse)
 async def quiz(request: QuizRequest) -> AIResponse:
+    if request.use_context and request.session_id:
+        # Quiz based on previous conversation context
+        stored_messages = get_session_messages(request.session_id)
+        context_str = "Based on the following previous conversation:\n\n" + "\n".join(
+            [f"{'User' if isinstance(m, HumanMessage) else 'Assistant'}: {m.content[:500]}" for m in stored_messages[-10:]]
+        ) if stored_messages else ""
+    else:
+        context_str = "Generate a standalone quiz about this topic from scratch."
+
     values = {
         "level": request.level.value,
         "language": request.language,
         "topic": request.topic,
         "num_questions": request.num_questions,
+        "context_messages": stored_messages if request.use_context else [],
+        "quiz_context": context_str,
     }
 
     return await run_routed(
@@ -663,6 +835,29 @@ async def quiz(request: QuizRequest) -> AIResponse:
         request.topic,
         request.level,
     )
+
+
+@app.post("/clear-session", response_model=Dict[str, str])
+async def clear_session_endpoint(data: Dict[str, str]):
+    """Clear conversational memory for a given session."""
+    session_id = data.get("session_id", "")
+    if session_id:
+        clear_session(session_id)
+        return {"status": "ok", "message": f"Session {session_id} cleared"}
+    return {"status": "ok", "message": "No session to clear"}
+
+
+@app.get("/session-info")
+async def session_info(session_id: str = "") -> Dict[str, Any]:
+    """Return info about a session's conversation memory."""
+    if session_id and session_id in conversation_store:
+        msgs = conversation_store[session_id]
+        return {
+            "session_id": session_id,
+            "message_count": len(msgs),
+            "topics": [m.content[:80] for m in msgs[:20]],
+        }
+    return {"session_id": session_id, "message_count": 0, "topics": []}
 
 
 if __name__ == "__main__":

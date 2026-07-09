@@ -6,3 +6,8 @@ langchain
 langchain-core
 langchain-groq
 langchain-openai
+plotly
+pyvista
+vtk
+3dmol
+manim

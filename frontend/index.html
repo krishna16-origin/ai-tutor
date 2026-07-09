@@ -12,6 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://3dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
 
@@ -92,7 +93,7 @@
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
 
-        .mermaid-container, .plotly-container, .threejs-container, .quiz-container {
+        .mermaid-container, .plotly-container, .threejs-container, .quiz-container, .threedmol-container, .pyvista-container, .manim-container {
             margin: 1.5rem 0;
             background: #1a1a1a;
             border: 1px solid #383838;
@@ -102,7 +103,10 @@
             width: 100%;
         }
         .mermaid-container { display: flex; justify-content: center; }
-        .threejs-container canvas { width: 100% !important; height: 300px !important; }
+        .threejs-container canvas, .threedmol-container canvas { width: 100% !important; height: 400px !important; }
+        .plotly-container { min-height: 300px; }
+        .pyvista-container iframe { width: 100%; height: 400px; border: none; border-radius: 0.5rem; }
+        .manim-container video { width: 100%; max-height: 400px; border-radius: 0.5rem; }
 
         .quiz-container { border: 2px solid #3b82f644; border-radius: 1rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); }
         .quiz-question-box { background: #262626; border: 1px solid #383838; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1.5rem; transition: transform 0.2s; }
@@ -138,6 +142,24 @@
         .quiz-submit-btn:hover { background: #2563eb; transform: translateY(-1px); }
         .quiz-submit-btn:disabled { background: #4b5563; cursor: not-allowed; transform: none; }
 
+        /* Section indicator styles */
+        .section-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .section-badge.teach { background: #3b82f622; color: #60a5fa; border: 1px solid #3b82f644; }
+        .section-badge.deep { background: #8b5cf622; color: #a78bfa; border: 1px solid #8b5cf644; }
+        .section-badge.connectors { background: #f59e0b22; color: #fbbf24; border: 1px solid #f59e0b44; }
+        .section-badge.quiz { background: #10b98122; color: #34d399; border: 1px solid #10b98144; }
+
         @media (min-width: 768px) {
             .sidebar-desktop-closed { width: 0 !important; border-right-width: 0 !important; padding-left: 0 !important; padding-right: 0 !important; }
         }
@@ -168,7 +190,7 @@
 
     <aside id="sidebar" class="bg-chat-sidebar border-r border-chat-border flex flex-col shrink-0 transition-all duration-300 ease-in-out z-30 fixed md:relative h-full w-[260px] -translate-x-full md:translate-x-0 overflow-hidden">
         <div class="p-3 flex items-center justify-between">
-            <button onclick="location.reload()" class="flex-1 flex items-center gap-2 px-3 py-2 text-sm text-chat-text hover:bg-chat-hover rounded-lg transition-colors border border-chat-border group whitespace-nowrap">
+            <button onclick="newChat()" class="flex-1 flex items-center gap-2 px-3 py-2 text-sm text-chat-text hover:bg-chat-hover rounded-lg transition-colors border border-chat-border group whitespace-nowrap">
                 <i data-lucide="plus" class="w-4 h-4 text-chat-muted group-hover:text-chat-text shrink-0"></i>
                 New lesson
             </button>
@@ -207,6 +229,23 @@
                     <input type="text" id="setting-language" value="English" class="w-full bg-chat-bg border border-chat-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-500">
                 </div>
             </div>
+
+            <div class="space-y-3">
+                <h3 class="text-xs font-semibold text-chat-muted uppercase tracking-wider px-2">Session</h3>
+                <div class="text-xs text-chat-muted px-2">
+                    <div class="flex items-center justify-between mb-1">
+                        <span>Session ID:</span>
+                        <code id="session-id-display" class="text-[10px] text-blue-400 bg-chat-bg px-1 py-0.5 rounded">-</code>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span>Messages:</span>
+                        <span id="msg-count-display" class="text-chat-text">0</span>
+                    </div>
+                </div>
+                <button onclick="clearSessionMemory()" class="w-full px-3 py-1.5 text-xs text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/10 transition-colors">
+                    Clear Session Memory
+                </button>
+            </div>
         </div>
 
         <div class="p-3 border-t border-chat-border w-[260px]">
@@ -233,7 +272,7 @@
                     <span class="font-medium tracking-tight">Scribe</span>
                 </div>
             </div>
-            <button onclick="location.reload()" class="p-2 hover:bg-chat-hover rounded-md text-chat-muted hover:text-chat-text md:hidden">
+            <button onclick="newChat()" class="p-2 hover:bg-chat-hover rounded-md text-chat-muted hover:text-chat-text md:hidden">
                 <i data-lucide="plus" class="w-5 h-5"></i>
             </button>
         </header>
@@ -265,6 +304,7 @@
 
         <div class="w-full bg-chat-bg pt-2 pb-6 px-4 md:px-8 shrink-0 z-10 border-t border-chat-border md:border-transparent">
             <div class="max-w-3xl mx-auto relative">
+                <!-- Section mode buttons above input -->
                 <div class="flex items-center gap-2 mb-3 overflow-x-auto pb-1 hide-scrollbar">
                     <button onclick="setMode('teach')" id="mode-teach" class="mode-btn px-3 py-1.5 rounded-full text-xs font-medium bg-chat-input text-chat-text border border-chat-border hover:bg-gray-700 transition-colors flex items-center gap-1.5 whitespace-nowrap">
                         <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i> Teach
@@ -293,6 +333,10 @@
                     <div id="opt-num" class="hidden flex items-center gap-2 text-xs text-chat-muted">
                         <label>Questions:</label>
                         <input type="number" id="input-num" min="1" max="20" value="5" class="bg-chat-input border border-chat-border rounded px-2 py-1 w-16 focus:outline-none text-chat-text">
+                    </div>
+                    <div id="opt-quiz-context" class="hidden flex items-center gap-2 text-xs">
+                        <label class="text-chat-muted">Quiz from conversation?</label>
+                        <input type="checkbox" id="input-quiz-context" class="accent-blue-500">
                     </div>
                 </div>
 
@@ -346,13 +390,17 @@
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
 
+            // Generate a session ID for conversational memory
+            sessionStorage.setItem('scribe_session_id', generateSessionId());
+            updateSessionDisplay();
+
             // Splash Screen Logic
             setTimeout(() => {
                 const splash = document.getElementById('splash-screen');
                 if (splash) {
                     splash.classList.add('splash-hidden');
                 }
-            }, 1800); // Wait 1.8 seconds before fading out for a premium feel
+            }, 1800);
         });
 
        mermaid.initialize({
@@ -376,11 +424,82 @@
 
         let currentMode = 'teach';
         let isGenerating = false;
-        
-        // --- ADD YOUR ACTUAL BACKEND API URL HERE ---
+        let chatStarted = false;  // tracks if the user has sent at least one message
+
+        // --- ACTUAL BACKEND API URL ---
         let apiUrl = 'https://ai-tutor-mhua.onrender.com'; 
-        
+
+        // Conversational memory: store conversation history
+        let conversationHistory = [];  // [{role: 'user'|'assistant', content: '...'}]
+
         let streamingInterval;
+
+        // ─── Session ID Helpers ───
+        function generateSessionId() {
+            return 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+        }
+
+        function getSessionId() {
+            return sessionStorage.getItem('scribe_session_id') || generateSessionId();
+        }
+
+        function updateSessionDisplay() {
+            const sid = getSessionId();
+            document.getElementById('session-id-display').textContent = sid.substring(0, 16) + '...';
+            document.getElementById('msg-count-display').textContent = conversationHistory.length;
+        }
+
+        function newChat() {
+            // Clear conversation history and generate new session ID
+            conversationHistory = [];
+            chatStarted = false;
+            sessionStorage.removeItem('scribe_session_id');
+            sessionStorage.setItem('scribe_session_id', generateSessionId());
+            
+            // Clear chat transcript visually
+            document.getElementById('chat-transcript').innerHTML = '';
+            document.getElementById('empty-state').classList.remove('hidden');
+            document.getElementById('empty-state').classList.remove('md:hidden');
+            
+            updateSessionDisplay();
+            setMode('teach');
+            
+            // Notify backend to clear session
+            try {
+                fetch((apiUrl || 'http://localhost:3000') + '/clear-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: getSessionId() })
+                }).catch(() => {});
+            } catch(e) {}
+        }
+
+        function clearSessionMemory() {
+            conversationHistory = [];
+            chatStarted = false;
+            sessionStorage.removeItem('scribe_session_id');
+            sessionStorage.setItem('scribe_session_id', generateSessionId());
+            updateSessionDisplay();
+            
+            try {
+                fetch((apiUrl || 'http://localhost:3000') + '/clear-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: getSessionId() })
+                }).catch(() => {});
+            } catch(e) {}
+        }
+
+        // ─── Conversational Memory Management ───
+
+        function addToConversationHistory(role, content) {
+            conversationHistory.push({ role, content });
+            updateSessionDisplay();
+        }
+
+        function getConversationHistory() {
+            return conversationHistory.map(t => ({ role: t.role, content: t.content }));
+        }
 
         const ui = {
             input: document.getElementById('main-input'),
@@ -390,7 +509,8 @@
             emptyState: document.getElementById('empty-state'),
             contextOptions: document.getElementById('context-options'),
             optTask: document.getElementById('opt-task'),
-            optNum: document.getElementById('opt-num')
+            optNum: document.getElementById('opt-num'),
+            optQuizContext: document.getElementById('opt-quiz-context')
         };
 
         function toggleSidebar() {
@@ -444,17 +564,29 @@
             ui.contextOptions.classList.add('hidden');
             ui.optTask.classList.add('hidden');
             ui.optNum.classList.add('hidden');
+            ui.optQuizContext.classList.add('hidden');
 
-            if (mode === 'teach') ui.input.placeholder = "Enter a topic to learn...";
-            else if (mode === 'deep') ui.input.placeholder = "Enter advanced topic for Mariana Mode...";
-            else if (mode === 'connectors') {
-                ui.input.placeholder = "Paste source text here...";
+            if (mode === 'teach') {
+                ui.input.placeholder = chatStarted 
+                    ? "Ask a follow-up question or enter a new topic..." 
+                    : "Enter a topic to learn...";
+            } else if (mode === 'deep') {
+                ui.input.placeholder = chatStarted
+                    ? "Dive deeper into any topic..."
+                    : "Enter advanced topic for Mariana Mode...";
+            } else if (mode === 'connectors') {
+                ui.input.placeholder = chatStarted
+                    ? "Paste source text for analysis..."
+                    : "Paste source text here...";
                 ui.contextOptions.classList.remove('hidden');
                 ui.optTask.classList.remove('hidden');
             } else if (mode === 'quiz') {
-                ui.input.placeholder = "Enter topic for quiz...";
+                ui.input.placeholder = chatStarted
+                    ? "Quiz me on what we discussed..."
+                    : "Enter topic for quiz...";
                 ui.contextOptions.classList.remove('hidden');
                 ui.optNum.classList.remove('hidden');
+                ui.optQuizContext.classList.remove('hidden');
             }
 
             ui.input.focus();
@@ -505,7 +637,6 @@
 
             if (logo) logo.classList.add('animate-[spin_6s_linear_infinite]');
 
-            // Start hidden; only reveal if backend actually streams reasoning/thoughts
             accordion.classList.add('hidden');
             accordion.open = true;
             status.textContent = "Thinking...";
@@ -525,7 +656,7 @@
             
             if (!accordion.classList.contains('hidden')) {
                 status.textContent = "Thought process finished";
-                accordion.open = false; // Collapse to save space like Claude
+                accordion.open = false;
             }
 
             lucide.createIcons();
@@ -579,6 +710,8 @@
 
     return html;
    }
+
+        // ─── RENDER VISUALS: plotly, Three.js, 3Dmol.js, PyVista, Manim ───
         function renderVisuals(container) {
             const blocks = container.querySelectorAll('pre code');
 
@@ -590,6 +723,7 @@
                 const isMermaidLang = lang.includes('language-mermaid') || lang.includes('mermaid');
                 const hasMermaidKeyword = /^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gantt|pie|gitGraph|journey|C4Context|mindmap|timeline|quadrantChart|xychart-beta)\b/i.test(content);
 
+                // ─── Mermaid ───
                 if (isMermaidLang || hasMermaidKeyword) {
                     const id = `mermaid_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
                     const div = document.createElement('div');
@@ -601,20 +735,21 @@
                         try {
                             let cleanContent = content.replace(/^```mermaid\s*/i, '').replace(/```$/i, '').trim();
 
-                         // Sanitize node labels: Mermaid chokes on raw ( ) inside [...] "..." labels
-                           cleanContent = cleanContent.replace(/\[([^\]]*)\]/g, (match, label) => {
-                           if (label.startsWith('"') && label.endsWith('"')) return match;
-                           const safeLabel = label.replace(/\(/g, '（').replace(/\)/g, '）');
-                           return `["${safeLabel.replace(/"/g, "'")}"]`;
-                           });
+                            cleanContent = cleanContent.replace(/\[([^\]]*)\]/g, (match, label) => {
+                                if (label.startsWith('"') && label.endsWith('"')) return match;
+                                const safeLabel = label.replace(/\(/g, '（').replace(/\)/g, '）');
+                                return `["${safeLabel.replace(/"/g, "'")}"]`;
+                            });
 
-                           const { svg } = await mermaid.render(`${id}_svg`, cleanContent);
+                            const { svg } = await mermaid.render(`${id}_svg`, cleanContent);
                             div.innerHTML = svg;
                         } catch (err) {
                             console.error("Mermaid Render Error:", err);
                             div.innerHTML = `<div class="text-xs text-red-500 p-2 bg-red-900/20 rounded font-mono overflow-auto max-h-32">Mermaid Syntax Error:<br>${err.message}</div>`;
                         }
                     }, 100);
+
+                // ─── Plotly (MUST RENDER) ───
                 } else if (lang.includes('plotly') || (content.includes('"data"') && content.includes('"layout"'))) {
                     try {
                         const data = JSON.parse(content);
@@ -625,17 +760,57 @@
                     } catch (e) {
                         if (lang.includes('plotly')) pre.innerHTML = `<div class="text-xs text-red-500 font-mono">Plotly Data Error</div>`;
                     }
+
+                // ─── Three.js ───
                 } else if (lang.includes('threejs') || (content.includes('"type"') && content.includes('"color"') && content.includes('"objects"'))) {
                     try {
-                       const spec = JSON.parse(content);
-                       const div = document.createElement('div');
+                        const spec = JSON.parse(content);
+                        const div = document.createElement('div');
                         div.className = 'threejs-container';
-                         pre.replaceWith(div);
+                        pre.replaceWith(div);
                         initThreeJS(div, spec);
-                       } catch (e) {
-                         pre.innerHTML = `<div class="text-xs text-red-500 font-mono">3D Spec Error: ${e.message}</div>`;
-                           }
-                    } else if (lang.includes('svg-spec') || (content.trim().startsWith('{') && content.includes('"elements"'))) {
+                    } catch (e) {
+                        pre.innerHTML = `<div class="text-xs text-red-500 font-mono">3D Spec Error: ${e.message}</div>`;
+                    }
+
+                // ─── 3Dmol.js (for molecular structures) ───
+                } else if (lang.includes('3dmol') || lang.includes('3dmol-js') || (content.includes('"type"') && content.includes('"pdb")')) {
+                    try {
+                        const spec = JSON.parse(content);
+                        const div = document.createElement('div');
+                        div.className = 'threedmol-container';
+                        pre.replaceWith(div);
+                        initThreeDmol(div, spec);
+                    } catch (e) {
+                        pre.innerHTML = `<div class="text-xs text-red-500 font-mono">3Dmol.js Error: ${e.message}</div>`;
+                    }
+
+                // ─── PyVista / VTK ───
+                } else if (lang.includes('pyvista') || lang.includes('vtk')) {
+                    try {
+                        const spec = JSON.parse(content);
+                        const div = document.createElement('div');
+                        div.className = 'pyvista-container';
+                        pre.replaceWith(div);
+                        initPyVista(div, spec);
+                    } catch (e) {
+                        pre.innerHTML = `<div class="text-xs text-red-500 font-mono">PyVista Error: ${e.message}</div>`;
+                    }
+
+                // ─── Manim Animation ───
+                } else if (lang.includes('manim')) {
+                    try {
+                        const spec = JSON.parse(content);
+                        const div = document.createElement('div');
+                        div.className = 'manim-container';
+                        pre.replaceWith(div);
+                        initManim(div, spec);
+                    } catch (e) {
+                        pre.innerHTML = `<div class="text-xs text-red-500 font-mono">Manim Error: ${e.message}</div>`;
+                    }
+
+                // ─── SVG Spec ───
+                } else if (lang.includes('svg-spec') || (content.trim().startsWith('{') && content.includes('"elements"'))) {
                     try {
                         const spec = JSON.parse(content);
                         const div = document.createElement('div');
@@ -649,9 +824,10 @@
             });
 
             renderInteractiveQuiz(container);
-             }
+        }
 
-         function renderInteractiveQuiz(container) {
+        // ─── Interactive Quiz Rendering ───
+        function renderInteractiveQuiz(container) {
             const rawText = container.getAttribute('data-raw') || "";
             const quizStart = rawText.search(/(?:#+\s*|\*\*?)(?:Quiz|Practice Problems|Test Your Knowledge|Knowledge Check|Pop Quiz)(?:\*\*?)?/i);
 
@@ -734,10 +910,11 @@
             lucide.createIcons();
         }
 
+        // ─── Three.js Renderer ───
         function initThreeJS(div, spec) {
         div.innerHTML = '';
         const width = div.clientWidth || 600;
-        const height = 300;
+        const height = 400;
 
         const scene = new THREE.Scene();
         scene.background = null;
@@ -824,6 +1001,322 @@
         observer.observe(document.body, { childList: true, subtree: true });
           }
 
+        // ─── 3Dmol.js Renderer ───
+        function initThreeDmol(div, spec) {
+            div.innerHTML = '';
+            div.style.position = 'relative';
+            div.style.height = '400px';
+
+            try {
+                const viewer = $3Dmol.createViewer(div, {
+                    backgroundColor: 'black',
+                    width: div.clientWidth,
+                    height: 400
+                });
+
+                if (spec.molecule_type === 'pdb') {
+                    viewer.addModel(spec.data, "pdb");
+                } else if (spec.molecule_type === 'sdf') {
+                    viewer.addModel(spec.data, "sdf");
+                } else if (spec.molecule_type === 'cif') {
+                    viewer.addModel(spec.data, "cif");
+                } else if (spec.smiles) {
+                    viewer.addModel(spec.smiles, "smi");
+                } else {
+                    // Fallback: show a placeholder
+                    div.innerHTML = `<div class="text-sm text-chat-muted">No molecular data provided</div>`;
+                    return;
+                }
+
+                const style = spec.style || { stick: { colorscheme: 'greenCarbon' } };
+                viewer.setStyle({}, style);
+
+                if (spec.zoom) {
+                    viewer.zoomTo();
+                }
+                viewer.render();
+                viewer.zoom(0.8, 1000);
+
+                // Label
+                if (spec.label) {
+                    const label = document.createElement('div');
+                    label.className = 'absolute bottom-2 left-2 text-xs text-chat-muted bg-black/50 px-2 py-1 rounded';
+                    label.textContent = spec.label;
+                    div.appendChild(label);
+                }
+            } catch (e) {
+                div.innerHTML = `<div class="text-xs text-red-500 font-mono">3Dmol.js Error: ${e.message}</div>`;
+            }
+        }
+
+        // ─── PyVista / VTK Renderer (iframe fallback) ───
+        function initPyVista(div, spec) {
+            div.innerHTML = '';
+            div.className = 'pyvista-container';
+
+            try {
+                // Create an embedded 3D viewer using Three.js as PyVista visualization fallback
+                // PyVista outputs are typically HTML/VTK JSON that we render via a canvas
+                const width = div.clientWidth || 600;
+                const height = 400;
+
+                const scene = new THREE.Scene();
+                scene.background = null;
+
+                const camera = new THREE.PerspectiveCamera(45, width / height, 0.01, 1000);
+                camera.position.set(0, 0, 5);
+
+                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(width, height);
+                renderer.setPixelRatio(window.devicePixelRatio || 1);
+                div.appendChild(renderer.domElement);
+
+                const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+                scene.add(ambient);
+                const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                dirLight.position.set(5, 5, 5);
+                scene.add(dirLight);
+
+                const objects = [];
+
+                // Parse PyVista spec - handle common PyVista output formats
+                const shapes = spec.objects || spec.meshes || spec.elements || [spec];
+                shapes.forEach(obj => {
+                    let geometry;
+                    const type = (obj.type || 'sphere').toLowerCase();
+                    const size = obj.size || 1;
+
+                    if (type.includes('box') || type.includes('cube')) {
+                        geometry = new THREE.BoxGeometry(size, size, size);
+                    } else if (type.includes('sphere') || type.includes('blob')) {
+                        geometry = new THREE.SphereGeometry(size * 0.6, 32, 32);
+                    } else if (type.includes('cylinder') || type.includes('tube')) {
+                        geometry = new THREE.CylinderGeometry(size * 0.5, size * 0.5, size, 32);
+                    } else if (type.includes('cone')) {
+                        geometry = new THREE.ConeGeometry(size * 0.5, size, 32);
+                    } else if (type.includes('plane') || type.includes('surface')) {
+                        geometry = new THREE.PlaneGeometry(size, size, 32, 32);
+                    } else if (type.includes('point') || type.includes('node')) {
+                        geometry = new THREE.SphereGeometry(size * 0.3, 16, 16);
+                    } else {
+                        geometry = new THREE.SphereGeometry(size * 0.6, 32, 32);
+                    }
+
+                    const color = obj.color ? new THREE.Color(obj.color) : new THREE.Color(0x60a5fa);
+                    const material = new THREE.MeshStandardMaterial({
+                        color,
+                        metalness: 0.3,
+                        roughness: 0.4,
+                        wireframe: !!obj.wireframe
+                    });
+
+                    const mesh = new THREE.Mesh(geometry, material);
+                    if (obj.position) {
+                        mesh.position.set(obj.position.x || 0, obj.position.y || 0, obj.position.z || 0);
+                    } else if (obj.x !== undefined) {
+                        mesh.position.set((obj.x - 300) / 60, -(obj.y - 200) / 60, 0);
+                    }
+                    if (obj.rotation) {
+                        mesh.rotation.set(obj.rotation.x || 0, obj.rotation.y || 0, obj.rotation.z || 0);
+                    }
+                    scene.add(mesh);
+                    objects.push(mesh);
+                });
+
+                // Add grid for scientific context
+                const gridHelper = new THREE.GridHelper(10, 10, 0x383838, 0x2a2a2a);
+                scene.add(gridHelper);
+
+                // Axes
+                const axesHelper = new THREE.AxesHelper(2);
+                scene.add(axesHelper);
+
+                let frameId;
+                function animate() {
+                    frameId = requestAnimationFrame(animate);
+                    objects.forEach(o => { o.rotation.y += 0.005; o.rotation.x += 0.002; });
+                    renderer.render(scene, camera);
+                }
+                animate();
+
+                const observer = new MutationObserver(() => {
+                    if (!document.body.contains(div)) {
+                        cancelAnimationFrame(frameId);
+                        renderer.dispose();
+                        observer.disconnect();
+                    }
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+
+            } catch (e) {
+                div.innerHTML = `<div class="text-xs text-red-500 font-mono">PyVista Render Error: ${e.message}</div>`;
+            }
+        }
+
+        // ─── Manim Animation Renderer ───
+        function initManim(div, spec) {
+            div.innerHTML = '';
+            div.className = 'manim-container';
+
+            try {
+                // Manim outputs are typically video files or animated scene descriptions
+                // We render them as described in the spec
+                if (spec.video_url) {
+                    // Direct video playback
+                    const video = document.createElement('video');
+                    video.src = spec.video_url;
+                    video.controls = true;
+                    video.autoplay = !!spec.autoplay;
+                    video.loop = !!spec.loop;
+                    video.style.width = '100%';
+                    video.style.maxHeight = '400px';
+                    video.style.borderRadius = '0.5rem';
+                    div.appendChild(video);
+                } else if (spec.script || spec.scene_description) {
+                    // Render Manim scene description as animated SVG/Canvas
+                    const desc = spec.script || spec.scene_description;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = div.clientWidth || 600;
+                    canvas.height = 400;
+                    canvas.style.borderRadius = '0.5rem';
+                    canvas.style.background = '#0a0a0a';
+                    div.appendChild(canvas);
+
+                    const ctx = canvas.getContext('2d');
+                    const W = canvas.width, H = canvas.height;
+
+                    // Parse simple Manim scene instructions and animate
+                    let progress = 0;
+                    function animateManim() {
+                        progress += 0.005;
+                        if (progress > 1) progress = 1;
+
+                        ctx.fillStyle = '#0a0a0a';
+                        ctx.fillRect(0, 0, W, H);
+
+                        // Render based on scene type
+                        if (desc.includes('circle') || desc.includes('Circle')) {
+                            const radius = Math.min(W, H) * 0.25 * progress;
+                            ctx.strokeStyle = '#60a5fa';
+                            ctx.lineWidth = 2;
+                            ctx.beginPath();
+                            ctx.arc(W/2, H/2, radius, 0, Math.PI * 2);
+                            ctx.stroke();
+                        } else if (desc.includes('square') || desc.includes('Square')) {
+                            const size = Math.min(W, H) * 0.4 * progress;
+                            ctx.strokeStyle = '#60a5fa';
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(W/2 - size/2, H/2 - size/2, size, size);
+                        } else if (desc.includes('transform') || desc.includes('Transform')) {
+                            const t = progress;
+                            const r1 = Math.min(W, H) * 0.15;
+                            const r2 = Math.min(W, H) * 0.25;
+                            ctx.strokeStyle = `rgba(96, 165, 250, ${t})`;
+                            ctx.lineWidth = 2;
+                            ctx.beginPath();
+                            ctx.arc(W/2, H/2, r1 + (r2 - r1) * t, 0, Math.PI * 2);
+                            ctx.stroke();
+                        } else {
+                            // Generic animation: draw text with fade
+                            ctx.fillStyle = `rgba(236, 236, 236, ${progress})`;
+                            ctx.font = '16px monospace';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('Manim Animation', W/2, H/2);
+                            if (desc) {
+                                ctx.font = '12px monospace';
+                                ctx.fillStyle = `rgba(180, 180, 180, ${progress * 0.7})`;
+                                ctx.fillText(desc.substring(0, 80), W/2, H/2 + 25);
+                            }
+                        }
+
+                        if (progress < 1) {
+                            requestAnimationFrame(animateManim);
+                        }
+                    }
+                    animateManim();
+                } else if (spec.elements || spec.shapes) {
+                    // Render Manim shapes as animated canvas elements
+                    const shapes = spec.elements || spec.shapes || [spec];
+                    const canvas = document.createElement('canvas');
+                    canvas.width = div.clientWidth || 600;
+                    canvas.height = 400;
+                    canvas.style.borderRadius = '0.5rem';
+                    canvas.style.background = '#0a0a0a';
+                    div.appendChild(canvas);
+
+                    const ctx = canvas.getContext('2d');
+                    const W = canvas.width, H = canvas.height;
+                    let progress = 0;
+
+                    function animateShapes() {
+                        progress += 0.005;
+                        if (progress > 1) progress = 1;
+
+                        ctx.fillStyle = '#0a0a0a';
+                        ctx.fillRect(0, 0, W, H);
+
+                        shapes.forEach((shape, i) => {
+                            const delay = i * 0.15;
+                            const p = Math.max(0, Math.min(1, (progress - delay) / (1 - delay * shapes.length)));
+                            if (p <= 0) return;
+
+                            const type = (shape.type || 'circle').toLowerCase();
+                            const color = shape.color || '#60a5fa';
+                            const size = shape.size || 1;
+
+                            ctx.strokeStyle = color;
+                            ctx.lineWidth = 2;
+                            ctx.globalAlpha = p;
+
+                            const cx = (shape.x || 0) + W/2;
+                            const cy = (shape.y || 0) + H/2;
+
+                            if (type === 'circle') {
+                                ctx.beginPath();
+                                ctx.arc(cx, cy, size * 40, 0, Math.PI * 2);
+                                ctx.stroke();
+                            } else if (type === 'square' || type === 'rectangle') {
+                                ctx.strokeRect(cx - size * 30, cy - size * 30, size * 60, size * 60);
+                            } else if (type === 'line') {
+                                ctx.beginPath();
+                                ctx.moveTo(cx - size * 40, cy);
+                                ctx.lineTo(cx + size * 40, cy);
+                                ctx.stroke();
+                            } else if (type === 'arrow') {
+                                ctx.beginPath();
+                                ctx.moveTo(cx - size * 30, cy);
+                                ctx.lineTo(cx + size * 30, cy);
+                                ctx.stroke();
+                                ctx.beginPath();
+                                ctx.moveTo(cx + size * 30, cy);
+                                ctx.lineTo(cx + size * 20, cy - 8);
+                                ctx.moveTo(cx + size * 30, cy);
+                                ctx.lineTo(cx + size * 20, cy + 8);
+                                ctx.stroke();
+                            }
+
+                            if (shape.label) {
+                                ctx.fillStyle = color;
+                                ctx.font = '12px monospace';
+                                ctx.textAlign = 'center';
+                                ctx.fillText(shape.label, cx, cy + size * 50);
+                            }
+
+                            ctx.globalAlpha = 1;
+                        });
+
+                        if (progress < 1) {
+                            requestAnimationFrame(animateShapes);
+                        }
+                    }
+                    animateShapes();
+                }
+            } catch (e) {
+                div.innerHTML = `<div class="text-xs text-red-500 font-mono">Manim Error: ${e.message}</div>`;
+            }
+        }
+
+        // ─── SVG Spec Renderer ───
         function renderSvgSpec(div, spec) {
          const w = spec.width || 600;
          const h = spec.height || 400;
@@ -919,7 +1412,7 @@
         }
 
         // ==========================================
-        // ACTUAL BACKEND INTEGRATION
+        // ACTUAL BACKEND INTEGRATION WITH CONVERSATIONAL MEMORY
         // ==========================================
         ui.form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -934,6 +1427,9 @@
             ui.input.value = '';
             autoResize(ui.input);
 
+            // Mark chat as started after first message
+            chatStarted = true;
+
             const aiNode = createAIMessage();
             const contentArea = aiNode.querySelector('.content-area');
             const actionBar = aiNode.querySelector('.action-bar');
@@ -944,23 +1440,41 @@
             startThinking(aiNode);
 
             try {
-                // The backend only exposes /teach, /learn-deep, /connectors and /quiz
-                // (see app.py) - there is no route on the bare root URL, which is why
-                // posting straight to apiUrl was returning 404. Build the correct
-                // endpoint + payload shape for the current mode instead.
                 const level = document.getElementById('setting-level').value;
                 const provider = document.getElementById('setting-provider').value;
                 const language = document.getElementById('setting-language').value;
+                const sessionId = getSessionId();
 
                 let endpointPath = '/teach';
                 let requestBody = {};
 
                 if (currentMode === 'teach') {
                     endpointPath = '/teach';
-                    requestBody = { topic: text, question: text, level, provider, language };
+                    // Determine if this is a new session or continuation
+                    const isNewSession = !chatStarted || conversationHistory.length === 0;
+                    requestBody = {
+                        topic: text,
+                        question: text,
+                        level,
+                        provider,
+                        language,
+                        history: getConversationHistory(),
+                        session_id: sessionId,
+                        new_session: isNewSession
+                    };
                 } else if (currentMode === 'deep') {
                     endpointPath = '/learn-deep';
-                    requestBody = { topic: text, question: text, level, provider, language };
+                    const isNewSession = !chatStarted || conversationHistory.length === 0;
+                    requestBody = {
+                        topic: text,
+                        question: text,
+                        level,
+                        provider,
+                        language,
+                        history: getConversationHistory(),
+                        session_id: sessionId,
+                        new_session: isNewSession
+                    };
                 } else if (currentMode === 'connectors') {
                     endpointPath = '/connectors';
                     requestBody = {
@@ -970,19 +1484,26 @@
                         provider,
                         language
                     };
+                    // Add source to conversation history
+                    addToConversationHistory('user', `[Source Analysis] ${text}`);
                 } else if (currentMode === 'quiz') {
                     endpointPath = '/quiz';
+                    const useContext = document.getElementById('input-quiz-context').checked;
                     requestBody = {
                         topic: text,
                         level,
                         provider,
                         language,
-                        num_questions: parseInt(document.getElementById('input-num').value, 10) || 10
+                        num_questions: parseInt(document.getElementById('input-num').value, 10) || 10,
+                        session_id: sessionId,
+                        use_context: useContext
                     };
+                    // Add quiz request to conversation history
+                    addToConversationHistory('user', `[Quiz Request] ${text}`);
                 }
 
-                // Ensure a target URL is provided.
-                const targetUrl = (apiUrl || 'http://localhost:3000') + endpointPath; // Change fallback if needed
+                // Ensure a target URL is provided
+                const targetUrl = (apiUrl || 'http://localhost:3000') + endpointPath;
 
                 const response = await fetch(targetUrl, {
                     method: 'POST',
@@ -1023,11 +1544,9 @@
                                 try {
                                     const data = JSON.parse(line.slice(6));
                                     
-                                    // Map to JSON reasoning_content (e.g. DeepSeek APIs)
                                     const rToken = data.choices?.[0]?.delta?.reasoning_content || '';
                                     if (rToken) reasoningResponse += rToken;
 
-                                    // Map to JSON message content
                                     const textToken = data.choices?.[0]?.delta?.content || data.text || data.message || '';
                                     fullResponse += textToken;
                                 } catch (e) {
@@ -1041,7 +1560,6 @@
                         displayMain = fullResponse;
                         let displayThoughts = reasoningResponse;
 
-                        // Fallback: If backend sends thoughts via text tags <think>...</think>
                         if (!reasoningResponse && fullResponse.includes('<think>')) {
                             const thinkStart = fullResponse.indexOf('<think>');
                             const thinkEnd = fullResponse.indexOf('</think>');
@@ -1055,7 +1573,6 @@
                             }
                         }
 
-                        // Update Thought Box
                         const logs = aiNode.querySelector('#thought-logs');
                         const accordion = aiNode.querySelector('#thought-accordion');
                         if (displayThoughts.trim()) {
@@ -1080,7 +1597,6 @@
                     displayMain = fullResponse;
                     let displayThoughts = reasoningResponse;
 
-                    // Fallback: If backend sends thoughts via text tags <think>...</think>
                     if (!reasoningResponse && fullResponse.includes('<think>')) {
                         const thinkStart = fullResponse.indexOf('<think>');
                         const thinkEnd = fullResponse.indexOf('</think>');
@@ -1117,6 +1633,11 @@
                 function finalizeResponse(finalText) {
                     contentArea.innerHTML = processTextWithMath(finalText);
                     renderVisuals(aiNode);
+                    
+                    // Save to conversational memory
+                    addToConversationHistory('user', text);
+                    addToConversationHistory('assistant', finalText);
+                    
                     isGenerating = false;
                     ui.submitBtn.disabled = false;
                     ui.input.disabled = false;

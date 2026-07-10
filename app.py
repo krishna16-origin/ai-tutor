@@ -137,7 +137,7 @@ def glm_llm() -> ChatOpenAI:
 
     return ChatOpenAI(
         api_key=api_key,
-        base_url=getenv("GLM_BASE_URL", "https://open.bigmodel.cn/api/paas/v4/"),
+        base_url=getenv("GLM_BASE_URL", "https://api.z.ai/api/paas/v4/"),
         model="glm-5.2",
         temperature=float(getenv("MODEL_TEMPERATURE", "0.2")),
         max_tokens=int(getenv("MAX_TOKENS", "8192")),

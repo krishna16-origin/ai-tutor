@@ -701,6 +701,7 @@ async def run_routed(
         answer = await run_model(selected, prompt, values)
         return AIResponse(provider_used=selected.value, answer=answer)
     except Exception as primary_error:
+        print(f"[PROVIDER ERROR] {selected.value} failed: {primary_error}")
         fallback = Provider.glm if selected == Provider.groq else Provider.groq
 
         try:
@@ -727,7 +728,7 @@ def health() -> Dict[str, Any]:
         "groq_configured": bool(getenv("GROQ_API_KEY")),
         "glm_configured": bool(getenv("GLM_API_KEY") or getenv("ZHIPUAI_API_KEY")),
         "groq_model": "openai/gpt-oss-120b",
-        "glm_model": "GLM-5.2",
+        "glm_model": "glm-5.2",
     }
 
 

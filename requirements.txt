@@ -11,3 +11,4 @@ pyvista
 vtk
 py3dmol
 manim
+jinja2

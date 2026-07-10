@@ -327,61 +327,61 @@ Do NOT include:
 - Anatomy
 - Literature analysis
 
+
+
+
+- Manim Animation Script (for mathematical animations)
+- SVG Description
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-VISUAL INTELLIGENCE
+OUTPUT FORMAT — MANDATORY, MATCH EXACTLY
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Generate visual specifications ONLY if they genuinely improve understanding.
+The renderer ONLY converts a code block into a visual if it uses the EXACT
+fenced code block tag below, with valid JSON containing the EXACT keys
+shown. Untagged code blocks, prose descriptions, or wrong key names will
+render as plain code and NOT as a visual. Never deviate from these tags.
 
-Supported outputs (MUST use these libraries):
+Mermaid:
+```mermaid
+graph TD
+  A[Start] --> B[End]
+```
 
-• Mermaid
-• MathJax
-• KaTeX
-• Plotly JSON (for data visualizations, graphs, charts)
-• PyVista / VTK JSON (for 3D scientific visualizations)
-• Three.js Scene Specification (for 3D spatial understanding)
-• 3Dmol.js Specification (for molecular structures, chemistry)
-• Manim Animation Script (for mathematical animations)
-• SVG Description
+Plotly (top-level keys must be exactly "data" and "layout"):
+```plotly
+{"data": [{"x": [1,2,3], "y": [4,5,6], "type": "scatter"}], "layout": {"title": "Example"}}
+```
+
+Three.js (top-level key must be "objects", each with "type"/"color"):
+```threejs
+{"objects": [{"type": "sphere", "color": "#60a5fa", "size": 1, "position": {"x": 0, "y": 0, "z": 0}}], "cameraDistance": 6}
+```
+
+3Dmol.js (top-level key "molecule_type" + "data", or "smiles"):
+```3dmol
+{"molecule_type": "pdb", "data": "<PDB block>", "style": {"stick": {"colorscheme": "greenCarbon"}}, "zoom": true, "label": "Caffeine"}
+```
+
+PyVista (top-level key "objects", each with "type"/"color"):
+```pyvista
+{"objects": [{"type": "sphere", "color": "#60a5fa", "size": 1, "position": {"x": 0, "y": 0, "z": 0}}]}
+```
+
+Manim (use "script" for a text description, or "elements" for shapes):
+```manim
+{"script": "Animate a circle transforming into a square"}
+```
+
+SVG (top-level key "elements"):
+```svg-spec
+{"width": 600, "height": 400, "elements": [{"type": "circle", "cx": 300, "cy": 200, "r": 50, "stroke": "#60a5fa", "label": "Nucleus"}]}
+```
+
+Do NOT wrap these in ```json. Do NOT describe the visual in prose instead
+of emitting the JSON. Do NOT invent new tag names. Use ONLY the tags above.
 
 Examples
-
-Calculus
-→ Function Graph (Plotly)
-→ Tangent Animation (Manim)
-→ Derivative Visualization (Plotly)
-
-Physics
-→ Force Diagram (SVG/Mermaid)
-→ Motion Animation (Manim)
-→ Velocity Graph (Plotly)
-
-Botany
-→ Plant Cell SVG
-→ Photosynthesis Pathway (Mermaid)
-→ Xylem & Phloem Diagram (SVG)
-
-Chemistry
-→ Molecular Model (3Dmol.js)
-→ Reaction Energy Graph (Plotly)
-→ Orbital Diagram (PyVista)
-
-Computer Science
-→ Flowchart (Mermaid)
-→ Tree Diagram (Mermaid)
-→ Network Topology (SVG)
-→ Algorithm Animation (Manim)
-
-Astronomy
-→ Orbital Mechanics (PyVista 3D)
-→ Planetary System (Three.js)
-→ Stellar Evolution (Plotly)
-
-Never generate:
-- Plotly graphs that don't make sense.
-- 3D models that don't improve understanding.
-- Random diagrams unrelated to the topic.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TEACHING STYLE
@@ -551,12 +551,47 @@ Number of questions: {num_questions}
 
 {quiz_context}
 
-Include:
-- mixed difficulty questions
-- answer key
-- explanations
-- common mistakes
-- advanced challenge questions
+Follow this EXACT format so the quiz renders in the interactive quiz box:
+
+## Quiz
+
+1. First question text?
+a) Option one
+b) Option two
+c) Option three
+d) Option four
+
+2. Second question text?
+a) Option one
+b) Option two
+c) Option three
+d) Option four
+
+(continue numbering sequentially — one question per number, exactly 4
+lettered options a) through d) for every question, never more or fewer)
+
+Answer Key:
+1. b
+2. a
+(continue for every question — number, period, space, single correct
+letter, nothing else on each line)
+
+Explanations:
+- Explain question 1: why the correct answer is right and why the
+  common wrong answers are tempting.
+- Explain question 2.
+(continue for every question)
+
+Advanced Challenge:
+- Include 1-2 harder bonus questions here in plain prose, NOT numbered
+  like the quiz above, so they aren't mistaken for quiz questions.
+
+Rules:
+- Mix difficulty levels across the numbered questions.
+- Never use a)/b)/c)/d) style lettering anywhere outside the quiz
+  questions and Answer Key.
+- The Answer Key must come immediately after the last question,
+  before Explanations.
 """,
         ),
     ]
@@ -741,7 +776,7 @@ async def teach(request: TeachRequest) -> AIResponse:
     return response
 
 
-@app.post("/Mariana Dive", response_model=AIResponse)
+@app.post("/learn-deep", response_model=AIResponse)
 async def learn_deep(request: DeepRequest) -> AIResponse:
     mode = "deep"
 
@@ -790,7 +825,7 @@ async def learn_deep(request: DeepRequest) -> AIResponse:
     return response
 
 
-@app.post("/Analyze Source", response_model=AIResponse)
+@app.post("/connectors", response_model=AIResponse)
 async def connectors(request: SourceRequest) -> AIResponse:
     values = {
         "level": request.level.value,
@@ -808,7 +843,7 @@ async def connectors(request: SourceRequest) -> AIResponse:
     )
 
 
-@app.post("/Quiz Me", response_model=AIResponse)
+@app.post("/quiz"", response_model=AIResponse)
 async def quiz(request: QuizRequest) -> AIResponse:
     if request.use_context and request.session_id:
         # Quiz based on previous conversation context

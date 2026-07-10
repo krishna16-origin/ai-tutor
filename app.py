@@ -843,7 +843,7 @@ async def connectors(request: SourceRequest) -> AIResponse:
     )
 
 
-@app.post("/quiz"", response_model=AIResponse)
+@app.post("/quiz", response_model=AIResponse)
 async def quiz(request: QuizRequest) -> AIResponse:
     if request.use_context and request.session_id:
         # Quiz based on previous conversation context

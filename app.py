@@ -138,7 +138,7 @@ def glm_llm() -> ChatOpenAI:
     return ChatOpenAI(
         api_key=api_key,
         base_url=getenv("GLM_BASE_URL", "https://api.z.ai/api/paas/v4/"),
-        model="glm-5.2",
+        model="glm-4.7-flash",
         temperature=float(getenv("MODEL_TEMPERATURE", "0.2")),
         max_tokens=int(getenv("MAX_TOKENS", "8192")),
     )
@@ -728,7 +728,7 @@ def health() -> Dict[str, Any]:
         "groq_configured": bool(getenv("GROQ_API_KEY")),
         "glm_configured": bool(getenv("GLM_API_KEY") or getenv("ZHIPUAI_API_KEY")),
         "groq_model": "openai/gpt-oss-120b",
-        "glm_model": "glm-5.2",
+        "glm_model": "glm-4.7-flash",
     }
 
 

@@ -240,8 +240,8 @@ Supported domains include (but are not limited to):
 - Philosophy
 
 • Adapt explanations to:
-  - Learner Level: {level}
-  - Language: {language}
+  - Learner Level: {{level}}
+  - Language: {{language}}
 
 • Never hallucinate facts, equations, citations, or research.
 • If uncertain, explicitly state uncertainty.
@@ -350,32 +350,32 @@ graph TD
 
 Plotly (top-level keys must be exactly "data" and "layout"):
 ```plotly
-{"data": [{"x": [1,2,3], "y": [4,5,6], "type": "scatter"}], "layout": {"title": "Example"}}
+{ {"data": [{"x": [1,2,3], "y": [4,5,6], "type": "scatter"}], "layout": { {"title": "Example"} }} }
 ```
 
 Three.js (top-level key must be "objects", each with "type"/"color"):
 ```threejs
-{"objects": [{"type": "sphere", "color": "#60a5fa", "size": 1, "position": {"x": 0, "y": 0, "z": 0}}], "cameraDistance": 6}
+{ {"objects": [{"type": "sphere", "color": "#60a5fa", "size": 1, "position": { {"x": 0, "y": 0, "z": 0} } } }], "cameraDistance": 6} }
 ```
 
 3Dmol.js (top-level key "molecule_type" + "data", or "smiles"):
 ```3dmol
-{"molecule_type": "pdb", "data": "<PDB block>", "style": {"stick": {"colorscheme": "greenCarbon"}}, "zoom": true, "label": "Caffeine"}
+{ {"molecule_type": "pdb", "data": "<PDB block>", "style": { {"stick": { {"colorscheme": "greenCarbon"} }} } , "zoom": true, "label": "Caffeine"} }
 ```
 
 PyVista (top-level key "objects", each with "type"/"color"):
 ```pyvista
-{"objects": [{"type": "sphere", "color": "#60a5fa", "size": 1, "position": {"x": 0, "y": 0, "z": 0}}]}
+{ {"objects": [{"type": "sphere", "color": "#60a5fa", "size": 1, "position": { {"x": 0, "y": 0, "z": 0} } } }]} }
 ```
 
 Manim (use "script" for a text description, or "elements" for shapes):
 ```manim
-{"script": "Animate a circle transforming into a square"}
+{ {"script": "Animate a circle transforming into a square"} }
 ```
 
 SVG (top-level key "elements"):
 ```svg-spec
-{"width": 600, "height": 400, "elements": [{"type": "circle", "cx": 300, "cy": 200, "r": 50, "stroke": "#60a5fa", "label": "Nucleus"}]}
+{ {"width": 600, "height": 400, "elements": [{"type": "circle", "cx": 300, "cy": 200, "r": 50, "stroke": "#60a5fa", "label": "Nucleus"}]} }
 ```
 
 Do NOT wrap these in ```json. Do NOT describe the visual in prose instead
@@ -522,19 +522,20 @@ TEACH_PROMPT = ChatPromptTemplate.from_messages(
         (
             "human",
             """
-Topic: {topic}
-Question: {question}
+Topic: {{topic}}
+Question: {{question}}
 
 Connected source:
-{connected_source}
+{{connected_source}}
 
-Mode: {mode}
+Mode: {{mode}}
 
 Teach this topic using the required structure.
 If this is a continuation of a previous conversation, reference the prior discussion context.
 """,
         ),
-    ]
+    ],
+    template_format="jinja2"
 )
 
 QUIZ_PROMPT = ChatPromptTemplate.from_messages(
@@ -546,10 +547,10 @@ QUIZ_PROMPT = ChatPromptTemplate.from_messages(
             """
 Create a quiz for:
 
-Topic: {topic}
-Number of questions: {num_questions}
+Topic: {{topic}}
+Number of questions: {{num_questions}}
 
-{quiz_context}
+{{quiz_context}}
 
 Follow this EXACT format so the quiz renders in the interactive quiz box:
 
@@ -594,7 +595,8 @@ Rules:
   before Explanations.
 """,
         ),
-    ]
+    ],
+    template_format="jinja2"
 )
 
 SOURCE_PROMPT = ChatPromptTemplate.from_messages(
@@ -603,15 +605,16 @@ SOURCE_PROMPT = ChatPromptTemplate.from_messages(
         (
             "human",
             """
-Task: {task}
+Task: {{task}}
 
 Source text:
-{source_text}
+{{source_text}}
 
 Use the source faithfully. Clearly separate source-derived content from AI-generated extensions.
 """,
         ),
-    ]
+    ],
+    template_format="jinja2"
 )
 
 

@@ -173,9 +173,10 @@
             width: min(470px, calc(100vw - 1rem));
             background: #242424;
             border: 1px solid #454545;
-            border-radius: 0.85rem;
-            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.48);
+            border-radius: 0.35rem;
+            box-shadow: 0 16px 34px rgba(0, 0, 0, 0.5);
             overflow: hidden;
+            transform-origin: bottom left;
         }
         .model-picker-main {
             width: 245px;
@@ -339,8 +340,15 @@
             transition: transform 0.18s ease;
         }
         .picker-thinking-switch[aria-checked="true"] { background: #3b82f6; }
-        .picker-thinking-switch[aria-checked="true"]::after {             transform: translateX(0.9rem);
- }
+        .picker-thinking-switch[aria-checked="true"]::after {
+            transform: translateX(0.9rem);
+        }
+        .model-picker-trigger {
+            border: 1px solid #444444;
+            border-radius: 0.3rem !important;
+            padding: 0.34rem 0.55rem !important;
+            background: #272727;
+        }
         .model-picker-trigger[aria-expanded="true"] {
             background: #3a3a3a;
             color: #ececec;
@@ -598,7 +606,7 @@
                     <textarea id="main-input" rows="1" placeholder="Enter a topic to learn..." class="w-full bg-transparent text-chat-text text-base px-4 py-3 focus:outline-none placeholder-chat-muted resize-none custom-scrollbar m-0" oninput="autoResize(this)" onkeydown="handleEnter(event)"></textarea>
                     <div class="flex items-center justify-between px-2 pb-1">
                         <div class="flex items-center gap-1">
-                            <button type="button" id="provider-picker" class="model-picker-trigger flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-chat-muted hover:bg-chat-hover hover:text-chat-text transition-colors" aria-expanded="false" aria-controls="provider-menu" onclick="toggleProviderMenu(event)">
+                            <button type="button" id="provider-picker" class="model-picker-trigger flex items-center gap-1.5 text-xs text-chat-muted hover:bg-chat-hover hover:text-chat-text transition-colors" aria-expanded="false" aria-controls="provider-menu" onclick="toggleProviderMenu(event)">
                                 <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
                                 <span id="provider-picker-label">Auto Route · Student</span>
                                 <i data-lucide="chevron-up" class="model-chevron w-3.5 h-3.5 transition-transform"></i>

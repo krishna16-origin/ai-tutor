@@ -390,6 +390,16 @@ PyVista (top-level key "objects", each with "type"/"color"):
 {"objects": [{"type": "sphere", "color": "#60a5fa", "size": 1, "position": {"x": 0, "y": 0, "z": 0}}]}
 ```
 
+Interactive chemistry (use real element symbols, chemically meaningful bonds, and approximate 3D coordinates in angstroms):
+```chemistry
+{"title": "Water molecule", "atoms": [{"element": "O", "position": {"x": 0, "y": 0, "z": 0}}, {"element": "H", "position": {"x": 0.96, "y": 0, "z": 0}}, {"element": "H", "position": {"x": -0.24, "y": 0.93, "z": 0}}], "bonds": [{"from": 0, "to": 1, "order": 1}, {"from": 0, "to": 2, "order": 1}], "vibration": {"enabled": true, "amplitude": 0.03, "frequency": 2}}
+```
+
+Interactive physics (use SI units and physically meaningful constants; supported types are projectile, pendulum, and spring):
+```physics-spec
+{"type": "projectile", "title": "Projectile motion", "parameters": {"gravity": 9.80665, "mass": 1, "speed": 18, "angleDegrees": 45, "damping": 0}}
+```
+
 Manim (use "script" for a text description, or "elements" for shapes):
 ```manim
 {"script": "Animate a circle transforming into a square"}
@@ -457,8 +467,10 @@ Possible sections:
 17. SVG Diagram Specification
 18. Three.js Scene Specification (only if spatial understanding benefits)
 19. 3Dmol.js Molecular Specification (for chemistry/molecular topics)
-20. Manim Animation Script (for mathematical animations)
-21. Interactive Simulation Specification
+20. Interactive Chemistry Molecule Simulation (when atom/bond controls improve understanding)
+21. Physics Simulation Specification (projectile, pendulum, spring, or other physically defined motion)
+22. Manim Animation Script (for mathematical animations)
+23. Interactive Simulation Specification
 22. Real World Applications
 23. Historical Background (if relevant)
 24. Scientists Behind the Discovery (if relevant)
@@ -509,8 +521,14 @@ Botany
 
 Chemistry
 → Molecular geometry (3Dmol.js)
+→ Interactive atom-and-bond molecule (chemistry)
 → Reaction coordinate diagram (Plotly)
 → Electron orbitals (PyVista)
+
+Physics
+→ Projectile, pendulum, and spring simulations (physics-spec)
+→ Motion trajectories (Plotly)
+→ Force diagrams (Mermaid)
 
 Astronomy
 → Orbital mechanics (PyVista)
@@ -533,6 +551,7 @@ Do NOT force every section into every answer.
 Only generate content that genuinely helps explain the detected subject.
 
 Every explanation, formula, graph, animation, simulation, diagram, and 3D specification must be directly relevant to the topic.
+For chemistry simulations, use real element symbols, real atomic masses/radii where available, and chemically meaningful coordinates and bond orders. For physics simulations, use SI units and standard physical constants such as g = 9.80665 m/s². If no external measurement or dataset is provided, label the result as a real-time numerical model rather than claiming it is live sensor data.
 
 Avoid generic templates. Adapt dynamically to the user's subject, learner level, and educational needs.
 """

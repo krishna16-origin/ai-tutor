@@ -93,7 +93,7 @@
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
 
-        .mermaid-container, .plotly-container, .threejs-container, .quiz-container, .threedmol-container, .pyvista-container, .manim-container {
+        .mermaid-container, .plotly-container, .threejs-container, .quiz-container, .threedmol-container, .pyvista-container, .manim-container, .chemistry-container, .physics-container {
             margin: 1.5rem 0;
             background: #1a1a1a;
             border: 1px solid #383838;
@@ -107,6 +107,22 @@
         .plotly-container { min-height: 300px; }
         .pyvista-container iframe { width: 100%; height: 400px; border: none; border-radius: 0.5rem; }
         .manim-container video { width: 100%; max-height: 400px; border-radius: 0.5rem; }
+        .chemistry-container, .physics-container { position: relative; min-height: 320px; }
+        .chemistry-container canvas, .physics-container canvas { display: block; width: 100%; height: 360px; border-radius: 0.5rem; background: radial-gradient(circle at 50% 40%, #202a3c 0%, #101318 70%); }
+        .visual-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.7rem; color: #b4b4b4; font-size: 0.72rem; }
+        .visual-toolbar-title { display: flex; align-items: center; gap: 0.45rem; color: #ececec; font-weight: 600; }
+        .visual-live-badge { display: inline-flex; align-items: center; gap: 0.3rem; color: #86efac; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; }
+        .visual-live-badge::before { content: ''; width: 0.4rem; height: 0.4rem; border-radius: 9999px; background: #22c55e; box-shadow: 0 0 0 3px #22c55e22; }
+        .visual-control { background: #2f2f2f; border: 1px solid #454545; color: #ececec; border-radius: 0.4rem; padding: 0.28rem 0.55rem; font-size: 0.68rem; }
+        .visual-control:hover { background: #3b3b3b; }
+        .visual-control-range { width: 5.5rem; accent-color: #60a5fa; }
+        .visual-legend { display: flex; flex-wrap: wrap; gap: 0.45rem 0.8rem; margin-top: 0.55rem; color: #9ca3af; font-size: 0.65rem; }
+        .visual-legend-item { display: inline-flex; align-items: center; gap: 0.3rem; }
+        .visual-legend-dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; display: inline-block; }
+        @media (max-width: 640px) {
+            .chemistry-container canvas, .physics-container canvas { height: 300px; }
+            .visual-toolbar { align-items: flex-start; flex-wrap: wrap; }
+        }
 
         .quiz-container { border: 2px solid #3b82f644; border-radius: 1rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); }
         .quiz-question-box { background: #262626; border: 1px solid #383838; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1.5rem; transition: transform 0.2s; }
@@ -1148,7 +1164,7 @@
         }
 
         function hasCompleteVisualBlock(text) {
-            return /```(?:mermaid|plotly|threejs|3dmol|3dmol-js|pyvista|vtk|manim|svg-spec)[^`]*```/is.test(text);
+            return /```(?:mermaid|plotly|threejs|3dmol|3dmol-js|chemistry|molecule|physics|physics-spec|pyvista|vtk|manim|svg-spec)[^`]*```/is.test(text);
         }
 
         function scheduleLiveVisualRender(container) {
@@ -1203,6 +1219,30 @@
                             div.innerHTML = `<div class="text-xs text-red-500 p-2 bg-red-900/20 rounded font-mono overflow-auto max-h-32">Mermaid Syntax Error:<br>${err.message}</div>`;
                         }
                     }, 100);
+
+                // ─── Interactive chemistry molecule ───
+                } else if (lang.includes('chemistry') || lang.includes('molecule') || (content.includes('"atoms"') && content.includes('"bonds"'))) {
+                    try {
+                        const spec = parseVisualSpec(content);
+                        const div = document.createElement('div');
+                        div.className = 'chemistry-container';
+                        pre.replaceWith(div);
+                        initChemistrySimulation(div, spec);
+                    } catch (e) {
+                        pre.innerHTML = `<div class="text-xs text-red-500 font-mono">Chemistry simulation error: ${e.message}</div>`;
+                    }
+
+                // ─── Interactive physics simulation ───
+                } else if (lang.includes('physics') || lang.includes('physics-spec') || content.includes('"simulation"')) {
+                    try {
+                        const spec = parseVisualSpec(content);
+                        const div = document.createElement('div');
+                        div.className = 'physics-container';
+                        pre.replaceWith(div);
+                        initPhysicsSimulation(div, spec);
+                    } catch (e) {
+                        pre.innerHTML = `<div class="text-xs text-red-500 font-mono">Physics simulation error: ${e.message}</div>`;
+                    }
 
                 // ─── Plotly (MUST RENDER) ───
                 } else if (lang.includes('plotly') || (content.includes('"data"') && content.includes('"layout"'))) {
@@ -1364,6 +1404,231 @@
 
             container.querySelector('.content-area').appendChild(quizContainer);
             lucide.createIcons();
+        }
+
+        const REAL_ATOMIC_DATA = {
+            H: { name: 'Hydrogen', color: '#f1f1f1', radius: 0.31, mass: 1.008 },
+            C: { name: 'Carbon', color: '#555555', radius: 0.76, mass: 12.011 },
+            N: { name: 'Nitrogen', color: '#4f8cff', radius: 0.71, mass: 14.007 },
+            O: { name: 'Oxygen', color: '#ff5b67', radius: 0.66, mass: 15.999 },
+            F: { name: 'Fluorine', color: '#8be28b', radius: 0.57, mass: 18.998 },
+            P: { name: 'Phosphorus', color: '#ff9d45', radius: 1.07, mass: 30.974 },
+            S: { name: 'Sulfur', color: '#f4d35e', radius: 1.05, mass: 32.06 },
+            Cl: { name: 'Chlorine', color: '#42d66b', radius: 1.02, mass: 35.45 },
+            Na: { name: 'Sodium', color: '#8d7aff', radius: 1.66, mass: 22.990 },
+            Mg: { name: 'Magnesium', color: '#89b6c8', radius: 1.41, mass: 24.305 }
+        };
+
+        function makeVisualToolbar(title, description) {
+            const toolbar = document.createElement('div');
+            toolbar.className = 'visual-toolbar';
+            toolbar.innerHTML = `<span class="visual-toolbar-title"><i data-lucide="activity" class="w-3.5 h-3.5 text-blue-400"></i><span>${title}</span><span class="visual-live-badge">Live</span></span><span class="text-[10px] text-chat-muted">${description}</span>`;
+            return toolbar;
+        }
+
+        function addVisualLegend(container, entries) {
+            const legend = document.createElement('div');
+            legend.className = 'visual-legend';
+            entries.forEach(entry => {
+                const item = document.createElement('span');
+                item.className = 'visual-legend-item';
+                item.innerHTML = `<span class="visual-legend-dot" style="background:${entry.color}"></span>${entry.label}`;
+                legend.appendChild(item);
+            });
+            container.appendChild(legend);
+        }
+
+        function initChemistrySimulation(div, spec) {
+            div.innerHTML = '';
+            div.className = 'chemistry-container';
+            const atoms = (spec.atoms || []).map((atom, index) => ({
+                ...atom,
+                element: atom.element || atom.symbol || 'C',
+                index
+            }));
+            const bonds = spec.bonds || [];
+            const state = { running: true, phase: 0, yaw: 0.35, pitch: -0.18, zoom: 1, dragging: false, lastX: 0, lastY: 0 };
+            const moleculeName = spec.title || spec.name || 'Interactive molecule';
+            const vibration = spec.vibration || {};
+
+            div.appendChild(makeVisualToolbar(moleculeName, 'Drag to rotate · Scroll to zoom'));
+            const controls = document.createElement('div');
+            controls.className = 'flex flex-wrap items-center gap-2 mb-2';
+            controls.innerHTML = `<button type="button" class="visual-control" data-chem-play>Pause</button><button type="button" class="visual-control" data-chem-reset>Reset view</button><label class="flex items-center gap-1.5 text-[10px] text-chat-muted"><input type="checkbox" data-chem-labels ${spec.showLabels !== false ? 'checked' : ''}> Labels</label><label class="flex items-center gap-1.5 text-[10px] text-chat-muted"><input type="checkbox" data-chem-vibration ${vibration.enabled !== false ? 'checked' : ''}> Vibrate</label>`;
+            div.appendChild(controls);
+
+            const canvas = document.createElement('canvas');
+            canvas.setAttribute('aria-label', 'Interactive chemistry molecule simulation');
+            div.appendChild(canvas);
+            const ctx = canvas.getContext('2d');
+            let dpr = 1;
+            let frameId;
+            let lastTime = performance.now();
+            let showLabels = spec.showLabels !== false;
+            let vibrating = vibration.enabled !== false;
+
+            function resize() {
+                const rect = canvas.getBoundingClientRect();
+                dpr = Math.min(window.devicePixelRatio || 1, 2);
+                canvas.width = Math.max(280, rect.width) * dpr;
+                canvas.height = Math.max(280, rect.height || 360) * dpr;
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+            const resizeObserver = new ResizeObserver(resize);
+            resizeObserver.observe(canvas);
+            resize();
+
+            function project(position) {
+                const cosY = Math.cos(state.yaw), sinY = Math.sin(state.yaw);
+                const cosP = Math.cos(state.pitch), sinP = Math.sin(state.pitch);
+                const x1 = position.x * cosY - position.z * sinY;
+                const z1 = position.x * sinY + position.z * cosY;
+                const y1 = position.y * cosP - z1 * sinP;
+                const z2 = position.y * sinP + z1 * cosP;
+                const scale = Math.min(canvas.clientWidth || 600, canvas.clientHeight || 360) * 0.22 * state.zoom;
+                return { x: (canvas.clientWidth || 600) / 2 + x1 * scale, y: (canvas.clientHeight || 360) / 2 - y1 * scale, z: z2 };
+            }
+
+            function draw(now) {
+                const dt = Math.min(0.04, Math.max(0, (now - lastTime) / 1000));
+                lastTime = now;
+                if (state.running) state.phase += dt;
+                const width = canvas.clientWidth || 600;
+                const height = canvas.clientHeight || 360;
+                ctx.clearRect(0, 0, width, height);
+                ctx.fillStyle = '#101318';
+                ctx.fillRect(0, 0, width, height);
+
+                const positions = atoms.map((atom, index) => {
+                    const p = atom.position || atom.coordinates || { x: atom.x || 0, y: atom.y || 0, z: atom.z || 0 };
+                    const amplitude = Number(vibration.amplitude ?? 0.045);
+                    const frequency = Number(vibration.frequency ?? 2.2);
+                    const offset = vibrating ? amplitude * Math.sin(state.phase * frequency + index * 1.7) : 0;
+                    return project({ x: Number(p.x || 0) + offset * 0.25, y: Number(p.y || 0) + offset, z: Number(p.z || 0) + offset * 0.15 });
+                });
+
+                bonds.slice().sort((a, b) => ((positions[a.from ?? a.start ?? 0]?.z || 0) + (positions[a.to ?? a.end ?? 0]?.z || 0)) - ((positions[b.from ?? b.start ?? 0]?.z || 0) + (positions[b.to ?? b.end ?? 0]?.z || 0))).forEach(bond => {
+                    const from = positions[bond.from ?? bond.start ?? 0];
+                    const to = positions[bond.to ?? bond.end ?? 0];
+                    if (!from || !to) return;
+                    const order = Math.max(1, Math.min(3, Number(bond.order || 1)));
+                    ctx.strokeStyle = bond.color || '#a9b4c6';
+                    ctx.lineWidth = 3;
+                    for (let line = 0; line < order; line++) {
+                        const nudge = (line - (order - 1) / 2) * 5;
+                        ctx.beginPath();
+                        ctx.moveTo(from.x - nudge, from.y);
+                        ctx.lineTo(to.x - nudge, to.y);
+                        ctx.stroke();
+                    }
+                });
+
+                positions.map((position, index) => ({ position, atom: atoms[index] })).sort((a, b) => a.position.z - b.position.z).forEach(({ position, atom }) => {
+                    const data = REAL_ATOMIC_DATA[atom.element] || REAL_ATOMIC_DATA.C;
+                    const radius = Math.max(11, Math.min(30, data.radius * 19 * state.zoom));
+                    const gradient = ctx.createRadialGradient(position.x - radius * 0.3, position.y - radius * 0.35, radius * 0.1, position.x, position.y, radius);
+                    gradient.addColorStop(0, '#ffffff');
+                    gradient.addColorStop(0.18, data.color);
+                    gradient.addColorStop(1, '#101318');
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(position.x, position.y, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff55';
+                    ctx.stroke();
+                    if (showLabels) {
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = '600 11px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(atom.element, position.x, position.y + 4);
+                    }
+                });
+                ctx.fillStyle = '#9ca3af';
+                ctx.font = '11px monospace';
+                ctx.textAlign = 'left';
+                ctx.fillText(`t = ${state.phase.toFixed(2)} s`, 12, height - 14);
+                frameId = requestAnimationFrame(draw);
+            }
+            draw(performance.now());
+
+            controls.querySelector('[data-chem-play]').onclick = (event) => {
+                state.running = !state.running;
+                event.currentTarget.textContent = state.running ? 'Pause' : 'Play';
+            };
+            controls.querySelector('[data-chem-reset]').onclick = () => { state.yaw = 0.35; state.pitch = -0.18; state.zoom = 1; state.phase = 0; };
+            controls.querySelector('[data-chem-labels]').onchange = (event) => { showLabels = event.target.checked; };
+            controls.querySelector('[data-chem-vibration]').onchange = (event) => { vibrating = event.target.checked; };
+            canvas.addEventListener('pointerdown', event => { state.dragging = true; state.lastX = event.clientX; state.lastY = event.clientY; canvas.setPointerCapture?.(event.pointerId); });
+            canvas.addEventListener('pointermove', event => { if (!state.dragging) return; state.yaw += (event.clientX - state.lastX) * 0.012; state.pitch += (event.clientY - state.lastY) * 0.01; state.lastX = event.clientX; state.lastY = event.clientY; });
+            canvas.addEventListener('pointerup', event => { state.dragging = false; canvas.releasePointerCapture?.(event.pointerId); });
+            canvas.addEventListener('wheel', event => { event.preventDefault(); state.zoom = Math.max(0.55, Math.min(2.4, state.zoom - event.deltaY * 0.001)); }, { passive: false });
+            addVisualLegend(div, [...new Set(atoms.map(atom => atom.element))].map(element => ({ label: `${element} · ${REAL_ATOMIC_DATA[element]?.name || 'Element'}`, color: REAL_ATOMIC_DATA[element]?.color || '#9ca3af' })));
+            lucide.createIcons();
+
+            const mutationObserver = new MutationObserver(() => {
+                if (!document.body.contains(div)) { cancelAnimationFrame(frameId); resizeObserver.disconnect(); mutationObserver.disconnect(); }
+            });
+            mutationObserver.observe(document.body, { childList: true, subtree: true });
+        }
+
+        function initPhysicsSimulation(div, spec) {
+            div.innerHTML = '';
+            div.className = 'physics-container';
+            const type = String(spec.type || spec.simulation || 'projectile').toLowerCase();
+            const source = spec.parameters || spec.params || {};
+            const state = { running: true, time: 0, x: 0, y: 0, vx: 0, vy: 0, theta: Number(source.angle ?? 0.65), omega: 0, zoom: 1 };
+            const gravity = Number(source.gravity ?? 9.80665);
+            const mass = Number(source.mass ?? 1);
+            const speed = Number(source.speed ?? source.velocity ?? 18);
+            const angle = Number(source.angleDegrees ?? source.angle ?? 45);
+            const initialAngle = type === 'pendulum' ? Number(source.angle ?? 0.65) : angle * Math.PI / 180;
+            const length = Number(source.length ?? 1.5);
+            const springK = Number(source.stiffness ?? source.k ?? 12);
+            const damping = Number(source.damping ?? 0.03);
+
+            div.appendChild(makeVisualToolbar(spec.title || `${type[0].toUpperCase()}${type.slice(1)} simulation`, 'Real-time numerical integration · SI units'));
+            const controls = document.createElement('div');
+            controls.className = 'flex flex-wrap items-center gap-2 mb-2';
+            controls.innerHTML = `<button type="button" class="visual-control" data-physics-play>Pause</button><button type="button" class="visual-control" data-physics-reset>Reset</button><label class="flex items-center gap-1 text-[10px] text-chat-muted">g <input class="visual-control-range" data-physics-gravity type="range" min="0" max="20" step="0.01" value="${gravity}"><output data-physics-gravity-output>${gravity.toFixed(2)}</output></label><label class="flex items-center gap-1 text-[10px] text-chat-muted">Input <input class="visual-control-range" data-physics-input type="range" min="0.1" max="40" step="0.1" value="${speed}"><output data-physics-input-output>${speed.toFixed(1)}</output></label>`;
+            div.appendChild(controls);
+            const canvas = document.createElement('canvas');
+            canvas.setAttribute('aria-label', `Interactive real-time ${type} physics simulation`);
+            div.appendChild(canvas);
+            const ctx = canvas.getContext('2d');
+            let dpr = 1;
+            let frameId;
+            let lastTime = performance.now();
+            let currentGravity = gravity;
+            let currentInput = speed;
+
+            function resize() { const rect = canvas.getBoundingClientRect(); dpr = Math.min(window.devicePixelRatio || 1, 2); canvas.width = Math.max(280, rect.width) * dpr; canvas.height = Math.max(280, rect.height || 360) * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+            const resizeObserver = new ResizeObserver(resize); resizeObserver.observe(canvas); resize();
+            function reset() { state.time = 0; state.x = 0; state.y = 0; state.vx = type === 'projectile' ? currentInput * Math.cos(initialAngle) : 0; state.vy = type === 'projectile' ? currentInput * Math.sin(initialAngle) : 0; state.theta = initialAngle; state.omega = 0; }
+            reset();
+            function integrate(dt) {
+                if (type === 'pendulum') { const alpha = -(currentGravity / length) * Math.sin(state.theta) - damping * state.omega; state.omega += alpha * dt; state.theta += state.omega * dt; }
+                else if (type === 'spring') { const acceleration = -(springK / mass) * state.x - damping * state.vx; state.vx += acceleration * dt; state.x += state.vx * dt; }
+                else { state.vy -= currentGravity * dt; state.x += state.vx * dt; state.y += state.vy * dt; if (state.y < 0) { state.y = 0; state.vy = -state.vy * 0.78; if (Math.abs(state.vy) < 0.35) { state.vy = 0; state.vx *= 0.92; } } }
+                state.time += dt;
+            }
+            function draw(now) {
+                const dt = Math.min(0.03, Math.max(0, (now - lastTime) / 1000)); lastTime = now; if (state.running) integrate(dt);
+                const width = canvas.clientWidth || 600, height = canvas.clientHeight || 360; ctx.clearRect(0, 0, width, height); ctx.fillStyle = '#101318'; ctx.fillRect(0, 0, width, height); ctx.strokeStyle = '#263244'; ctx.lineWidth = 1;
+                for (let x = 0; x < width; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke(); } for (let y = 0; y < height; y += 32) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke(); }
+                const originX = width * 0.13, groundY = height * 0.78;
+                ctx.strokeStyle = '#738196'; ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(width, groundY); ctx.stroke();
+                let metric = '';
+                if (type === 'pendulum') { const px = originX + Math.sin(state.theta) * length * 95; const py = groundY - Math.cos(state.theta) * length * 95; ctx.strokeStyle = '#8daef7'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(originX, groundY); ctx.lineTo(px, py); ctx.stroke(); ctx.fillStyle = '#ff9d45'; ctx.beginPath(); ctx.arc(px, py, 17, 0, Math.PI * 2); ctx.fill(); metric = `θ ${state.theta.toFixed(2)} rad · ω ${state.omega.toFixed(2)} rad/s`; }
+                else if (type === 'spring') { const anchorX = width * 0.16, cy = height * 0.48, px = anchorX + 150 + state.x * 85; ctx.strokeStyle = '#8daef7'; ctx.lineWidth = 2; ctx.beginPath(); for (let i = 0; i <= 32; i++) { const x = anchorX + i * (px - anchorX) / 32; const y = cy + Math.sin(i * Math.PI * 5) * 10; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); } ctx.stroke(); ctx.fillStyle = '#ff9d45'; ctx.fillRect(px, cy - 24, 42, 48); metric = `x ${state.x.toFixed(2)} m · v ${state.vx.toFixed(2)} m/s`; }
+                else { const scale = Math.min(18, width / 20); const px = originX + state.x * scale; const py = groundY - state.y * scale; ctx.fillStyle = '#ff9d45'; ctx.beginPath(); ctx.arc(px, py, 13, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#60a5fa'; ctx.beginPath(); ctx.moveTo(originX, groundY); ctx.lineTo(px, py); ctx.stroke(); metric = `x ${state.x.toFixed(2)} m · y ${state.y.toFixed(2)} m · v ${Math.hypot(state.vx, state.vy).toFixed(2)} m/s`; }
+                const kinetic = 0.5 * mass * (state.vx * state.vx + state.vy * state.vy); const potential = type === 'projectile' ? mass * currentGravity * state.y : 0; ctx.fillStyle = '#d6deeb'; ctx.font = '12px monospace'; ctx.fillText(`t ${state.time.toFixed(2)} s  |  E ${(kinetic + potential).toFixed(2)} J  |  ${metric}`, 12, height - 14); frameId = requestAnimationFrame(draw);
+            }
+            draw(performance.now());
+            const play = controls.querySelector('[data-physics-play]'); play.onclick = () => { state.running = !state.running; play.textContent = state.running ? 'Pause' : 'Play'; };
+            controls.querySelector('[data-physics-reset]').onclick = reset;
+            const gravityInput = controls.querySelector('[data-physics-gravity]'); const gravityOutput = controls.querySelector('[data-physics-gravity-output]'); gravityInput.oninput = event => { currentGravity = Number(event.target.value); gravityOutput.value = currentGravity.toFixed(2); gravityOutput.textContent = currentGravity.toFixed(2); };
+            const inputControl = controls.querySelector('[data-physics-input]'); const inputOutput = controls.querySelector('[data-physics-input-output]'); inputControl.oninput = event => { currentInput = Number(event.target.value); inputOutput.value = currentInput.toFixed(1); inputOutput.textContent = currentInput.toFixed(1); reset(); };
+            const mutationObserver = new MutationObserver(() => { if (!document.body.contains(div)) { cancelAnimationFrame(frameId); resizeObserver.disconnect(); mutationObserver.disconnect(); } }); mutationObserver.observe(document.body, { childList: true, subtree: true });
         }
 
         function bindLive3DControls(div, camera, renderer, objects) {

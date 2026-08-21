@@ -30,6 +30,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request, exc: Exception):
+    """
+    Catch anything that isn't already an HTTPException so the client always
+    gets a clean JSON error body instead of the connection just dropping
+    (which is what makes Render's edge proxy return an opaque 502 with
+    nothing useful in it).
+    """
+    from fastapi.responses import JSONResponse
+
+    print(f"[UNHANDLED ERROR] {type(exc).__name__}: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"{type(exc).__name__}: {exc}"},
+    )
+
 # ─── Conversational Memory Store (session-based) ───
 conversation_store: Dict[str, List[BaseMessage]] = {}
 
@@ -127,6 +144,8 @@ def groq_llm() -> ChatGroq:
         model="openai/gpt-oss-120b",
         temperature=float(getenv("MODEL_TEMPERATURE", "0.2")),
         max_tokens=int(getenv("MAX_TOKENS", "4096")),
+        timeout=float(getenv("LLM_TIMEOUT_SECONDS", "55")),
+        max_retries=1,
     )
 
 
@@ -141,6 +160,8 @@ def glm_llm() -> ChatOpenAI:
         model="glm-4.7-flash",
         temperature=float(getenv("MODEL_TEMPERATURE", "0.2")),
         max_tokens=int(getenv("MAX_TOKENS", "8192")),
+        timeout=float(getenv("LLM_TIMEOUT_SECONDS", "55")),
+        max_retries=1,
     )
 
 
@@ -697,11 +718,15 @@ async def run_routed(
 
         return AIResponse(provider_used="both", answer=next(iter(valid.values())), raw_outputs=outputs)
 
+    def describe(exc: Exception) -> str:
+        return f"{type(exc).__name__}: {exc}"
+
     try:
         answer = await run_model(selected, prompt, values)
         return AIResponse(provider_used=selected.value, answer=answer)
     except Exception as primary_error:
-        print(f"[PROVIDER ERROR] {selected.value} failed: {primary_error}")
+        primary_desc = describe(primary_error)
+        print(f"[PROVIDER ERROR] {selected.value} failed: {primary_desc}")
         fallback = Provider.glm if selected == Provider.groq else Provider.groq
 
         try:
@@ -709,14 +734,19 @@ async def run_routed(
             return AIResponse(
                 provider_used=f"{fallback.value}:fallback",
                 answer=answer,
-                raw_outputs={selected.value: str(primary_error), fallback.value: answer},
+                raw_outputs={selected.value: primary_desc, fallback.value: answer},
             )
         except Exception as fallback_error:
+            fallback_desc = describe(fallback_error)
+            print(f"[PROVIDER ERROR] {fallback.value} (fallback) failed: {fallback_desc}")
             raise HTTPException(
                 status_code=502,
                 detail={
-                    "primary_error": str(primary_error),
-                    "fallback_error": str(fallback_error),
+                    "message": "Both AI providers failed to respond.",
+                    "primary_provider": selected.value,
+                    "primary_error": primary_desc,
+                    "fallback_provider": fallback.value,
+                    "fallback_error": fallback_desc,
                 },
             )
 

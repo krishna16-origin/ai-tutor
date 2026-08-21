@@ -1121,6 +1121,51 @@
     return html;
    }
 
+        function parseVisualSpec(rawContent) {
+            let content = rawContent.trim()
+                .replace(/^```[a-z0-9_-]*\s*/i, '')
+                .replace(/```$/i, '')
+                .trim();
+
+            try {
+                return JSON.parse(content);
+            } catch (firstError) {
+                const firstObject = content.indexOf('{');
+                const lastObject = content.lastIndexOf('}');
+                if (firstObject !== -1 && lastObject > firstObject) {
+                    try {
+                        return JSON.parse(content.slice(firstObject, lastObject + 1));
+                    } catch (secondError) {
+                        const firstArray = content.indexOf('[');
+                        const lastArray = content.lastIndexOf(']');
+                        if (firstArray !== -1 && lastArray > firstArray) {
+                            return JSON.parse(content.slice(firstArray, lastArray + 1));
+                        }
+                    }
+                }
+                throw firstError;
+            }
+        }
+
+        function hasCompleteVisualBlock(text) {
+            return /```(?:mermaid|plotly|threejs|3dmol|3dmol-js|pyvista|vtk|manim|svg-spec)[^`]*```/is.test(text);
+        }
+
+        function scheduleLiveVisualRender(container) {
+            if (!container || !hasCompleteVisualBlock(container.getAttribute('data-raw') || '')) return;
+            if (container._visualRenderTimer) return;
+            container._visualRenderTimer = setTimeout(() => {
+                container._visualRenderTimer = null;
+                renderVisuals(container);
+            }, 80);
+        }
+
+        function updateStreamingContent(aiNode, contentArea, text, showCursor = true) {
+            aiNode.setAttribute('data-raw', text);
+            contentArea.innerHTML = processTextWithMath(text) + (showCursor ? '<span class="blinking-cursor"></span>' : '');
+            scheduleLiveVisualRender(aiNode);
+        }
+
         // ─── RENDER VISUALS: plotly, Three.js, 3Dmol.js, PyVista, Manim ───
         function renderVisuals(container) {
             const blocks = container.querySelectorAll('pre code');
@@ -1162,7 +1207,7 @@
                 // ─── Plotly (MUST RENDER) ───
                 } else if (lang.includes('plotly') || (content.includes('"data"') && content.includes('"layout"'))) {
                     try {
-                        const data = JSON.parse(content);
+                        const data = parseVisualSpec(content);
                         const div = document.createElement('div');
                         div.className = 'plotly-container';
                         pre.replaceWith(div);
@@ -1174,7 +1219,7 @@
                 // ─── Three.js ───
                 } else if (lang.includes('threejs') || (content.includes('"type"') && content.includes('"color"') && content.includes('"objects"'))) {
                     try {
-                        const spec = JSON.parse(content);
+                        const spec = parseVisualSpec(content);
                         const div = document.createElement('div');
                         div.className = 'threejs-container';
                         pre.replaceWith(div);
@@ -1186,7 +1231,7 @@
                 // ─── 3Dmol.js (for molecular structures) ───
                 } else if (lang.includes('3dmol') || lang.includes('3dmol-js') || (content.includes('"type"') && content.includes('"pdb"'))) {
                     try {
-                        const spec = JSON.parse(content);
+                        const spec = parseVisualSpec(content);
                         const div = document.createElement('div');
                         div.className = 'threedmol-container';
                         pre.replaceWith(div);
@@ -1198,7 +1243,7 @@
                 // ─── PyVista / VTK ───
                 } else if (lang.includes('pyvista') || lang.includes('vtk')) {
                     try {
-                        const spec = JSON.parse(content);
+                        const spec = parseVisualSpec(content);
                         const div = document.createElement('div');
                         div.className = 'pyvista-container';
                         pre.replaceWith(div);
@@ -1210,7 +1255,7 @@
                 // ─── Manim Animation ───
                 } else if (lang.includes('manim')) {
                     try {
-                        const spec = JSON.parse(content);
+                        const spec = parseVisualSpec(content);
                         const div = document.createElement('div');
                         div.className = 'manim-container';
                         pre.replaceWith(div);
@@ -1222,7 +1267,7 @@
                 // ─── SVG Spec ───
                 } else if (lang.includes('svg-spec') || (content.trim().startsWith('{') && content.includes('"elements"'))) {
                     try {
-                        const spec = JSON.parse(content);
+                        const spec = parseVisualSpec(content);
                         const div = document.createElement('div');
                         div.className = 'threejs-container';
                         pre.replaceWith(div);
@@ -1238,6 +1283,7 @@
 
         // ─── Interactive Quiz Rendering ───
         function renderInteractiveQuiz(container) {
+            if (container.querySelector('.quiz-container')) return;
             const rawText = container.getAttribute('data-raw') || "";
             const quizStart = rawText.search(/(?:#+\s*|\*\*?)(?:Quiz|Practice Problems|Test Your Knowledge|Knowledge Check|Pop Quiz)(?:\*\*?)?/i);
 
@@ -1320,6 +1366,53 @@
             lucide.createIcons();
         }
 
+        function bindLive3DControls(div, camera, renderer, objects) {
+            let dragging = false;
+            let lastX = 0;
+            let lastY = 0;
+
+            div.style.cursor = 'grab';
+            div.addEventListener('pointerdown', (event) => {
+                dragging = true;
+                lastX = event.clientX;
+                lastY = event.clientY;
+                div.setPointerCapture?.(event.pointerId);
+                div.style.cursor = 'grabbing';
+            });
+            div.addEventListener('pointermove', (event) => {
+                if (!dragging) return;
+                const dx = event.clientX - lastX;
+                const dy = event.clientY - lastY;
+                lastX = event.clientX;
+                lastY = event.clientY;
+                objects.forEach(object => {
+                    object.rotation.y += dx * 0.012;
+                    object.rotation.x += dy * 0.008;
+                });
+            });
+            const stopDragging = (event) => {
+                dragging = false;
+                div.releasePointerCapture?.(event.pointerId);
+                div.style.cursor = 'grab';
+            };
+            div.addEventListener('pointerup', stopDragging);
+            div.addEventListener('pointercancel', stopDragging);
+            div.addEventListener('wheel', (event) => {
+                event.preventDefault();
+                camera.position.z = Math.max(1.5, Math.min(30, camera.position.z + event.deltaY * 0.01));
+            }, { passive: false });
+
+            const resizeObserver = new ResizeObserver(() => {
+                const width = Math.max(280, div.clientWidth || 600);
+                const height = Math.max(260, div.clientHeight || 400);
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height, false);
+            });
+            resizeObserver.observe(div);
+            return resizeObserver;
+        }
+
         // ─── Three.js Renderer ───
         function initThreeJS(div, spec) {
         div.innerHTML = '';
@@ -1334,7 +1427,8 @@
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(width, height);
-        renderer.setPixelRatio(window.devicePixelRatio || 1);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.domElement.setAttribute('aria-label', 'Interactive live 3D visual. Drag to rotate and scroll to zoom.');
         div.appendChild(renderer.domElement);
 
         const ambient = new THREE.AmbientLight(0xffffff, 0.6);
@@ -1385,6 +1479,8 @@
         objects.push(mesh);
         });
 
+        const resizeObserver = bindLive3DControls(div, camera, renderer, objects);
+
         if (objects.length === 0) {
         const geo = new THREE.SphereGeometry(1.2, 32, 32);
         const mat = new THREE.MeshStandardMaterial({ color: 0x60a5fa, roughness: 0.4 });
@@ -1405,6 +1501,7 @@
         if (!document.body.contains(div)) {
             cancelAnimationFrame(frameId);
             renderer.dispose();
+            resizeObserver.disconnect();
             observer.disconnect();
         }
          });
@@ -1446,6 +1543,20 @@
                 }
                 viewer.render();
                 viewer.zoom(0.8, 1000);
+
+                const resizeObserver = new ResizeObserver(() => {
+                    viewer.resize?.();
+                    viewer.render();
+                });
+                resizeObserver.observe(div);
+
+                const mutationObserver = new MutationObserver(() => {
+                    if (!document.body.contains(div)) {
+                        resizeObserver.disconnect();
+                        mutationObserver.disconnect();
+                    }
+                });
+                mutationObserver.observe(document.body, { childList: true, subtree: true });
 
                 // Label
                 if (spec.label) {
@@ -1533,6 +1644,8 @@
                     objects.push(mesh);
                 });
 
+                const resizeObserver = bindLive3DControls(div, camera, renderer, objects);
+
                 // Add grid for scientific context
                 const gridHelper = new THREE.GridHelper(10, 10, 0x383838, 0x2a2a2a);
                 scene.add(gridHelper);
@@ -1550,12 +1663,14 @@
                 animate();
 
                 const observer = new MutationObserver(() => {
-                    if (!document.body.contains(div)) {
-                        cancelAnimationFrame(frameId);
-                        renderer.dispose();
-                        observer.disconnect();
-                    }
-                });
+                                            if (!document.body.contains(div)) {
+                            cancelAnimationFrame(frameId);
+                            renderer.dispose();
+                            resizeObserver.disconnect();
+                            observer.disconnect();
+                        }
+                    });
+
                 observer.observe(document.body, { childList: true, subtree: true });
 
             } catch (e) {
@@ -1576,8 +1691,10 @@
                     const video = document.createElement('video');
                     video.src = spec.video_url;
                     video.controls = true;
-                    video.autoplay = !!spec.autoplay;
-                    video.loop = !!spec.loop;
+                    video.autoplay = spec.autoplay !== false;
+                    video.loop = spec.loop !== false;
+                    video.muted = spec.muted !== false;
+                    video.playsInline = true;
                     video.style.width = '100%';
                     video.style.maxHeight = '400px';
                     video.style.borderRadius = '0.5rem';
@@ -1639,7 +1756,8 @@
                             }
                         }
 
-                        if (progress < 1) {
+                        if (progress < 1 || spec.loop !== false) {
+                            if (progress >= 1) progress = 0;
                             requestAnimationFrame(animateManim);
                         }
                     }
@@ -1715,7 +1833,8 @@
                             ctx.globalAlpha = 1;
                         });
 
-                        if (progress < 1) {
+                        if (progress < 1 || spec.loop !== false) {
+                            if (progress >= 1) progress = 0;
                             requestAnimationFrame(animateShapes);
                         }
                     }
@@ -2006,8 +2125,7 @@
                             logs.scrollTop = logs.scrollHeight;
                         }
 
-                        aiNode.setAttribute('data-raw', displayMain);
-                        contentArea.innerHTML = processTextWithMath(displayMain) + '<span class="blinking-cursor"></span>';
+                        updateStreamingContent(aiNode, contentArea, displayMain, true);
                         scrollToBottom();
                     }
 
@@ -2045,7 +2163,7 @@
                     streamingInterval = setInterval(() => {
                         if (currentIdx <= displayMain.length) {
                             const chunk = displayMain.substring(0, currentIdx);
-                            contentArea.innerHTML = processTextWithMath(chunk) + '<span class="blinking-cursor"></span>';
+                            updateStreamingContent(aiNode, contentArea, chunk, true);
                             scrollToBottom();
                             currentIdx += 4;
                         } else {
@@ -2056,7 +2174,7 @@
                 }
 
                 function finalizeResponse(finalText) {
-                    contentArea.innerHTML = processTextWithMath(finalText);
+                    updateStreamingContent(aiNode, contentArea, finalText, false);
                     renderVisuals(aiNode);
                     
                     // Save to conversational memory

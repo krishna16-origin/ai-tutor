@@ -1526,7 +1526,22 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    let detailMsg = `HTTP ${response.status}`;
+                    try {
+                        const errBody = await response.json();
+                        const d = errBody?.detail;
+                        if (typeof d === 'string') {
+                            detailMsg = d;
+                        } else if (d && typeof d === 'object') {
+                            detailMsg = d.message
+                                ? `${d.message} (${d.primary_provider}: ${d.primary_error} | ${d.fallback_provider}: ${d.fallback_error})`
+                                : JSON.stringify(d);
+                        }
+                    } catch (parseErr) {
+                        // Response body wasn't JSON (e.g. a platform-level gateway error page)
+                        detailMsg = `HTTP ${response.status} (no error detail returned by server)`;
+                    }
+                    throw new Error(detailMsg);
                 }
 
                 stopThinking(aiNode);

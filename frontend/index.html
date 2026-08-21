@@ -166,6 +166,44 @@
         @media (max-width: 767px) {
             .sidebar-mobile-open { transform: translateX(0) !important; }
         }
+
+        /* Composer model picker */
+        .model-picker-menu {
+            background: #242424;
+            border: 1px solid #454545;
+            border-radius: 0.85rem;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.42);
+            min-width: 250px;
+            overflow: hidden;
+        }
+        .model-picker-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.7rem 0.8rem;
+            color: #ececec;
+            text-align: left;
+            transition: background-color 0.18s ease;
+        }
+        .model-picker-option:hover { background: #333333; }
+        .model-picker-option.active { background: #303030; }
+        .model-picker-option .model-check {
+            width: 1rem;
+            color: #60a5fa;
+            opacity: 0;
+        }
+        .model-picker-option.active .model-check { opacity: 1; }
+        .model-picker-trigger[aria-expanded="true"] {
+            background: #3a3a3a;
+            color: #ececec;
+        }
+        .model-picker-trigger[aria-expanded="true"] .model-chevron {
+            transform: rotate(180deg);
+        }
+        @media (max-width: 480px) {
+            .model-picker-menu { min-width: min(250px, calc(100vw - 2rem)); }
+        }
     </style>
 </head>
 
@@ -202,27 +240,6 @@
         <div class="flex-1 overflow-y-auto px-3 py-2 space-y-6 custom-scrollbar w-[260px]">
             <div class="space-y-3">
                 <h3 class="text-xs font-semibold text-chat-muted uppercase tracking-wider px-2">Settings</h3>
-
-                <div class="space-y-1">
-                    <label class="text-xs text-chat-muted px-2">Learner Level</label>
-                    <select id="setting-level" class="w-full bg-chat-bg border border-chat-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-500 cursor-pointer">
-                        <option value="Beginner">Beginner</option>
-                        <option value="Student" selected>Student</option>
-                        <option value="College">College</option>
-                        <option value="Engineer">Engineer</option>
-                        <option value="Researcher">Researcher</option>
-                        <option value="Mariana Trench Mode">Mariana Trench</option>
-                    </select>
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-xs text-chat-muted px-2">Provider Model</label>
-                    <select id="setting-provider" class="w-full bg-chat-bg border border-chat-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-500 cursor-pointer">
-                        <option value="auto">Auto Route</option>
-                        <option value="groq">GPT 4.5</option>
-                        <option value="glm">GLM 5.2 </option>
-                    </select>
-                </div>
 
                 <div class="space-y-1">
                     <label class="text-xs text-chat-muted px-2">Language</label>
@@ -340,11 +357,92 @@
                     </div>
                 </div>
 
-                <form id="chat-form" class="relative flex items-end bg-chat-input rounded-2xl border border-chat-border shadow-lg focus-within:border-gray-500 transition-colors p-1">
+                <form id="chat-form" class="relative flex flex-col bg-chat-input rounded-2xl border border-chat-border shadow-lg focus-within:border-gray-500 transition-colors p-1">
+                    <div id="provider-menu" class="model-picker-menu absolute bottom-full left-0 mb-2 hidden z-20 p-1.5" role="menu" aria-label="Choose a provider model">
+                        <div class="px-2.5 pt-2 pb-1 text-[10px] uppercase tracking-wider font-semibold text-chat-muted">Provider model</div>
+                        <button type="button" class="model-picker-option active" data-provider-option="auto" role="menuitem" onclick="setProvider('auto')">
+                            <i data-lucide="route" class="w-4 h-4 text-chat-muted shrink-0"></i>
+                            <span class="flex-1 min-w-0">
+                                <span class="block text-sm font-medium">Auto Route</span>
+                                <span class="block text-[11px] text-chat-muted mt-0.5">Let Scribe choose the best model</span>
+                            </span>
+                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
+                        </button>
+                        <button type="button" class="model-picker-option" data-provider-option="groq" role="menuitem" onclick="setProvider('groq')">
+                            <i data-lucide="zap" class="w-4 h-4 text-orange-300 shrink-0"></i>
+                            <span class="flex-1 min-w-0">
+                                <span class="block text-sm font-medium">GPT 4.5</span>
+                                <span class="block text-[11px] text-chat-muted mt-0.5">Fast responses for everyday learning</span>
+                            </span>
+                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
+                        </button>
+                        <button type="button" class="model-picker-option" data-provider-option="glm" role="menuitem" onclick="setProvider('glm')">
+                            <i data-lucide="brain" class="w-4 h-4 text-blue-300 shrink-0"></i>
+                            <span class="flex-1 min-w-0">
+                                <span class="block text-sm font-medium">GLM 5.2</span>
+                                <span class="block text-[11px] text-chat-muted mt-0.5">Deeper reasoning for complex topics</span>
+                            </span>
+                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
+                        </button>
+                        <div class="my-1.5 border-t border-chat-border"></div>
+                        <div class="px-2.5 pt-1.5 pb-1 text-[10px] uppercase tracking-wider font-semibold text-chat-muted">Learner level</div>
+                        <button type="button" class="model-picker-option" data-level-option="Beginner" role="menuitem" onclick="setLearnerLevel('Beginner')">
+                            <i data-lucide="sprout" class="w-4 h-4 text-emerald-300 shrink-0"></i>
+                            <span class="flex-1 text-sm font-medium">Beginner</span>
+                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
+                        </button>
+                        <button type="button" class="model-picker-option active" data-level-option="Student" role="menuitem" onclick="setLearnerLevel('Student')">
+                            <i data-lucide="graduation-cap" class="w-4 h-4 text-blue-300 shrink-0"></i>
+                            <span class="flex-1 text-sm font-medium">Student</span>
+                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
+                        </button>
+                        <button type="button" class="model-picker-option" data-level-option="College" role="menuitem" onclick="setLearnerLevel('College')">
+                            <i data-lucide="book-open" class="w-4 h-4 text-violet-300 shrink-0"></i>
+                            <span class="flex-1 text-sm font-medium">College</span>
+                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
+                        </button>
+                        <button type="button" class="model-picker-option" data-level-option="Engineer" role="menuitem" onclick="setLearnerLevel('Engineer')">
+                            <i data-lucide="binary" class="w-4 h-4 text-amber-300 shrink-0"></i>
+                            <span class="flex-1 text-sm font-medium">Engineer</span>
+                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
+                        </button>
+                        <button type="button" class="model-picker-option" data-level-option="Researcher" role="menuitem" onclick="setLearnerLevel('Researcher')">
+                            <i data-lucide="microscope" class="w-4 h-4 text-cyan-300 shrink-0"></i>
+                            <span class="flex-1 text-sm font-medium">Researcher</span>
+                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
+                        </button>
+                        <button type="button" class="model-picker-option" data-level-option="Mariana Trench Mode" role="menuitem" onclick="setLearnerLevel('Mariana Trench Mode')">
+                            <i data-lucide="waves" class="w-4 h-4 text-indigo-300 shrink-0"></i>
+                            <span class="flex-1 text-sm font-medium">Mariana Trench</span>
+                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
+                        </button>
+                    </div>
                     <textarea id="main-input" rows="1" placeholder="Enter a topic to learn..." class="w-full bg-transparent text-chat-text text-base px-4 py-3 focus:outline-none placeholder-chat-muted resize-none custom-scrollbar m-0" oninput="autoResize(this)" onkeydown="handleEnter(event)"></textarea>
-                    <button type="submit" id="submit-btn" class="mb-2 mr-2 p-2 bg-white text-black rounded-xl hover:bg-gray-200 disabled:bg-chat-border disabled:text-chat-muted transition-colors flex-shrink-0">
-                        <i data-lucide="arrow-up" class="w-5 h-5"></i>
-                    </button>
+                    <div class="flex items-center justify-between px-2 pb-1">
+                        <div class="flex items-center gap-1">
+                            <button type="button" id="provider-picker" class="model-picker-trigger flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-chat-muted hover:bg-chat-hover hover:text-chat-text transition-colors" aria-expanded="false" aria-controls="provider-menu" onclick="toggleProviderMenu(event)">
+                                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                                <span id="provider-picker-label">Auto Route · Student</span>
+                                <i data-lucide="chevron-up" class="model-chevron w-3.5 h-3.5 transition-transform"></i>
+                            </button>
+                            <select id="setting-provider" class="hidden" aria-hidden="true" tabindex="-1">
+                                <option value="auto">Auto Route</option>
+                                <option value="groq">GPT 4.5</option>
+                                <option value="glm">GLM 5.2</option>
+                            </select>
+                            <select id="setting-level" class="hidden" aria-hidden="true" tabindex="-1">
+                                <option value="Beginner">Beginner</option>
+                                <option value="Student" selected>Student</option>
+                                <option value="College">College</option>
+                                <option value="Engineer">Engineer</option>
+                                <option value="Researcher">Researcher</option>
+                                <option value="Mariana Trench Mode">Mariana Trench</option>
+                            </select>
+                        </div>
+                        <button type="submit" id="submit-btn" class="p-2 bg-white text-black rounded-xl hover:bg-gray-200 disabled:bg-chat-border disabled:text-chat-muted transition-colors flex-shrink-0">
+                            <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -524,6 +622,83 @@
             optNum: document.getElementById('opt-num'),
             optQuizContext: document.getElementById('opt-quiz-context')
         };
+
+        const providerLabels = {
+            auto: 'Auto Route',
+            groq: 'GPT 4.5',
+            glm: 'GLM 5.2'
+        };
+
+        const levelLabels = {
+            Beginner: 'Beginner',
+            Student: 'Student',
+            College: 'College',
+            Engineer: 'Engineer',
+            Researcher: 'Researcher',
+            'Mariana Trench Mode': 'Mariana Trench'
+        };
+
+        function updateProviderPickerLabel() {
+            const label = document.getElementById('provider-picker-label');
+            const provider = document.getElementById('setting-provider')?.value;
+            const level = document.getElementById('setting-level')?.value;
+            if (label && providerLabels[provider] && levelLabels[level]) {
+                label.textContent = `${providerLabels[provider]} · ${levelLabels[level]}`;
+            }
+        }
+
+        function closeProviderMenu() {
+            const menu = document.getElementById('provider-menu');
+            const trigger = document.getElementById('provider-picker');
+            if (menu && trigger) {
+                menu.classList.add('hidden');
+                trigger.setAttribute('aria-expanded', 'false');
+            }
+        }
+
+        function setProvider(provider) {
+            const select = document.getElementById('setting-provider');
+            if (!select || !providerLabels[provider]) return;
+
+            select.value = provider;
+            updateProviderPickerLabel();
+            document.querySelectorAll('[data-provider-option]').forEach(option => {
+                option.classList.toggle('active', option.dataset.providerOption === provider);
+            });
+            closeProviderMenu();
+        }
+
+        function setLearnerLevel(level) {
+            const select = document.getElementById('setting-level');
+            if (!select || !levelLabels[level]) return;
+
+            select.value = level;
+            updateProviderPickerLabel();
+            document.querySelectorAll('[data-level-option]').forEach(option => {
+                option.classList.toggle('active', option.dataset.levelOption === level);
+            });
+            closeProviderMenu();
+        }
+
+        function toggleProviderMenu(event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const menu = document.getElementById('provider-menu');
+            const trigger = document.getElementById('provider-picker');
+            const isOpen = !menu.classList.contains('hidden');
+
+            menu.classList.toggle('hidden', isOpen);
+            trigger.setAttribute('aria-expanded', String(!isOpen));
+        }
+
+        document.addEventListener('click', (event) => {
+            const picker = document.getElementById('provider-picker');
+            const menu = document.getElementById('provider-menu');
+            if (picker && menu && !picker.contains(event.target) && !menu.contains(event.target)) {
+                closeProviderMenu();
+            }
+        });
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');

@@ -849,12 +849,17 @@ async def connectors(request: SourceRequest) -> AIResponse:
 
 @app.post("/quiz", response_model=AIResponse)
 async def quiz(request: QuizRequest) -> AIResponse:
+    # Always define stored_messages up front so it exists no matter which
+    # branch below runs (fixes UnboundLocalError when use_context=True but
+    # session_id is empty/missing).
+    stored_messages: List[BaseMessage] = []
+
     if request.use_context and request.session_id:
         # Quiz based on previous conversation context
         stored_messages = get_session_messages(request.session_id)
         context_str = "Based on the following previous conversation:\n\n" + "\n".join(
             [f"{'User' if isinstance(m, HumanMessage) else 'Assistant'}: {m.content[:500]}" for m in stored_messages[-10:]]
-        ) if stored_messages else ""
+        ) if stored_messages else "Generate a standalone quiz about this topic from scratch."
     else:
         context_str = "Generate a standalone quiz about this topic from scratch."
 
@@ -863,7 +868,7 @@ async def quiz(request: QuizRequest) -> AIResponse:
         "language": request.language,
         "topic": request.topic,
         "num_questions": request.num_questions,
-        "context_messages": stored_messages if request.use_context else [],
+        "context_messages": stored_messages,
         "quiz_context": context_str,
     }
 

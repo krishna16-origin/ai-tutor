@@ -169,21 +169,60 @@
 
         /* Composer model picker */
         .model-picker-menu {
+            display: flex;
+            width: min(600px, calc(100vw - 2rem));
             background: #242424;
             border: 1px solid #454545;
             border-radius: 0.85rem;
-            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.42);
-            min-width: 250px;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.48);
             overflow: hidden;
+        }
+        .model-picker-main {
+            width: 310px;
+            min-width: 310px;
+            padding: 0.45rem;
+        }
+        .model-picker-detail {
+            width: 290px;
+            min-width: 290px;
+            padding: 0.85rem;
+            border-left: 1px solid #3d3d3d;
+            background: #1f1f1f;
+        }
+        .model-picker-detail[hidden] { display: none; }
+        .picker-plan-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.35rem 0.55rem 0.5rem;
+            color: #9b9b9b;
+            font-size: 0.72rem;
+        }
+        .picker-upgrade {
+            border: 1px solid #4d688e;
+            color: #8db9f5;
+            border-radius: 9999px;
+            padding: 0.18rem 0.55rem;
+            font-size: 0.68rem;
+            line-height: 1;
+        }
+        .picker-section-label {
+            padding: 0.35rem 0.55rem 0.25rem;
+            color: #8d8d8d;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }
         .model-picker-option {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.65rem;
             width: 100%;
-            padding: 0.7rem 0.8rem;
+            padding: 0.62rem 0.55rem;
             color: #ececec;
             text-align: left;
+            border-radius: 0.55rem;
             transition: background-color 0.18s ease;
         }
         .model-picker-option:hover { background: #333333; }
@@ -194,6 +233,113 @@
             opacity: 0;
         }
         .model-picker-option.active .model-check { opacity: 1; }
+        .picker-model-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.45rem;
+            height: 1.45rem;
+            flex: 0 0 auto;
+            border-radius: 0.4rem;
+            background: #303030;
+            color: #bcbcbc;
+        }
+        .picker-badge {
+            border-radius: 9999px;
+            background: #293b55;
+            color: #8db9f5;
+            padding: 0.12rem 0.38rem;
+            font-size: 0.58rem;
+            font-weight: 700;
+        }
+        .picker-model-description {
+            margin-top: 0.12rem;
+            color: #999999;
+            font-size: 0.68rem;
+            line-height: 1.2;
+        }
+        .picker-submenu-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 0.28rem;
+            padding: 0.62rem 0.55rem;
+            border-top: 1px solid #3b3b3b;
+            color: #ececec;
+            text-align: left;
+            transition: background-color 0.18s ease;
+        }
+        .picker-submenu-row:hover { background: #333333; }
+        .picker-submenu-summary {
+            display: block;
+            margin-top: 0.12rem;
+            color: #999999;
+            font-size: 0.68rem;
+        }
+        .picker-detail-title {
+            color: #f1f1f1;
+            font-size: 0.88rem;
+            font-weight: 700;
+        }
+        .picker-detail-copy {
+            margin-top: 0.22rem;
+            color: #999999;
+            font-size: 0.68rem;
+            line-height: 1.35;
+        }
+        .picker-effort-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0.52rem 0;
+            color: #eeeeee;
+            text-align: left;
+            border-bottom: 1px solid #343434;
+        }
+        .picker-effort-option:last-child { border-bottom: 0; }
+        .picker-effort-option:hover { color: #ffffff; }
+        .picker-effort-option.active { color: #ffffff; }
+        .picker-effort-check { color: #60a5fa; opacity: 0; }
+        .picker-effort-option.active .picker-effort-check { opacity: 1; }
+        .picker-effort-note {
+            display: block;
+            margin-top: 0.12rem;
+            color: #8e8e8e;
+            font-size: 0.66rem;
+        }
+        .picker-thinking-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-top: 0.65rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #3b3b3b;
+        }
+        .picker-thinking-switch {
+            position: relative;
+            width: 2.45rem;
+            height: 1.35rem;
+            flex: 0 0 auto;
+            border-radius: 9999px;
+            background: #555555;
+            transition: background-color 0.18s ease;
+        }
+        .picker-thinking-switch::after {
+            content: '';
+            position: absolute;
+            top: 0.18rem;
+            left: 0.18rem;
+            width: 0.99rem;
+            height: 0.99rem;
+            border-radius: 50%;
+            background: #eeeeee;
+            transition: transform 0.18s ease;
+        }
+        .picker-thinking-switch[aria-checked="true"] { background: #3b82f6; }
+        .picker-thinking-switch[aria-checked="true"]::after { transform: translateX(1.1rem); }
         .model-picker-trigger[aria-expanded="true"] {
             background: #3a3a3a;
             color: #ececec;
@@ -201,8 +347,21 @@
         .model-picker-trigger[aria-expanded="true"] .model-chevron {
             transform: rotate(180deg);
         }
-        @media (max-width: 480px) {
-            .model-picker-menu { min-width: min(250px, calc(100vw - 2rem)); }
+        @media (max-width: 640px) {
+            .model-picker-menu {
+                flex-direction: column;
+                width: min(360px, calc(100vw - 1rem));
+                max-height: min(72vh, 540px);
+                overflow-y: auto;
+            }
+            .model-picker-main, .model-picker-detail {
+                width: 100%;
+                min-width: 0;
+            }
+            .model-picker-detail {
+                border-top: 1px solid #3d3d3d;
+                border-left: 0;
+            }
         }
     </style>
 </head>
@@ -358,64 +517,82 @@
                 </div>
 
                 <form id="chat-form" class="relative flex flex-col bg-chat-input rounded-2xl border border-chat-border shadow-lg focus-within:border-gray-500 transition-colors p-1">
-                    <div id="provider-menu" class="model-picker-menu absolute bottom-full left-0 mb-2 hidden z-20 p-1.5" role="menu" aria-label="Choose a provider model">
-                        <div class="px-2.5 pt-2 pb-1 text-[10px] uppercase tracking-wider font-semibold text-chat-muted">Provider model</div>
-                        <button type="button" class="model-picker-option active" data-provider-option="auto" role="menuitem" onclick="setProvider('auto')">
-                            <i data-lucide="route" class="w-4 h-4 text-chat-muted shrink-0"></i>
-                            <span class="flex-1 min-w-0">
-                                <span class="block text-sm font-medium">Auto Route</span>
-                                <span class="block text-[11px] text-chat-muted mt-0.5">Let Scribe choose the best model</span>
-                            </span>
-                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
-                        </button>
-                        <button type="button" class="model-picker-option" data-provider-option="groq" role="menuitem" onclick="setProvider('groq')">
-                            <i data-lucide="zap" class="w-4 h-4 text-orange-300 shrink-0"></i>
-                            <span class="flex-1 min-w-0">
-                                <span class="block text-sm font-medium">GPT 4.5</span>
-                                <span class="block text-[11px] text-chat-muted mt-0.5">Fast responses for everyday learning</span>
-                            </span>
-                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
-                        </button>
-                        <button type="button" class="model-picker-option" data-provider-option="glm" role="menuitem" onclick="setProvider('glm')">
-                            <i data-lucide="brain" class="w-4 h-4 text-blue-300 shrink-0"></i>
-                            <span class="flex-1 min-w-0">
-                                <span class="block text-sm font-medium">GLM 5.2</span>
-                                <span class="block text-[11px] text-chat-muted mt-0.5">Deeper reasoning for complex topics</span>
-                            </span>
-                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
-                        </button>
-                        <div class="my-1.5 border-t border-chat-border"></div>
-                        <div class="px-2.5 pt-1.5 pb-1 text-[10px] uppercase tracking-wider font-semibold text-chat-muted">Learner level</div>
-                        <button type="button" class="model-picker-option" data-level-option="Beginner" role="menuitem" onclick="setLearnerLevel('Beginner')">
-                            <i data-lucide="sprout" class="w-4 h-4 text-emerald-300 shrink-0"></i>
-                            <span class="flex-1 text-sm font-medium">Beginner</span>
-                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
-                        </button>
-                        <button type="button" class="model-picker-option active" data-level-option="Student" role="menuitem" onclick="setLearnerLevel('Student')">
-                            <i data-lucide="graduation-cap" class="w-4 h-4 text-blue-300 shrink-0"></i>
-                            <span class="flex-1 text-sm font-medium">Student</span>
-                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
-                        </button>
-                        <button type="button" class="model-picker-option" data-level-option="College" role="menuitem" onclick="setLearnerLevel('College')">
-                            <i data-lucide="book-open" class="w-4 h-4 text-violet-300 shrink-0"></i>
-                            <span class="flex-1 text-sm font-medium">College</span>
-                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
-                        </button>
-                        <button type="button" class="model-picker-option" data-level-option="Engineer" role="menuitem" onclick="setLearnerLevel('Engineer')">
-                            <i data-lucide="binary" class="w-4 h-4 text-amber-300 shrink-0"></i>
-                            <span class="flex-1 text-sm font-medium">Engineer</span>
-                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
-                        </button>
-                        <button type="button" class="model-picker-option" data-level-option="Researcher" role="menuitem" onclick="setLearnerLevel('Researcher')">
-                            <i data-lucide="microscope" class="w-4 h-4 text-cyan-300 shrink-0"></i>
-                            <span class="flex-1 text-sm font-medium">Researcher</span>
-                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
-                        </button>
-                        <button type="button" class="model-picker-option" data-level-option="Mariana Trench Mode" role="menuitem" onclick="setLearnerLevel('Mariana Trench Mode')">
-                            <i data-lucide="waves" class="w-4 h-4 text-indigo-300 shrink-0"></i>
-                            <span class="flex-1 text-sm font-medium">Mariana Trench</span>
-                            <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
-                        </button>
+                    <div id="provider-menu" class="model-picker-menu absolute bottom-full left-0 mb-2 hidden z-20" role="dialog" aria-label="Choose a provider model">
+                        <div class="model-picker-main">
+                            <div class="picker-plan-row">
+                                <span>Free plan</span>
+                                <button type="button" class="picker-upgrade" onclick="event.stopPropagation()">Upgrade</button>
+                            </div>
+                            <div class="picker-section-label">Models</div>
+                            <button type="button" class="model-picker-option active" data-provider-option="auto" role="menuitem" onclick="setProvider('auto')">
+                                <span class="picker-model-icon"><i data-lucide="route" class="w-3.5 h-3.5"></i></span>
+                                <span class="flex-1 min-w-0">
+                                    <span class="flex items-center gap-1.5 text-sm font-medium">Auto Route <span class="picker-badge">Recommended</span></span>
+                                    <span class="picker-model-description">Let Scribe choose the best model</span>
+                                </span>
+                                <i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i>
+                            </button>
+                            <div class="model-picker-option" data-provider-option="groq" role="menuitem" tabindex="0" onclick="setProvider('groq')">
+                                <span class="picker-model-icon text-orange-300"><i data-lucide="zap" class="w-3.5 h-3.5"></i></span>
+                                <span class="flex-1 min-w-0">
+                                    <span class="flex items-center gap-1.5 text-sm font-medium">GPT 4.5 <span class="picker-badge">Pro</span></span>
+                                    <span class="picker-model-description">Fast responses for everyday learning</span>
+                                </span>
+                                <button type="button" class="picker-upgrade" onclick="event.stopPropagation()">Upgrade</button>
+                            </div>
+                            <div class="model-picker-option" data-provider-option="glm" role="menuitem" tabindex="0" onclick="setProvider('glm')">
+                                <span class="picker-model-icon text-blue-300"><i data-lucide="brain" class="w-3.5 h-3.5"></i></span>
+                                <span class="flex-1 min-w-0">
+                                    <span class="flex items-center gap-1.5 text-sm font-medium">GLM 5.2 <span class="picker-badge">Pro</span></span>
+                                    <span class="picker-model-description">Deeper reasoning for complex topics</span>
+                                </span>
+                                <button type="button" class="picker-upgrade" onclick="event.stopPropagation()">Upgrade</button>
+                            </div>
+                            <button type="button" class="picker-submenu-row" onclick="togglePickerDetail('effort')">
+                                <span>
+                                    <span class="text-sm font-medium">Effort</span>
+                                    <span id="effort-summary" class="picker-submenu-summary">High</span>
+                                </span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 text-chat-muted"></i>
+                            </button>
+                            <button type="button" class="picker-submenu-row" onclick="togglePickerDetail('level')">
+                                <span>
+                                    <span class="text-sm font-medium">Learner level</span>
+                                    <span id="level-summary" class="picker-submenu-summary">Student</span>
+                                </span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 text-chat-muted"></i>
+                            </button>
+                        </div>
+                        <section id="effort-detail" class="model-picker-detail" aria-label="Effort settings">
+                            <div class="picker-detail-title">Effort</div>
+                            <p class="picker-detail-copy">Higher effort means more thorough responses, but takes longer and uses your limits faster.</p>
+                            <div class="mt-3">
+                                <button type="button" class="picker-effort-option" data-effort-option="low" onclick="setEffort('low')"><span>Low</span><i data-lucide="check" class="picker-effort-check w-4 h-4"></i></button>
+                                <button type="button" class="picker-effort-option" data-effort-option="medium" onclick="setEffort('medium')"><span>Medium <small class="text-[10px] text-chat-muted">Default</small></span><i data-lucide="check" class="picker-effort-check w-4 h-4"></i></button>
+                                <button type="button" class="picker-effort-option active" data-effort-option="high" onclick="setEffort('high')"><span>High</span><i data-lucide="check" class="picker-effort-check w-4 h-4"></i></button>
+                                <button type="button" class="picker-effort-option" data-effort-option="extra" onclick="setEffort('extra')"><span>Extra</span><i data-lucide="check" class="picker-effort-check w-4 h-4"></i></button>
+                                <button type="button" class="picker-effort-option" data-effort-option="max" onclick="setEffort('max')"><span>Max <small class="text-[10px] text-chat-muted">ⓘ</small></span><i data-lucide="check" class="picker-effort-check w-4 h-4"></i></button>
+                            </div>
+                            <div class="picker-thinking-row">
+                                <span>
+                                    <span class="block text-sm font-medium">Thinking</span>
+                                    <span class="block mt-0.5 text-[10px] text-chat-muted">Can think for more complex tasks</span>
+                                </span>
+                                <button type="button" id="thinking-toggle" class="picker-thinking-switch" role="switch" aria-checked="true" aria-label="Toggle thinking" onclick="toggleThinking()"></button>
+                            </div>
+                        </section>
+                        <section id="level-detail" class="model-picker-detail" aria-label="Learner level settings" hidden>
+                            <div class="picker-detail-title">Learner level</div>
+                            <p class="picker-detail-copy">Choose how deeply Scribe should explain concepts and tailor examples.</p>
+                            <div class="mt-3">
+                                <button type="button" class="model-picker-option" data-level-option="Beginner" role="menuitem" onclick="setLearnerLevel('Beginner')"><span class="picker-model-icon text-emerald-300"><i data-lucide="sprout" class="w-3.5 h-3.5"></i></span><span class="flex-1 text-sm font-medium">Beginner</span><i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i></button>
+                                <button type="button" class="model-picker-option active" data-level-option="Student" role="menuitem" onclick="setLearnerLevel('Student')"><span class="picker-model-icon text-blue-300"><i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i></span><span class="flex-1 text-sm font-medium">Student</span><i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i></button>
+                                <button type="button" class="model-picker-option" data-level-option="College" role="menuitem" onclick="setLearnerLevel('College')"><span class="picker-model-icon text-violet-300"><i data-lucide="book-open" class="w-3.5 h-3.5"></i></span><span class="flex-1 text-sm font-medium">College</span><i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i></button>
+                                <button type="button" class="model-picker-option" data-level-option="Engineer" role="menuitem" onclick="setLearnerLevel('Engineer')"><span class="picker-model-icon text-amber-300"><i data-lucide="binary" class="w-3.5 h-3.5"></i></span><span class="flex-1 text-sm font-medium">Engineer</span><i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i></button>
+                                <button type="button" class="model-picker-option" data-level-option="Researcher" role="menuitem" onclick="setLearnerLevel('Researcher')"><span class="picker-model-icon text-cyan-300"><i data-lucide="microscope" class="w-3.5 h-3.5"></i></span><span class="flex-1 text-sm font-medium">Researcher</span><i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i></button>
+                                <button type="button" class="model-picker-option" data-level-option="Mariana Trench Mode" role="menuitem" onclick="setLearnerLevel('Mariana Trench Mode')"><span class="picker-model-icon text-indigo-300"><i data-lucide="waves" class="w-3.5 h-3.5"></i></span><span class="flex-1 text-sm font-medium">Mariana Trench</span><i data-lucide="check" class="model-check w-4 h-4 shrink-0"></i></button>
+                            </div>
+                        </section>
                     </div>
                     <textarea id="main-input" rows="1" placeholder="Enter a topic to learn..." class="w-full bg-transparent text-chat-text text-base px-4 py-3 focus:outline-none placeholder-chat-muted resize-none custom-scrollbar m-0" oninput="autoResize(this)" onkeydown="handleEnter(event)"></textarea>
                     <div class="flex items-center justify-between px-2 pb-1">
@@ -637,6 +814,14 @@
             Researcher: 'Researcher',
             'Mariana Trench Mode': 'Mariana Trench'
         };
+        const effortLabels = {
+            low: 'Low',
+            medium: 'Medium',
+            high: 'High',
+            extra: 'Extra',
+            max: 'Max'
+        };
+        let currentEffort = 'high';
 
         function updateProviderPickerLabel() {
             const label = document.getElementById('provider-picker-label');
@@ -656,10 +841,9 @@
             }
         }
 
-        function setProvider(provider) {
+                function setProvider(provider) {
             const select = document.getElementById('setting-provider');
             if (!select || !providerLabels[provider]) return;
-
             select.value = provider;
             updateProviderPickerLabel();
             document.querySelectorAll('[data-provider-option]').forEach(option => {
@@ -668,29 +852,59 @@
             closeProviderMenu();
         }
 
+        function togglePickerDetail(detail) {
+            const menu = document.getElementById('provider-menu');
+            const effortPanel = document.getElementById('effort-detail');
+            const levelPanel = document.getElementById('level-detail');
+            if (!menu || !effortPanel || !levelPanel) return;
+
+            effortPanel.hidden = detail !== 'effort';
+            levelPanel.hidden = detail !== 'level';
+            menu.classList.toggle('has-detail', true);
+        }
+
+        function setEffort(effort) {
+            if (!effortLabels[effort]) return;
+            currentEffort = effort;
+            document.querySelectorAll('[data-effort-option]').forEach(option => {
+                option.classList.toggle('active', option.dataset.effortOption === effort);
+            });
+            const summary = document.getElementById('effort-summary');
+            if (summary) summary.textContent = effortLabels[effort];
+        }
+
+        function toggleThinking() {
+            const toggle = document.getElementById('thinking-toggle');
+            if (!toggle) return;
+            toggle.setAttribute('aria-checked', String(toggle.getAttribute('aria-checked') !== 'true'));
+        }
+
+
         function setLearnerLevel(level) {
             const select = document.getElementById('setting-level');
             if (!select || !levelLabels[level]) return;
 
             select.value = level;
             updateProviderPickerLabel();
+            const summary = document.getElementById('level-summary');
+            if (summary) summary.textContent = levelLabels[level];
             document.querySelectorAll('[data-level-option]').forEach(option => {
                 option.classList.toggle('active', option.dataset.levelOption === level);
             });
             closeProviderMenu();
         }
 
-        function toggleProviderMenu(event) {
+                function toggleProviderMenu(event) {
             event.preventDefault();
             event.stopPropagation();
-
             const menu = document.getElementById('provider-menu');
             const trigger = document.getElementById('provider-picker');
             const isOpen = !menu.classList.contains('hidden');
-
             menu.classList.toggle('hidden', isOpen);
             trigger.setAttribute('aria-expanded', String(!isOpen));
+            if (!isOpen) togglePickerDetail('effort');
         }
+
 
         document.addEventListener('click', (event) => {
             const picker = document.getElementById('provider-picker');

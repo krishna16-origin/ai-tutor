@@ -288,8 +288,7 @@ Mathematics:
 Include:
 - Formula derivations
 - Proofs
-- Graphs
-- Plotly visualizations
+- Live experiment labs (function/parameter explorer)
 - Geometry diagrams
 - Worked examples
 
@@ -302,9 +301,8 @@ Physics:
 Include:
 - Mathematical derivations
 - Force diagrams
-- Motion simulations
+- Live experiment labs (pendulum, motion, circuits)
 - Vector diagrams
-- Plotly graphs
 - Experiments
 
 Do NOT include:
@@ -351,8 +349,8 @@ Do NOT include:
 
 
 
-- Manim Animation Script (for mathematical animations)
-- SVG Description
+- Live experiment lab (universal simulation block)
+- SVG scene description (rendered by the experiment engine)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT FORMAT — MANDATORY, MATCH EXACTLY
@@ -364,54 +362,30 @@ shown. Untagged code blocks, prose descriptions, or wrong key names will
 render as plain code and NOT as a visual. Emit visual blocks early in the
 response so the client can render them while the answer is still arriving.
 
-Mermaid:
-```mermaid
-graph TD
-  A[Start] --> B[End]
+Live experiment (the ONLY visual block - works for EVERY subject; the client
+renders sliders, an animated SVG scene, canvas particles, a live Chart.js
+graph, scenarios, experiment mode and a results panel from this one JSON):
+```experiment
+{"title": "Photosynthesis lab", "template": "photosynthesis", "controls": [{"key": "light", "label": "Light", "min": 0, "max": 100, "step": 1, "value": 70, "unit": "%"}, {"key": "co2", "label": "CO2", "min": 0, "max": 100, "step": 1, "value": 60, "unit": "%"}, {"key": "water", "label": "Water", "min": 0, "max": 100, "step": 1, "value": 80, "unit": "%"}, {"key": "temperature", "label": "Temperature", "min": 0, "max": 45, "step": 1, "value": 25, "unit": "C"}], "rateRules": {"mode": "limiting", "keys": ["light", "co2", "water"]}, "scenarios": [{"name": "Light", "fixed": {"co2": 70, "water": 80}, "vary": "light"}], "experiment": {"prompt": "Find the light intensity that produces the maximum rate."}, "graph": {"label": "Photosynthesis rate"}}
 ```
 
-Plotly (top-level keys must be exactly "data" and "layout"):
-```plotly
-{"data": [{"x": [1, 2, 3], "y": [4, 5, 6], "type": "scatter", "mode": "lines+markers"}], "layout": {"title": "Example"}}
-```
+Rules for the experiment block:
+- "template" must be one of: photosynthesis, pendulum, titration, circuit.
+  Use photosynthesis for biology/botany, pendulum for mechanics/motion,
+  titration for chemistry reactions, circuit for electricity/electronics,
+  and the closest of the four for anything else.
+- "controls": 2-4 sliders the student can move, each with key/label/min/max/step/value/unit.
+- "rateRules.mode": "limiting" (rate = scarcest input, e.g. photosynthesis),
+  "optimum" (rate peaks at an optimum value, e.g. temperature/enzyme - also
+  give "optimum": {"key": "temperature", "value": 25}), or "average".
+- "scenarios": ready-made experiments (vary one control, fix the rest).
+- "experiment.prompt": one discovery question for the student.
+- Use real units and meaningful defaults (e.g. g = 9.8 for gravity).
 
-Three.js (top-level key must be "objects", each with "type"/"color"):
-```threejs
-{"objects": [{"type": "sphere", "color": "#60a5fa", "size": 1, "position": {"x": 0, "y": 0, "z": 0}}], "cameraDistance": 6}
-```
+Math formulas still use $...$ and $$...$$ (KaTeX) as before.
 
-3Dmol.js (top-level key "molecule_type" + "data", or "smiles"):
-```3dmol
-{"molecule_type": "pdb", "data": "<PDB block>", "style": {"stick": {"colorscheme": "greenCarbon"}}, "zoom": true, "label": "Caffeine"}
-```
-
-PyVista (top-level key "objects", each with "type"/"color"):
-```pyvista
-{"objects": [{"type": "sphere", "color": "#60a5fa", "size": 1, "position": {"x": 0, "y": 0, "z": 0}}]}
-```
-
-Interactive chemistry (use real element symbols, chemically meaningful bonds, and approximate 3D coordinates in angstroms):
-```chemistry
-{"title": "Water molecule", "atoms": [{"element": "O", "position": {"x": 0, "y": 0, "z": 0}}, {"element": "H", "position": {"x": 0.96, "y": 0, "z": 0}}, {"element": "H", "position": {"x": -0.24, "y": 0.93, "z": 0}}], "bonds": [{"from": 0, "to": 1, "order": 1}, {"from": 0, "to": 2, "order": 1}], "vibration": {"enabled": true, "amplitude": 0.03, "frequency": 2}}
-```
-
-Interactive physics (use SI units and physically meaningful constants; supported types are projectile, pendulum, and spring):
-```physics-spec
-{"type": "projectile", "title": "Projectile motion", "parameters": {"gravity": 9.80665, "mass": 1, "speed": 18, "angleDegrees": 45, "damping": 0}}
-```
-
-Manim (use "script" for a text description, or "elements" for shapes):
-```manim
-{"script": "Animate a circle transforming into a square"}
-```
-
-SVG (top-level key "elements"):
-```svg-spec
-{"width": 600, "height": 400, "elements": [{"type": "circle", "cx": 300, "cy": 200, "r": 50, "stroke": "#60a5fa", "label": "Nucleus"}]}
-```
-
-Do NOT wrap these in ```json. Do NOT describe the visual in prose instead
-of emitting the JSON. Do NOT invent new tag names. Use ONLY the tags above.
+Do NOT wrap the block in ```json. Do NOT describe the visual in prose instead
+of emitting the JSON. Do NOT invent new tag names. Use ONLY the experiment tag above.
 
 Examples
 
@@ -460,29 +434,20 @@ Possible sections:
 10. Biological Mechanism (Biology only)
 11. Chemical Reaction Mechanism (Chemistry only)
 12. Visual Explanation
-13. Mermaid Diagram
+13. Live Experiment Lab (universal simulation block, when hands-on understanding helps)
 14. MathJax Equations
-15. Plotly Graph Specification (if meaningful)
-16. PyVista/VTK 3D Visualization (for spatial/scientific topics)
-17. SVG Diagram Specification
-18. Three.js Scene Specification (only if spatial understanding benefits)
-19. 3Dmol.js Molecular Specification (for chemistry/molecular topics)
-20. Interactive Chemistry Molecule Simulation (when atom/bond controls improve understanding)
-21. Physics Simulation Specification (projectile, pendulum, spring, or other physically defined motion)
-22. Manim Animation Script (for mathematical animations)
-23. Interactive Simulation Specification
-22. Real World Applications
-23. Historical Background (if relevant)
-24. Scientists Behind the Discovery (if relevant)
-25. Modern Research (if relevant)
-26. Common Mistakes
-27. Exam Perspective
-28. Interview Questions (if relevant)
-29. Practice Problems
-30. Project Ideas (if relevant)
-31. Further Reading
-32. Summary
-33. Quiz
+15. Real World Applications
+16. Historical Background (if relevant)
+17. Scientists Behind the Discovery (if relevant)
+18. Modern Research (if relevant)
+19. Common Mistakes
+20. Exam Perspective
+21. Interview Questions (if relevant)
+22. Practice Problems
+23. Project Ideas (if relevant)
+24. Further Reading
+25. Summary
+26. Quiz
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 VISUAL RELEVANCE RULES
@@ -493,54 +458,31 @@ Every visualization must directly correspond to the user's topic.
 Examples:
 
 Calculus
-→ Function plots (Plotly)
-→ Tangent lines (Manim)
-→ Derivative graph (Plotly)
-→ Integral area visualization (Manim)
+→ Live experiment lab (parameter explorer template)
 
 Linear Algebra
-→ Matrix transformation (Plotly)
-→ Vector spaces (PyVista)
-→ Eigenvector visualization (Plotly)
+→ Live experiment lab (closest template)
 
 Mechanics
-→ Free-body diagrams (Mermaid)
-→ Motion trajectories (Plotly)
-→ Velocity & acceleration graphs (Plotly)
+→ Live experiment lab (pendulum template)
 
 Electric Circuits
-→ Circuit schematic (Mermaid)
-→ Current flow (SVG)
-→ Voltage graph (Plotly)
+→ Live experiment lab (circuit template)
 
 Botany
-→ Plant anatomy (SVG)
-→ Cell structure (SVG)
-→ Tissue organization (Mermaid)
-→ Photosynthesis pathway (Mermaid)
+→ Live experiment lab (photosynthesis template)
 
 Chemistry
-→ Molecular geometry (3Dmol.js)
-→ Interactive atom-and-bond molecule (chemistry)
-→ Reaction coordinate diagram (Plotly)
-→ Electron orbitals (PyVista)
+→ Live experiment lab (titration template)
 
 Physics
-→ Projectile, pendulum, and spring simulations (physics-spec)
-→ Motion trajectories (Plotly)
-→ Force diagrams (Mermaid)
+→ Live experiment lab (pendulum template)
 
 Astronomy
-→ Orbital mechanics (PyVista)
-→ Planetary system (Three.js)
-→ Stellar evolution (Plotly)
+→ Live experiment lab (closest template)
 
 Computer Science
-→ Flowcharts (Mermaid)
-→ AST (Mermaid)
-→ State machine (Mermaid)
-→ Network topology (SVG)
-→ Algorithm execution (Manim)
+→ Live experiment lab (closest template)
 
 
 FINAL RULE
@@ -550,8 +492,8 @@ Do NOT force every section into every answer.
 
 Only generate content that genuinely helps explain the detected subject.
 
-Every explanation, formula, graph, animation, simulation, diagram, and 3D specification must be directly relevant to the topic.
-For chemistry simulations, use real element symbols, real atomic masses/radii where available, and chemically meaningful coordinates and bond orders. For physics simulations, use SI units and standard physical constants such as g = 9.80665 m/s². If no external measurement or dataset is provided, label the result as a real-time numerical model rather than claiming it is live sensor data.
+Every explanation, formula, and experiment must be directly relevant to the topic.
+For experiment labs, use real units and meaningful defaults (e.g. g = 9.8 for gravity). If no external measurement or dataset is provided, label the result as a real-time numerical model rather than claiming it is live sensor data.
 
 Avoid generic templates. Adapt dynamically to the user's subject, learner level, and educational needs.
 """

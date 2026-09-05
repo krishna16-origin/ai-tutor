@@ -42,7 +42,30 @@
         ::-webkit-scrollbar-thumb { background: #565869; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #acacbe; }
 
-        body { background-color: #212121; color: #ececec; }
+        html, body { height: 100%; }
+        body { background-color: #212121; color: #ececec; -webkit-tap-highlight-color: transparent; }
+        body.h-screen { height: 100vh; height: 100dvh; }
+        button { touch-action: manipulation; }
+        #chat-container { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; overflow-x: hidden; }
+        .hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .prose { min-width: 0; overflow-wrap: break-word; }
+        .prose table { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .prose pre { max-width: 100%; }
+        .prose img, .prose svg { max-width: 100%; height: auto; }
+        .katex-display { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; padding: 0.25rem 0; }
+        @media (max-width: 767px) {
+            #chat-transcript > div { padding-left: 0.75rem; padding-right: 0.75rem; }
+            .mode-btn { min-height: 36px; }
+            .visual-control, .exp-param { min-height: 36px; }
+            .visual-control-range { width: 6.5rem; }
+            .exp-param { font-size: 0.72rem; }
+            .quiz-container, .experiment-container { padding: 0.9rem; margin: 1rem 0; }
+            .quiz-question-box { padding: 1rem; }
+            .prose th, .prose td { padding: 0.5rem; font-size: 0.82em; }
+            #empty-state h1 { font-size: 1.35rem; }
+            #chat-form { border-radius: 1.25rem; }
+        }
 
         /* Splash Screen Animations */
         #splash-screen {
@@ -111,7 +134,8 @@
         .visual-legend-item { display: inline-flex; align-items: center; gap: 0.3rem; }
         .visual-legend-dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; display: inline-block; }
         @media (max-width: 640px) {
-            .experiment-scene canvas { height: 260px; }
+            .experiment-scene svg { height: 240px; }
+            .experiment-graph canvas { height: 180px !important; }
             .visual-toolbar { align-items: flex-start; flex-wrap: wrap; }
         }
 
@@ -422,7 +446,7 @@
 
     <div id="sidebar-backdrop" class="fixed inset-0 bg-black/60 z-20 hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
 
-    <aside id="sidebar" class="bg-chat-sidebar border-r border-chat-border flex flex-col shrink-0 transition-all duration-300 ease-in-out z-30 fixed md:relative h-full w-[260px] -translate-x-full md:translate-x-0 overflow-hidden">
+    <aside id="sidebar" class="bg-chat-sidebar border-r border-chat-border flex flex-col shrink-0 transition-all duration-300 ease-in-out z-30 fixed md:relative h-full w-[260px] max-w-[85vw] -translate-x-full md:translate-x-0 overflow-hidden">
         <div class="p-3 flex items-center justify-between">
             <button onclick="newChat()" class="flex-1 flex items-center gap-2 px-3 py-2 text-sm text-chat-text hover:bg-chat-hover rounded-lg transition-colors border border-chat-border group whitespace-nowrap">
                 <i data-lucide="plus" class="w-4 h-4 text-chat-muted group-hover:text-chat-text shrink-0"></i>
@@ -522,7 +546,7 @@
             <div id="chat-transcript" class="pb-6 pt-6 flex flex-col gap-6 w-full"></div>
         </div>
 
-        <div class="w-full bg-chat-bg pt-2 pb-6 px-4 md:px-8 shrink-0 z-10 border-t border-chat-border md:border-transparent">
+        <div class="w-full bg-chat-bg pt-2 pb-6 px-3 md:px-8 shrink-0 z-10 border-t border-chat-border md:border-transparent" style="padding-bottom:max(1.5rem, env(safe-area-inset-bottom))">
             <div class="max-w-3xl mx-auto relative">
                 <!-- Section mode buttons above input -->
                 <div class="flex items-center gap-2 mb-3 overflow-x-auto pb-1 hide-scrollbar">
@@ -1522,7 +1546,7 @@
                 const r = scene.getBoundingClientRect();
                 const dpr = Math.min(window.devicePixelRatio || 1, 2);
                 canvas.width = Math.max(280, r.width) * dpr;
-                canvas.height = 300 * dpr;
+                canvas.height = Math.max(200, r.height || 320) * dpr;
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             }
             sizeCanvas();
@@ -1532,13 +1556,14 @@
             let raf = 0, last = performance.now(), lastGraph = 0;
 
             function spawn(r) {
-                const W = canvas.clientWidth || 560, H = 300;
+                const W = canvas.clientWidth || 560, H = canvas.clientHeight || 320;
+                const SX = W / 600, SY = H / 300;
                 const speed = 0.5 + r / 100;
                 if (parts.length < 90 && Math.random() < r / 100) {
                     const kind = Math.random();
-                    if (kind < 0.45) parts.push({ x: 60 + Math.random() * 60, y: 90 + Math.random() * 130, vx: speed * (1 + Math.random()), vy: (Math.random() - 0.5) * 0.4, r: 2.5, c: '#22d3ee' });
-                    else if (kind < 0.8) parts.push({ x: 60 + Math.random() * 60, y: 90 + Math.random() * 130, vx: speed * (1 + Math.random()), vy: (Math.random() - 0.5) * 0.4, r: 2.5, c: '#60a5fa' });
-                    else parts.push({ x: 300 + (Math.random() - 0.5) * 120, y: 200, vx: (Math.random() - 0.5) * 0.5, vy: -(0.6 + Math.random() * speed), r: 2 + Math.random() * 3, c: '#34d399', bubble: true });
+                    if (kind < 0.45) parts.push({ x: (60 + Math.random() * 60) * SX, y: (90 + Math.random() * 130) * SY, vx: speed * (1 + Math.random()), vy: (Math.random() - 0.5) * 0.4, r: 2.5, c: '#22d3ee' });
+                    else if (kind < 0.8) parts.push({ x: (60 + Math.random() * 60) * SX, y: (90 + Math.random() * 130) * SY, vx: speed * (1 + Math.random()), vy: (Math.random() - 0.5) * 0.4, r: 2.5, c: '#60a5fa' });
+                    else parts.push({ x: (300 + (Math.random() - 0.5) * 120) * SX, y: 200 * SY, vx: (Math.random() - 0.5) * 0.5, vy: -(0.6 + Math.random() * speed), r: 2 + Math.random() * 3, c: '#34d399', bubble: true });
                 }
             }
             function draw(now) {
@@ -1550,7 +1575,7 @@
                 if (state.playing) {
                     state.t += dt;
                     spawn(r);
-                    const W = canvas.clientWidth || 560, H = 300;
+                    const W = canvas.clientWidth || 560, H = canvas.clientHeight || 320;
                     ctx.clearRect(0, 0, W, H);
                     // sunlight shimmer scales with light-like control if present
                     const lightKey = controlsDef.find((c) => /light|sun/i.test(c.label))?.key;

@@ -385,8 +385,8 @@
         .experiment-controls .visual-control.active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
         .exp-param { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.68rem; color: #b4b4b4; background: #2f2f2f; border: 1px solid #454545; border-radius: 0.4rem; padding: 0.28rem 0.55rem; }
         .exp-param output { color: #ececec; font-family: monospace; min-width: 3rem; text-align: right; }
-        .experiment-scene { position: relative; background: #101318; border: 1px solid #2a2a2e; border-radius: 0.5rem; overflow: hidden; }
-        .experiment-scene svg { display: block; width: 100%; height: 300px; }
+        .experiment-scene { position: relative; background: radial-gradient(circle at 50% 30%, #141d33 0%, #101318 60%, #0a0d13 100%); border: 1px solid #2a2a2e; border-radius: 0.5rem; overflow: hidden; box-shadow: inset 0 0 60px rgba(0,0,0,.55); }
+        .experiment-scene svg { display: block; width: 100%; height: 320px; }
         .experiment-scene canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
         .experiment-graph { background: #101318; border: 1px solid #2a2a2e; border-radius: 0.5rem; padding: 0.6rem; margin-top: 0.7rem; }
         .experiment-graph canvas { width: 100% !important; height: 220px !important; }
@@ -1272,66 +1272,136 @@
 
         // SVG scenes per template. Educational diagrams: individual elements animated.
         function expSceneSVG(template, uid) {
+            const sharedDefs = `
+                    <linearGradient id="sky-${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#182338"/><stop offset="0.7" stop-color="#101828"/><stop offset="1" stop-color="#0c1220"/></linearGradient>
+                    <linearGradient id="metal-${uid}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6b7280"/><stop offset="0.35" stop-color="#e5e7eb"/><stop offset="0.6" stop-color="#9ca3af"/><stop offset="1" stop-color="#4b5563"/></linearGradient>
+                    <linearGradient id="glass-${uid}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffffff" stop-opacity="0.28"/><stop offset="0.25" stop-color="#ffffff" stop-opacity="0.06"/><stop offset="1" stop-color="#ffffff" stop-opacity="0.16"/></linearGradient>
+                    <radialGradient id="ball-${uid}" cx="0.35" cy="0.3" r="0.9"><stop offset="0" stop-color="#ffffff"/><stop offset="0.25" stop-color="#bfdbfe"/><stop offset="0.6" stop-color="#3b82f6"/><stop offset="1" stop-color="#1e3a8a"/></radialGradient>
+                    <radialGradient id="sunCore-${uid}" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fefce8"/><stop offset="0.45" stop-color="#fde047"/><stop offset="0.8" stop-color="#f59e0b"/><stop offset="1" stop-color="#f59e0b" stop-opacity="0"/></radialGradient>
+                    <radialGradient id="leaf3d-${uid}" cx="0.42" cy="0.32" r="0.85"><stop offset="0" stop-color="#a7f3d0"/><stop offset="0.35" stop-color="#34d399"/><stop offset="0.75" stop-color="#047857"/><stop offset="1" stop-color="#022c22"/></radialGradient>
+                    <radialGradient id="bubble-${uid}" cx="0.35" cy="0.3" r="0.9"><stop offset="0" stop-color="#ffffff" stop-opacity="0.95"/><stop offset="0.4" stop-color="#a7f3d0" stop-opacity="0.25"/><stop offset="1" stop-color="#34d399" stop-opacity="0.08"/></radialGradient>
+                    <linearGradient id="water-${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7dd3fc"/><stop offset="1" stop-color="#0369a1"/></linearGradient>
+                    <linearGradient id="acid-${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fcd34d"/><stop offset="1" stop-color="#b45309"/></linearGradient>
+                    <filter id="soft-${uid}" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                    <filter id="glowf-${uid}" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+            const sky = `<rect x="0" y="0" width="600" height="300" fill="url(#sky-${uid})"/>` +
+                `<circle cx="70" cy="230" r="60" fill="#60a5fa" opacity="0.05"/><circle cx="540" cy="240" r="80" fill="#8b5cf6" opacity="0.06"/>` +
+                `<ellipse cx="300" cy="292" rx="280" ry="16" fill="#000000" opacity="0.45"/>`;
             if (template === 'pendulum') {
                 return `<svg viewBox="0 0 600 300" role="img" aria-label="Pendulum experiment scene">
-                    <defs><linearGradient id="str-${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
-                    <rect x="250" y="18" width="100" height="10" rx="3" fill="#383838"/>
-                    <line data-exp="string" x1="300" y1="28" x2="300" y2="200" stroke="url(#str-${uid})" stroke-width="3"/>
-                    <circle cx="150" cy="60" r="26" fill="none" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="5 6" opacity="0.7"/>
-                    <text x="150" y="64" fill="#22d3ee" font-size="11" text-anchor="middle">gravity</text>
-                    <circle cx="450" cy="60" r="26" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="5 6" opacity="0.7"/>
-                    <text x="450" y="64" fill="#a78bfa" font-size="11" text-anchor="middle">length</text>
-                    <circle data-exp="bob" cx="300" cy="215" r="26" fill="#60a5fa" stroke="#ececec" stroke-width="2"/>
-                    <text data-exp="arrows" x="300" y="285" fill="#b4b4b4" font-size="11" text-anchor="middle">drag sliders: gravity / length / angle</text>
+                    <defs>${sharedDefs}<linearGradient id="str-${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e5e7eb"/><stop offset="1" stop-color="#6b7280"/></linearGradient></defs>
+                    ${sky}
+                    <rect x="0" y="272" width="600" height="28" fill="#1a1410"/><rect x="0" y="272" width="600" height="4" fill="#3a2f25"/>
+                    <rect x="96" y="252" width="90" height="22" rx="4" fill="url(#metal-${uid})" stroke="#111827"/>
+                    <rect x="130" y="40" width="14" height="216" rx="5" fill="url(#metal-${uid})" stroke="#111827"/>
+                    <rect x="130" y="30" width="190" height="14" rx="5" fill="url(#metal-${uid})" stroke="#111827"/>
+                    <rect x="292" y="30" width="26" height="22" rx="4" fill="#374151" stroke="#111827"/>
+                    <path d="M120 260 A 190 190 0 0 1 480 260" fill="none" stroke="#4b5563" stroke-width="1.5" stroke-dasharray="4 5" opacity="0.8"/>
+                    <text x="300" y="252" fill="#9ca3af" font-size="10" text-anchor="middle">swing arc</text>
+                    <ellipse data-exp="shadow" cx="300" cy="272" rx="34" ry="6" fill="#000" opacity="0.5"/>
+                    <line data-exp="string" x1="305" y1="52" x2="300" y2="200" stroke="url(#str-${uid})" stroke-width="3"/>
+                    <circle data-exp="bob" cx="300" cy="218" r="26" fill="url(#ball-${uid})" stroke="#0b1220" stroke-width="2" filter="url(#soft-${uid})"/>
+                    <ellipse cx="291" cy="208" rx="8" ry="5" fill="#fff" opacity="0.75" transform="rotate(-25 291 208)"/>
+                    <g font-size="11" text-anchor="middle">
+                        <rect x="380" y="66" width="150" height="52" rx="8" fill="#0d1117" stroke="#2a2a2e"/>
+                        <text x="455" y="86" fill="#22d3ee">gravity</text><text x="455" y="104" fill="#ececec" data-exp="gval">9.8 m/s2</text>
+                    </g>
+                    <text x="300" y="292" fill="#b4b4b4" font-size="11" text-anchor="middle">steel bob swings - gravity / length / angle sliders drive it</text>
                 </svg>`;
             }
             if (template === 'titration') {
                 return `<svg viewBox="0 0 600 300" role="img" aria-label="Titration experiment scene">
-                    <rect x="270" y="20" width="60" height="90" rx="6" fill="none" stroke="#60a5fa" stroke-width="2"/>
-                    <rect data-exp="reagent" x="274" y="55" width="52" height="51" rx="4" fill="#3b82f655"/>
-                    <line data-exp="drip" x1="300" y1="112" x2="300" y2="170" stroke="#22d3ee" stroke-width="2" stroke-dasharray="3 5"/>
-                    <path d="M255 180 L345 180 L325 265 L275 265 Z" fill="none" stroke="#a78bfa" stroke-width="2"/>
-                    <ellipse data-exp="mixture" cx="300" cy="245" rx="20" ry="8" fill="#8b5cf655"/>
-                    <circle cx="120" cy="70" r="16" fill="none" stroke="#f59e0b" stroke-width="2"/><text x="120" y="74" fill="#f59e0b" font-size="10" text-anchor="middle">acid</text>
-                    <circle cx="480" cy="70" r="16" fill="none" stroke="#34d399" stroke-width="2"/><text x="480" y="74" fill="#34d399" font-size="10" text-anchor="middle">base</text>
-                    <text x="300" y="290" fill="#b4b4b4" font-size="11" text-anchor="middle">drops fall faster at higher rate</text>
+                    <defs>${sharedDefs}</defs>
+                    ${sky}
+                    <rect x="0" y="262" width="600" height="38" fill="#221a12"/><rect x="0" y="262" width="600" height="4" fill="#4a3a28"/>
+                    <rect x="150" y="246" width="300" height="18" rx="4" fill="#111827" stroke="#374151"/>
+                    <rect x="272" y="18" width="56" height="100" rx="6" fill="#0b1220" stroke="#9ca3af" stroke-width="2"/>
+                    <rect data-exp="reagent" x="276" y="55" width="48" height="59" rx="4" fill="url(#acid-${uid})" opacity="0.9"/>
+                    <rect x="272" y="18" width="56" height="100" rx="6" fill="url(#glass-${uid})"/>
+                    <g stroke="#6b7280" stroke-width="1" font-size="7" fill="#9ca3af">
+                        <line x1="276" y1="40" x2="286" y2="40"/><line x1="276" y1="60" x2="286" y2="60"/><line x1="276" y1="80" x2="286" y2="80"/><line x1="276" y1="100" x2="286" y2="100"/>
+                    </g>
+                    <rect x="292" y="118" width="16" height="14" rx="3" fill="url(#metal-${uid})" stroke="#111827"/>
+                    <line data-exp="drip" x1="300" y1="134" x2="300" y2="182" stroke="#7dd3fc" stroke-width="2.5" stroke-dasharray="3 5"/>
+                    <circle data-exp="drop" cx="300" cy="150" r="5" fill="url(#water-${uid})" stroke="#e0f2fe" stroke-width="1"/>
+                    <path d="M252 190 L348 190 L326 258 L274 258 Z" fill="#0b1220" stroke="#9ca3af" stroke-width="2"/>
+                    <path data-exp="mixture" d="M262 214 L338 214 L326 254 L274 254 Z" fill="#8b5cf6" opacity="0.55"/>
+                    <path d="M252 190 L348 190 L326 258 L274 258 Z" fill="url(#glass-${uid})"/>
+                    <ellipse cx="282" cy="222" rx="4" ry="7" fill="#fff" opacity="0.25"/>
+                    <g font-size="11" text-anchor="middle">
+                        <rect x="60" y="60" width="110" height="50" rx="8" fill="#0d1117" stroke="#2a2a2e"/>
+                        <circle cx="82" cy="85" r="11" fill="url(#acid-${uid})"/><text x="125" y="89" fill="#fbbf24">acid</text>
+                        <rect x="430" y="60" width="110" height="50" rx="8" fill="#0d1117" stroke="#2a2a2e"/>
+                        <circle cx="452" cy="85" r="11" fill="url(#water-${uid})"/><text x="495" y="89" fill="#7dd3fc">base</text>
+                    </g>
+                    <text x="300" y="292" fill="#b4b4b4" font-size="11" text-anchor="middle">drops fall faster and the flask glows as the rate rises</text>
                 </svg>`;
             }
             if (template === 'circuit') {
                 return `<svg viewBox="0 0 600 300" role="img" aria-label="Circuit experiment scene">
-                    <rect x="120" y="90" width="360" height="120" rx="10" fill="none" stroke="#454545" stroke-width="2"/>
-                    <rect x="140" y="130" width="54" height="40" rx="4" fill="none" stroke="#f59e0b" stroke-width="2"/><text x="167" y="154" fill="#f59e0b" font-size="11" text-anchor="middle">battery</text>
-                    <circle data-exp="bulb" cx="430" cy="150" r="24" fill="none" stroke="#60a5fa" stroke-width="2"/>
-                    <circle data-exp="glow" cx="430" cy="150" r="32" fill="#60a5fa22"/>
-                    <circle cx="300" cy="96" r="7" fill="#22d3ee"/><circle cx="300" cy="204" r="7" fill="#22d3ee"/>
-                    <text x="300" y="285" fill="#b4b4b4" font-size="11" text-anchor="middle">current flow speed follows the rate</text>
+                    <defs>${sharedDefs}<linearGradient id="cu-${uid}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f59e0b"/><stop offset="0.5" stop-color="#fde68a"/><stop offset="1" stop-color="#b45309"/></linearGradient></defs>
+                    ${sky}
+                    <rect x="0" y="246" width="600" height="54" fill="#1c1410"/><rect x="0" y="246" width="600" height="4" fill="#4a3a28"/>
+                    <rect x="110" y="80" width="380" height="150" rx="12" fill="#151a24" stroke="#454545" stroke-width="2"/>
+                    <rect x="110" y="80" width="380" height="150" rx="12" fill="url(#glass-${uid})" opacity="0.5"/>
+                    <path d="M150 195 L150 115 L450 115 L450 195" fill="none" stroke="url(#cu-${uid})" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M150 195 L450 195" fill="none" stroke="url(#cu-${uid})" stroke-width="5" stroke-linecap="round"/>
+                    <g>
+                        <rect x="128" y="160" width="66" height="52" rx="6" fill="#1f2937" stroke="#f59e0b" stroke-width="2"/>
+                        <rect x="134" y="166" width="26" height="40" rx="3" fill="#f59e0b"/><rect x="162" y="166" width="26" height="40" rx="3" fill="#4b5563"/>
+                        <text x="161" y="140" fill="#fbbf24" font-size="12" text-anchor="middle">battery</text>
+                        <text x="161" y="228" fill="#9ca3af" font-size="10" text-anchor="middle" data-exp="voltval">9 V</text>
+                    </g>
+                    <circle data-exp="glow" cx="430" cy="155" r="44" fill="#fbbf24" opacity="0.12" filter="url(#glowf-${uid})"/>
+                    <circle cx="430" cy="155" r="26" fill="#0b1220" fill-opacity="0.55" stroke="#9ca3af" stroke-width="2"/>
+                    <path data-exp="filament" d="M418 162 L426 148 L434 162 L442 148" fill="none" stroke="#fbbf24" stroke-width="2.5"/>
+                    <circle data-exp="bulb" cx="430" cy="155" r="26" fill="none" stroke="#e5e7eb" stroke-width="1.5" opacity="0.8"/>
+                    <rect x="420" y="181" width="20" height="12" rx="2" fill="url(#metal-${uid})" stroke="#111827"/>
+                    <g fill="#22d3ee"><circle data-exp="flow1" cx="220" cy="115" r="5"/><circle data-exp="flow2" cx="330" cy="195" r="5"/><circle data-exp="flow3" cx="450" cy="150" r="5"/></g>
+                    <text x="300" y="292" fill="#b4b4b4" font-size="11" text-anchor="middle">bulb brightness and current dots follow the rate</text>
                 </svg>`;
             }
-            // default: photosynthesis (leaf, sun, CO2/H2O in, O2 out, pathways)
+            // default: photosynthesis - realistic sun, clouds, soil, 3D leaf, shaded molecules
             return `<svg viewBox="0 0 600 300" role="img" aria-label="Photosynthesis experiment scene">
-                <defs>
-                    <radialGradient id="sun-${uid}" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b" stop-opacity="0"/></radialGradient>
-                    <radialGradient id="leaf-${uid}" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#065f46"/></radialGradient>
+                <defs>${sharedDefs}
+                    <radialGradient id="leaf3d-${uid}" cx="0.42" cy="0.3" r="0.9"><stop offset="0" stop-color="#d1fae5"/><stop offset="0.3" stop-color="#34d399"/><stop offset="0.7" stop-color="#047857"/><stop offset="1" stop-color="#022c22"/></radialGradient>
+                    <radialGradient id="co2b-${uid}" cx="0.35" cy="0.3" r="0.9"><stop offset="0" stop-color="#fff"/><stop offset="0.35" stop-color="#67e8f9"/><stop offset="0.75" stop-color="#0e7490"/><stop offset="1" stop-color="#083344"/></radialGradient>
+                    <radialGradient id="h2ob-${uid}" cx="0.35" cy="0.3" r="0.9"><stop offset="0" stop-color="#fff"/><stop offset="0.35" stop-color="#93c5fd"/><stop offset="0.75" stop-color="#1d4ed8"/><stop offset="1" stop-color="#172554"/></radialGradient>
                 </defs>
-                <circle data-exp="sun" cx="90" cy="60" r="46" fill="url(#sun-${uid})"/>
-                <circle cx="90" cy="60" r="20" fill="#fbbf24"/>
-                <g data-exp="rays" stroke="#fbbf24" stroke-width="2" opacity="0.8">
-                    <line x1="90" y1="22" x2="90" y2="10"/><line x1="90" y1="98" x2="90" y2="110"/><line x1="52" y1="60" x2="40" y2="60"/><line x1="128" y1="60" x2="140" y2="60"/>
+                ${sky}
+                <circle data-exp="sun" cx="92" cy="58" r="52" fill="url(#sunCore-${uid})" filter="url(#glowf-${uid})"/>
+                <circle cx="92" cy="58" r="21" fill="#fef9c3" stroke="#f59e0b" stroke-width="2"/>
+                <g data-exp="rays" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round" opacity="0.85">
+                    <line x1="92" y1="20" x2="92" y2="6"/><line x1="92" y1="96" x2="92" y2="110"/><line x1="54" y1="58" x2="40" y2="58"/><line x1="130" y1="58" x2="144" y2="58"/>
+                    <line x1="65" y1="31" x2="56" y2="22"/><line x1="119" y1="85" x2="128" y2="94"/><line x1="119" y1="31" x2="128" y2="22"/><line x1="65" y1="85" x2="56" y2="94"/>
                 </g>
-                <ellipse data-exp="leaf" cx="330" cy="190" rx="95" ry="52" fill="url(#leaf-${uid})" stroke="#34d399" stroke-width="2"/>
-                <line x1="250" y1="190" x2="410" y2="190" stroke="#065f46" stroke-width="2"/>
-                <text x="330" y="194" fill="#ecfdf5" font-size="22" text-anchor="middle">leaf</text>
-                <g font-size="12" text-anchor="middle">
-                    <circle data-exp="co2" cx="180" cy="120" r="20" fill="#101318" stroke="#22d3ee" stroke-width="2"/><text x="180" y="124" fill="#22d3ee">CO2</text>
-                    <circle data-exp="h2o" cx="180" cy="230" r="20" fill="#101318" stroke="#60a5fa" stroke-width="2"/><text x="180" y="234" fill="#60a5fa">H2O</text>
-                    <circle data-exp="o2" cx="480" cy="175" r="20" fill="#101318" stroke="#34d399" stroke-width="2"/><text x="480" y="179" fill="#34d399">O2</text>
+                <g fill="#e5e7eb" opacity="0.16"><ellipse cx="330" cy="52" rx="52" ry="13"/><ellipse cx="372" cy="44" rx="34" ry="10"/><ellipse cx="480" cy="90" rx="40" ry="10"/></g>
+                <rect x="0" y="248" width="600" height="52" fill="#241a10"/><rect x="0" y="248" width="600" height="5" fill="#4a3a28"/>
+                <ellipse cx="300" cy="252" rx="120" ry="10" fill="#000" opacity="0.4"/>
+                <rect x="294" y="196" width="12" height="56" rx="5" fill="#166534" stroke="#052e16"/>
+                <g data-exp="leaf">
+                    <ellipse cx="330" cy="182" rx="98" ry="54" fill="url(#leaf3d-${uid})" stroke="#022c22" stroke-width="2" filter="url(#soft-${uid})"/>
+                    <line x1="248" y1="182" x2="412" y2="182" stroke="#022c22" stroke-width="3"/>
+                    <g stroke="#064e3b" stroke-width="1.6" opacity="0.9">
+                        <line x1="290" y1="182" x2="268" y2="160"/><line x1="310" y1="182" x2="292" y2="156"/><line x1="330" y1="182" x2="318" y2="154"/><line x1="350" y1="182" x2="346" y2="156"/>
+                        <line x1="290" y1="182" x2="268" y2="204"/><line x1="310" y1="182" x2="292" y2="208"/><line x1="330" y1="182" x2="318" y2="210"/><line x1="350" y1="182" x2="346" y2="208"/>
+                    </g>
+                    <ellipse cx="300" cy="162" rx="34" ry="10" fill="#fff" opacity="0.22" transform="rotate(-8 300 162)"/>
                 </g>
-                <g stroke-width="2" fill="none" opacity="0.85">
-                    <path data-exp="path1" d="M202 132 C 240 140, 260 160, 278 178" stroke="#22d3ee" stroke-dasharray="6 6"/>
-                    <path data-exp="path2" d="M202 222 C 240 215, 260 205, 278 196" stroke="#60a5fa" stroke-dasharray="6 6"/>
-                    <path data-exp="path3" d="M408 186 C 430 184, 445 180, 458 178" stroke="#34d399" stroke-dasharray="6 6"/>
+                <g font-size="12" text-anchor="middle" font-weight="bold">
+                    <circle cx="150" cy="118" r="23" fill="url(#co2b-${uid})" stroke="#083344" stroke-width="1.5" filter="url(#soft-${uid})"/>
+                    <ellipse cx="142" cy="110" rx="6" ry="4" fill="#fff" opacity="0.8"/><text x="150" y="123" fill="#083344">CO2</text>
+                    <circle cx="150" cy="222" r="23" fill="url(#h2ob-${uid})" stroke="#172554" stroke-width="1.5" filter="url(#soft-${uid})"/>
+                    <ellipse cx="142" cy="214" rx="6" ry="4" fill="#fff" opacity="0.8"/><text x="150" y="227" fill="#172554">H2O</text>
+                    <circle cx="492" cy="168" r="23" fill="url(#bubble-${uid})" stroke="#065f46" stroke-width="1.5" filter="url(#soft-${uid})"/>
+                    <text x="492" y="173" fill="#065f46">O2</text>
                 </g>
-                <text x="300" y="288" fill="#b4b4b4" font-size="11" text-anchor="middle">CO2 + H2O enter, O2 bubbles rise faster at higher rate</text>
+                <g stroke-width="2.5" fill="none" opacity="0.9">
+                    <path data-exp="path1" d="M175 130 C 215 138, 235 158, 256 172" stroke="#67e8f9" stroke-dasharray="7 6"/>
+                    <path data-exp="path2" d="M175 214 C 215 208, 235 198, 256 190" stroke="#93c5fd" stroke-dasharray="7 6"/>
+                    <path data-exp="path3" d="M414 178 C 438 176, 456 172, 468 170" stroke="#6ee7b7" stroke-dasharray="7 6"/>
+                </g>
+                <text x="300" y="292" fill="#b4b4b4" font-size="11" text-anchor="middle">CO2 + H2O flow in, oxygen bubbles rise - brighter leaf means higher rate</text>
             </svg>`;
         }
 
@@ -1493,12 +1563,30 @@
                         p.y += p.vy * speed;
                         if (p.bubble) { p.y -= speed * 0.6; p.x += Math.sin(state.t * 3 + i) * 0.3; }
                         if (p.x > W + 10 || p.y < -10 || p.y > H + 10) { parts.splice(i, 1); continue; }
+                        ctx.save();
+                        ctx.shadowColor = p.c;
+                        ctx.shadowBlur = p.bubble ? 8 : 10;
                         ctx.beginPath();
                         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                        if (p.bubble) { ctx.strokeStyle = p.c; ctx.lineWidth = 1.5; ctx.stroke(); }
-                        else { ctx.fillStyle = p.c; ctx.globalAlpha = 0.85; ctx.fill(); ctx.globalAlpha = 1; }
+                        if (p.bubble) {
+                            ctx.strokeStyle = p.c; ctx.lineWidth = 1.5; ctx.stroke();
+                            ctx.shadowBlur = 0;
+                            ctx.beginPath();
+                            ctx.arc(p.x - p.r * 0.3, p.y - p.r * 0.3, p.r * 0.35, 0, Math.PI * 2);
+                            ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fill();
+                        } else {
+                            const g = ctx.createRadialGradient(p.x - p.r * 0.3, p.y - p.r * 0.3, p.r * 0.1, p.x, p.y, p.r);
+                            g.addColorStop(0, '#ffffff');
+                            g.addColorStop(0.35, p.c);
+                            g.addColorStop(1, p.c);
+                            ctx.globalAlpha = 0.9;
+                            ctx.fillStyle = g;
+                            ctx.fill();
+                            ctx.globalAlpha = 1;
+                        }
+                        ctx.restore();
                     }
-                    // SVG hooks: glow + bob/swing per template
+                    // SVG hooks: every visual element reads the live rate
                     const svg = scene.querySelector('svg');
                     if (svg) {
                         const leaf = svg.querySelector('[data-exp="leaf"]');
@@ -1515,10 +1603,44 @@
                             bob.setAttribute('cy', by.toFixed(1));
                             str.setAttribute('x2', bx.toFixed(1));
                             str.setAttribute('y2', by.toFixed(1));
+                            const sh = svg.querySelector('[data-exp="shadow"]');
+                            if (sh) { sh.setAttribute('cx', bx.toFixed(1)); sh.setAttribute('rx', (34 - Math.abs(300 - bx) * 0.08).toFixed(1)); }
                         }
+                        const bulbGlow = svg.querySelector('[data-exp="glow"]');
+                        if (bulbGlow) bulbGlow.setAttribute('opacity', (0.05 + (r / 100) * 0.75).toFixed(2));
+                        const fil = svg.querySelector('[data-exp="filament"]');
+                        if (fil) { fil.setAttribute('stroke', r > 60 ? '#fef08a' : r > 30 ? '#fbbf24' : '#92400e'); fil.setAttribute('stroke-width', (1.5 + (r / 100) * 2).toFixed(1)); }
+                        ['flow1', 'flow2', 'flow3'].forEach((k, idx) => {
+                            const f = svg.querySelector(`[data-exp="${k}"]`);
+                            if (f) f.setAttribute('opacity', (0.35 + (r / 100) * 0.65).toFixed(2));
+                        });
+                        const drip = svg.querySelector('[data-exp="drip"]');
+                        if (drip) drip.setAttribute('stroke-dashoffset', String(-Math.floor(state.t * (4 + speed * 14))));
+                        const drop = svg.querySelector('[data-exp="drop"]');
+                        if (drop) {
+                            const yy = 134 + ((state.t * (30 + speed * 60)) % 52);
+                            drop.setAttribute('cy', yy.toFixed(1));
+                            drop.setAttribute('opacity', (0.4 + (r / 100) * 0.6).toFixed(2));
+                        }
+                        const reag = svg.querySelector('[data-exp="reagent"]');
+                        if (reag) reag.setAttribute('opacity', (0.5 + (r / 100) * 0.5).toFixed(2));
+                        const mix = svg.querySelector('[data-exp="mixture"]');
+                        if (mix) mix.setAttribute('opacity', (0.25 + (r / 100) * 0.6).toFixed(2));
+                        const gv = svg.querySelector('[data-exp="gval"]');
+                        if (gv && values.gravity !== undefined) gv.textContent = Number(values.gravity).toFixed(1) + ' m/s2';
+                        const vv = svg.querySelector('[data-exp="voltval"]');
+                        if (vv && values.voltage !== undefined) vv.textContent = Number(values.voltage).toFixed(1) + ' V';
+                        ['path1', 'path2', 'path3'].forEach((k) => {
+                            const pp = svg.querySelector(`[data-exp="${k}"]`);
+                            if (pp) pp.setAttribute('stroke-dashoffset', String(-Math.floor(state.t * (6 + speed * 16))));
+                        });
                         if (window.gsap && svg.querySelector('[data-exp="rays"]') && !svg._gsap) {
                             svg._gsap = true;
                             gsap.to(svg.querySelector('[data-exp="rays"]'), { rotation: 360, transformOrigin: '90px 60px', duration: 24, repeat: -1, ease: 'none' });
+                        }
+                        if (window.gsap && leaf && !svg._leafGsap) {
+                            svg._leafGsap = true;
+                            gsap.to(leaf, { scale: 1.025, transformOrigin: '330px 182px', duration: 2.2, yoyo: true, repeat: -1, ease: 'sine.inOut' });
                         }
                     }
                     if (chart && now - lastGraph > 1000) {

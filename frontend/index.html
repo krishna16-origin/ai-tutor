@@ -9,10 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked-gfm-heading-id/lib/index.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://3dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
 
@@ -93,7 +91,7 @@
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
 
-        .mermaid-container, .plotly-container, .threejs-container, .quiz-container, .threedmol-container, .pyvista-container, .manim-container, .chemistry-container, .physics-container {
+        .experiment-container, .quiz-container {
             margin: 1.5rem 0;
             background: #1a1a1a;
             border: 1px solid #383838;
@@ -102,13 +100,6 @@
             overflow: hidden;
             width: 100%;
         }
-        .mermaid-container { display: flex; justify-content: center; }
-        .threejs-container canvas, .threedmol-container canvas { width: 100% !important; height: 400px !important; }
-        .plotly-container { min-height: 300px; }
-        .pyvista-container iframe { width: 100%; height: 400px; border: none; border-radius: 0.5rem; }
-        .manim-container video { width: 100%; max-height: 400px; border-radius: 0.5rem; }
-        .chemistry-container, .physics-container { position: relative; min-height: 320px; }
-        .chemistry-container canvas, .physics-container canvas { display: block; width: 100%; height: 360px; border-radius: 0.5rem; background: radial-gradient(circle at 50% 40%, #202a3c 0%, #101318 70%); }
         .visual-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.7rem; color: #b4b4b4; font-size: 0.72rem; }
         .visual-toolbar-title { display: flex; align-items: center; gap: 0.45rem; color: #ececec; font-weight: 600; }
         .visual-live-badge { display: inline-flex; align-items: center; gap: 0.3rem; color: #86efac; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; }
@@ -120,7 +111,7 @@
         .visual-legend-item { display: inline-flex; align-items: center; gap: 0.3rem; }
         .visual-legend-dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; display: inline-block; }
         @media (max-width: 640px) {
-            .chemistry-container canvas, .physics-container canvas { height: 300px; }
+            .experiment-scene canvas { height: 260px; }
             .visual-toolbar { align-items: flex-start; flex-wrap: wrap; }
         }
 
@@ -388,6 +379,27 @@
                 border-left: 0;
             }
         }
+
+        /* ─── UNIVERSAL EXPERIMENT ENGINE (HTML+CSS panels, SVG diagrams, Canvas particles, Chart.js) ─── */
+        .experiment-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 0.7rem; }
+        .experiment-controls .visual-control.active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+        .exp-param { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.68rem; color: #b4b4b4; background: #2f2f2f; border: 1px solid #454545; border-radius: 0.4rem; padding: 0.28rem 0.55rem; }
+        .exp-param output { color: #ececec; font-family: monospace; min-width: 3rem; text-align: right; }
+        .experiment-scene { position: relative; background: #101318; border: 1px solid #2a2a2e; border-radius: 0.5rem; overflow: hidden; }
+        .experiment-scene svg { display: block; width: 100%; height: 300px; }
+        .experiment-scene canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+        .experiment-graph { background: #101318; border: 1px solid #2a2a2e; border-radius: 0.5rem; padding: 0.6rem; margin-top: 0.7rem; }
+        .experiment-graph canvas { width: 100% !important; height: 220px !important; }
+        .experiment-readout { font-family: monospace; font-size: 0.68rem; color: #9ca3af; margin-top: 0.55rem; }
+        .experiment-readout b { color: #ececec; }
+        .experiment-level-low { color: #f87171; } .experiment-level-med { color: #fbbf24; } .experiment-level-high { color: #34d399; }
+        .experiment-scenarios { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.6rem 0; }
+        .experiment-results { background: #0d0d0d; border: 1px solid #383838; border-radius: 0.5rem; padding: 0.8rem 1rem; margin-top: 0.7rem; font-size: 0.75rem; }
+        .experiment-results h4 { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: #ececec; margin-bottom: 0.4rem; }
+        .experiment-results dl { display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 0.8rem; }
+        .experiment-results dt { color: #b4b4b4; } .experiment-results dd { color: #ececec; font-family: monospace; text-align: right; }
+
+
     </style>
 </head>
 
@@ -498,6 +510,13 @@
                         <div class="font-medium text-sm text-chat-text">Navier-Stokes</div>
                         <div class="text-xs text-chat-muted mt-1">Deep dive with Mariana Mode</div>
                     </button>
+                </div>
+                <div class="flex flex-wrap items-center justify-center gap-2 mt-4">
+                    <span class="text-[11px] text-chat-muted mr-1">Try live labs (no backend needed):</span>
+                    <button onclick="runExperimentDemo('photosynthesis')" class="px-3 py-1.5 rounded-full text-xs font-medium bg-chat-input text-chat-text border border-chat-border hover:bg-gray-700 transition-colors">Photosynthesis</button>
+                    <button onclick="runExperimentDemo('titration')" class="px-3 py-1.5 rounded-full text-xs font-medium bg-chat-input text-chat-text border border-chat-border hover:bg-gray-700 transition-colors">Titration</button>
+                    <button onclick="runExperimentDemo('pendulum')" class="px-3 py-1.5 rounded-full text-xs font-medium bg-chat-input text-chat-text border border-chat-border hover:bg-gray-700 transition-colors">Pendulum</button>
+                    <button onclick="runExperimentDemo('circuit')" class="px-3 py-1.5 rounded-full text-xs font-medium bg-chat-input text-chat-text border border-chat-border hover:bg-gray-700 transition-colors">Circuit lab</button>
                 </div>
             </div>
             <div id="chat-transcript" class="pb-6 pt-6 flex flex-col gap-6 w-full"></div>
@@ -742,14 +761,6 @@
         window.addEventListener('load', hideSplash);
 
         // ─── Library config (runs immediately, safe outside DOMContentLoaded) ───
-        mermaid.initialize({
-            startOnLoad: false,
-            theme: 'dark',
-            securityLevel: 'loose',
-            suppressErrorRendering: true,
-            flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
-        });
-
         if (window.markedGfmHeadingId) {
             marked.use(window.markedGfmHeadingId.gfmHeadingId());
         }
@@ -1164,7 +1175,7 @@
         }
 
         function hasCompleteVisualBlock(text) {
-            return /```(?:mermaid|plotly|threejs|3dmol|3dmol-js|chemistry|molecule|physics|physics-spec|pyvista|vtk|manim|svg-spec)[^`]*```/is.test(text);
+            return /```experiment[^`]*```/is.test(text);
         }
 
         function scheduleLiveVisualRender(container) {
@@ -1182,144 +1193,403 @@
             scheduleLiveVisualRender(aiNode);
         }
 
-        // ─── RENDER VISUALS: plotly, Three.js, 3Dmol.js, PyVista, Manim ───
+        // ─── RENDER VISUALS: universal experiment engine only (formulas stay via KaTeX) ───
         function renderVisuals(container) {
             const blocks = container.querySelectorAll('pre code');
-
             blocks.forEach((block) => {
                 const lang = block.className || '';
                 const content = block.textContent.trim();
                 const pre = block.parentElement;
-
-                const isMermaidLang = lang.includes('language-mermaid') || lang.includes('mermaid');
-                const hasMermaidKeyword = /^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gantt|pie|gitGraph|journey|C4Context|mindmap|timeline|quadrantChart|xychart-beta)\b/i.test(content);
-
-                // ─── Mermaid ───
-                if (isMermaidLang || hasMermaidKeyword) {
-                    const id = `mermaid_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-                    const div = document.createElement('div');
-                    div.className = 'mermaid-container';
-                    div.id = id;
-                    pre.replaceWith(div);
-
-                    setTimeout(async () => {
-                        try {
-                            let cleanContent = content.replace(/^```mermaid\s*/i, '').replace(/```$/i, '').trim();
-
-                            cleanContent = cleanContent.replace(/\[([^\]]*)\]/g, (match, label) => {
-                                if (label.startsWith('"') && label.endsWith('"')) return match;
-                                const safeLabel = label.replace(/\(/g, '（').replace(/\)/g, '）');
-                                return `["${safeLabel.replace(/"/g, "'")}"]`;
-                            });
-
-                            const { svg } = await mermaid.render(`${id}_svg`, cleanContent);
-                            div.innerHTML = svg;
-                        } catch (err) {
-                            console.error("Mermaid Render Error:", err);
-                            div.innerHTML = `<div class="text-xs text-red-500 p-2 bg-red-900/20 rounded font-mono overflow-auto max-h-32">Mermaid Syntax Error:<br>${err.message}</div>`;
-                        }
-                    }, 100);
-
-                // ─── Interactive chemistry molecule ───
-                } else if (lang.includes('chemistry') || lang.includes('molecule') || (content.includes('"atoms"') && content.includes('"bonds"'))) {
+                if (lang.includes('experiment')) {
                     try {
                         const spec = parseVisualSpec(content);
                         const div = document.createElement('div');
-                        div.className = 'chemistry-container';
+                        div.className = 'experiment-container';
                         pre.replaceWith(div);
-                        initChemistrySimulation(div, spec);
-                    } catch (e) {
-                        pre.innerHTML = `<div class="text-xs text-red-500 font-mono">Chemistry simulation error: ${e.message}</div>`;
-                    }
-
-                // ─── Interactive physics simulation ───
-                } else if (lang.includes('physics') || lang.includes('physics-spec') || content.includes('"simulation"')) {
-                    try {
-                        const spec = parseVisualSpec(content);
-                        const div = document.createElement('div');
-                        div.className = 'physics-container';
-                        pre.replaceWith(div);
-                        initPhysicsSimulation(div, spec);
-                    } catch (e) {
-                        pre.innerHTML = `<div class="text-xs text-red-500 font-mono">Physics simulation error: ${e.message}</div>`;
-                    }
-
-                // ─── Plotly (MUST RENDER) ───
-                } else if (lang.includes('plotly') || (content.includes('"data"') && content.includes('"layout"'))) {
-                    try {
-                        const data = parseVisualSpec(content);
-                        const div = document.createElement('div');
-                        div.className = 'plotly-container';
-                        pre.replaceWith(div);
-                        Plotly.newPlot(div, data.data || [], data.layout || { template: 'plotly_dark' }, { responsive: true });
-                    } catch (e) {
-                        if (lang.includes('plotly')) pre.innerHTML = `<div class="text-xs text-red-500 font-mono">Plotly Data Error</div>`;
-                    }
-
-                // ─── Three.js ───
-                } else if (lang.includes('threejs') || (content.includes('"type"') && content.includes('"color"') && content.includes('"objects"'))) {
-                    try {
-                        const spec = parseVisualSpec(content);
-                        const div = document.createElement('div');
-                        div.className = 'threejs-container';
-                        pre.replaceWith(div);
-                        initThreeJS(div, spec);
-                    } catch (e) {
-                        pre.innerHTML = `<div class="text-xs text-red-500 font-mono">3D Spec Error: ${e.message}</div>`;
-                    }
-
-                // ─── 3Dmol.js (for molecular structures) ───
-                } else if (lang.includes('3dmol') || lang.includes('3dmol-js') || (content.includes('"type"') && content.includes('"pdb"'))) {
-                    try {
-                        const spec = parseVisualSpec(content);
-                        const div = document.createElement('div');
-                        div.className = 'threedmol-container';
-                        pre.replaceWith(div);
-                        initThreeDmol(div, spec);
-                    } catch (e) {
-                        pre.innerHTML = `<div class="text-xs text-red-500 font-mono">3Dmol.js Error: ${e.message}</div>`;
-                    }
-
-                // ─── PyVista / VTK ───
-                } else if (lang.includes('pyvista') || lang.includes('vtk')) {
-                    try {
-                        const spec = parseVisualSpec(content);
-                        const div = document.createElement('div');
-                        div.className = 'pyvista-container';
-                        pre.replaceWith(div);
-                        initPyVista(div, spec);
-                    } catch (e) {
-                        pre.innerHTML = `<div class="text-xs text-red-500 font-mono">PyVista Error: ${e.message}</div>`;
-                    }
-
-                // ─── Manim Animation ───
-                } else if (lang.includes('manim')) {
-                    try {
-                        const spec = parseVisualSpec(content);
-                        const div = document.createElement('div');
-                        div.className = 'manim-container';
-                        pre.replaceWith(div);
-                        initManim(div, spec);
-                    } catch (e) {
-                        pre.innerHTML = `<div class="text-xs text-red-500 font-mono">Manim Error: ${e.message}</div>`;
-                    }
-
-                // ─── SVG Spec ───
-                } else if (lang.includes('svg-spec') || (content.trim().startsWith('{') && content.includes('"elements"'))) {
-                    try {
-                        const spec = parseVisualSpec(content);
-                        const div = document.createElement('div');
-                        div.className = 'threejs-container';
-                        pre.replaceWith(div);
-                        renderSvgSpec(div, spec);
-                    } catch (e) {
-                        pre.innerHTML = `<div class="text-xs text-red-500 font-mono">SVG Spec Error: ${e.message}</div>`;
-                    }
+                        initExperiment(div, spec);
+                    } catch (e) { pre.innerHTML = `<div class="text-xs text-red-500 font-mono">Experiment error: ${e.message}</div>`; }
                 }
             });
-
             renderInteractiveQuiz(container);
         }
+
+        // ─── UNIVERSAL EXPERIMENT ENGINE (HTML+CSS panels, SVG diagrams, Canvas particles, Chart.js + GSAP) ───
+        // Workflow for EVERY experiment: CONTROLS -> SIMULATION ENGINE -> RATE -> {SVG SCENE, PARTICLES, GRAPH} -> RESULTS
+        function expCleanup(div, fns) {
+            const obs = new MutationObserver(() => {
+                if (!document.body.contains(div)) {
+                    try { fns.forEach((f) => f && f()); } catch (e) {}
+                    obs.disconnect();
+                }
+            });
+            obs.observe(document.body, { childList: true, subtree: true });
+            return obs;
+        }
+
+        function expNorm(v, c) {
+            const min = Number(c.min ?? 0), max = Number(c.max ?? 100);
+            if (max <= min) return 0;
+            return Math.max(0, Math.min(100, ((Number(v) - min) / (max - min)) * 100));
+        }
+
+        // Central simulation engine: every visual element reads this value.
+        function expCalculateRate(values, controls, rules) {
+            rules = rules || {};
+            const mode = rules.mode || 'limiting';
+            const keys = rules.keys || Object.keys(values);
+            const norms = keys.map((k) => {
+                const c = (controls || []).find((x) => x.key === k) || { min: 0, max: 100 };
+                return expNorm(values[k] ?? 0, c);
+            });
+            if (!norms.length) return 0;
+            if (mode === 'optimum' && rules.optimum) {
+                const ok = rules.optimum.key;
+                const c = (controls || []).find((x) => x.key === ok) || { min: 0, max: 100 };
+                const v = Number(values[ok] ?? 0);
+                const opt = Number(rules.optimum.value ?? 50);
+                const sigma = (Number(c.max ?? 100) - Number(c.min ?? 0)) / 5 || 20;
+                const bell = Math.exp(-((v - opt) * (v - opt)) / (2 * sigma * sigma)) * 100;
+                const others = keys.filter((k) => k !== ok).map((k) => {
+                    const cc = (controls || []).find((x) => x.key === k) || { min: 0, max: 100 };
+                    return expNorm(values[k] ?? 0, cc);
+                });
+                const base = others.length ? Math.min.apply(null, others) : 100;
+                return Math.round(Math.min(bell, base));
+            }
+            if (mode === 'average') return Math.round(norms.reduce((a, b) => a + b, 0) / norms.length);
+            return Math.round(Math.min.apply(null, norms));
+        }
+
+        function expLevel(rate) {
+            if (rate >= 66) return 'high';
+            if (rate >= 33) return 'med';
+            return 'low';
+        }
+        function expLevelLabel(rate) {
+            const l = expLevel(rate);
+            return l === 'high' ? 'HIGH' : l === 'med' ? 'MEDIUM' : 'LOW';
+        }
+
+        // SVG scenes per template. Educational diagrams: individual elements animated.
+        function expSceneSVG(template, uid) {
+            if (template === 'pendulum') {
+                return `<svg viewBox="0 0 600 300" role="img" aria-label="Pendulum experiment scene">
+                    <defs><linearGradient id="str-${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+                    <rect x="250" y="18" width="100" height="10" rx="3" fill="#383838"/>
+                    <line data-exp="string" x1="300" y1="28" x2="300" y2="200" stroke="url(#str-${uid})" stroke-width="3"/>
+                    <circle cx="150" cy="60" r="26" fill="none" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="5 6" opacity="0.7"/>
+                    <text x="150" y="64" fill="#22d3ee" font-size="11" text-anchor="middle">gravity</text>
+                    <circle cx="450" cy="60" r="26" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="5 6" opacity="0.7"/>
+                    <text x="450" y="64" fill="#a78bfa" font-size="11" text-anchor="middle">length</text>
+                    <circle data-exp="bob" cx="300" cy="215" r="26" fill="#60a5fa" stroke="#ececec" stroke-width="2"/>
+                    <text data-exp="arrows" x="300" y="285" fill="#b4b4b4" font-size="11" text-anchor="middle">drag sliders: gravity / length / angle</text>
+                </svg>`;
+            }
+            if (template === 'titration') {
+                return `<svg viewBox="0 0 600 300" role="img" aria-label="Titration experiment scene">
+                    <rect x="270" y="20" width="60" height="90" rx="6" fill="none" stroke="#60a5fa" stroke-width="2"/>
+                    <rect data-exp="reagent" x="274" y="55" width="52" height="51" rx="4" fill="#3b82f655"/>
+                    <line data-exp="drip" x1="300" y1="112" x2="300" y2="170" stroke="#22d3ee" stroke-width="2" stroke-dasharray="3 5"/>
+                    <path d="M255 180 L345 180 L325 265 L275 265 Z" fill="none" stroke="#a78bfa" stroke-width="2"/>
+                    <ellipse data-exp="mixture" cx="300" cy="245" rx="20" ry="8" fill="#8b5cf655"/>
+                    <circle cx="120" cy="70" r="16" fill="none" stroke="#f59e0b" stroke-width="2"/><text x="120" y="74" fill="#f59e0b" font-size="10" text-anchor="middle">acid</text>
+                    <circle cx="480" cy="70" r="16" fill="none" stroke="#34d399" stroke-width="2"/><text x="480" y="74" fill="#34d399" font-size="10" text-anchor="middle">base</text>
+                    <text x="300" y="290" fill="#b4b4b4" font-size="11" text-anchor="middle">drops fall faster at higher rate</text>
+                </svg>`;
+            }
+            if (template === 'circuit') {
+                return `<svg viewBox="0 0 600 300" role="img" aria-label="Circuit experiment scene">
+                    <rect x="120" y="90" width="360" height="120" rx="10" fill="none" stroke="#454545" stroke-width="2"/>
+                    <rect x="140" y="130" width="54" height="40" rx="4" fill="none" stroke="#f59e0b" stroke-width="2"/><text x="167" y="154" fill="#f59e0b" font-size="11" text-anchor="middle">battery</text>
+                    <circle data-exp="bulb" cx="430" cy="150" r="24" fill="none" stroke="#60a5fa" stroke-width="2"/>
+                    <circle data-exp="glow" cx="430" cy="150" r="32" fill="#60a5fa22"/>
+                    <circle cx="300" cy="96" r="7" fill="#22d3ee"/><circle cx="300" cy="204" r="7" fill="#22d3ee"/>
+                    <text x="300" y="285" fill="#b4b4b4" font-size="11" text-anchor="middle">current flow speed follows the rate</text>
+                </svg>`;
+            }
+            // default: photosynthesis (leaf, sun, CO2/H2O in, O2 out, pathways)
+            return `<svg viewBox="0 0 600 300" role="img" aria-label="Photosynthesis experiment scene">
+                <defs>
+                    <radialGradient id="sun-${uid}" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b" stop-opacity="0"/></radialGradient>
+                    <radialGradient id="leaf-${uid}" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#065f46"/></radialGradient>
+                </defs>
+                <circle data-exp="sun" cx="90" cy="60" r="46" fill="url(#sun-${uid})"/>
+                <circle cx="90" cy="60" r="20" fill="#fbbf24"/>
+                <g data-exp="rays" stroke="#fbbf24" stroke-width="2" opacity="0.8">
+                    <line x1="90" y1="22" x2="90" y2="10"/><line x1="90" y1="98" x2="90" y2="110"/><line x1="52" y1="60" x2="40" y2="60"/><line x1="128" y1="60" x2="140" y2="60"/>
+                </g>
+                <ellipse data-exp="leaf" cx="330" cy="190" rx="95" ry="52" fill="url(#leaf-${uid})" stroke="#34d399" stroke-width="2"/>
+                <line x1="250" y1="190" x2="410" y2="190" stroke="#065f46" stroke-width="2"/>
+                <text x="330" y="194" fill="#ecfdf5" font-size="22" text-anchor="middle">leaf</text>
+                <g font-size="12" text-anchor="middle">
+                    <circle data-exp="co2" cx="180" cy="120" r="20" fill="#101318" stroke="#22d3ee" stroke-width="2"/><text x="180" y="124" fill="#22d3ee">CO2</text>
+                    <circle data-exp="h2o" cx="180" cy="230" r="20" fill="#101318" stroke="#60a5fa" stroke-width="2"/><text x="180" y="234" fill="#60a5fa">H2O</text>
+                    <circle data-exp="o2" cx="480" cy="175" r="20" fill="#101318" stroke="#34d399" stroke-width="2"/><text x="480" y="179" fill="#34d399">O2</text>
+                </g>
+                <g stroke-width="2" fill="none" opacity="0.85">
+                    <path data-exp="path1" d="M202 132 C 240 140, 260 160, 278 178" stroke="#22d3ee" stroke-dasharray="6 6"/>
+                    <path data-exp="path2" d="M202 222 C 240 215, 260 205, 278 196" stroke="#60a5fa" stroke-dasharray="6 6"/>
+                    <path data-exp="path3" d="M408 186 C 430 184, 445 180, 458 178" stroke="#34d399" stroke-dasharray="6 6"/>
+                </g>
+                <text x="300" y="288" fill="#b4b4b4" font-size="11" text-anchor="middle">CO2 + H2O enter, O2 bubbles rise faster at higher rate</text>
+            </svg>`;
+        }
+
+        function makeVisualToolbar(title, description) {
+            const toolbar = document.createElement('div');
+            toolbar.className = 'visual-toolbar';
+            toolbar.innerHTML = `<span class="visual-toolbar-title"><i data-lucide="activity" class="w-3.5 h-3.5 text-blue-400"></i><span>${title}</span><span class="visual-live-badge">Live</span></span><span class="text-[10px] text-chat-muted">${description}</span>`;
+            return toolbar;
+        }
+
+        function initExperiment(div, spec) {
+            div.innerHTML = '';
+            div.className = 'experiment-container';
+            spec = spec && typeof spec === 'object' ? spec : {};
+            const uid = 'e' + Date.now().toString(36) + Math.floor(Math.random() * 999);
+            const template = spec.template || 'photosynthesis';
+            const controlsDef = Array.isArray(spec.controls) && spec.controls.length ? spec.controls : [
+                { key: 'light', label: 'Light', min: 0, max: 100, step: 1, value: 70, unit: '%' },
+                { key: 'co2', label: 'CO2', min: 0, max: 100, step: 1, value: 60, unit: '%' },
+                { key: 'water', label: 'Water', min: 0, max: 100, step: 1, value: 80, unit: '%' },
+                { key: 'temperature', label: 'Temperature', min: 0, max: 45, step: 1, value: 25, unit: 'C' }
+            ];
+            const rules = spec.rateRules || { mode: 'limiting', keys: controlsDef.slice(0, 3).map((c) => c.key) };
+            const values = {};
+            controlsDef.forEach((c) => { values[c.key] = Number(c.value ?? 0); });
+
+            div.appendChild(makeVisualToolbar(spec.title || 'Live experiment', 'Move sliders - scene, particles and graph follow the rate'));
+            // Controls: panels, buttons, sliders, labels, cards (HTML+CSS)
+            const controls = document.createElement('div');
+            controls.className = 'experiment-controls';
+            controls.innerHTML = `<button type="button" class="visual-control" data-exp-play>Pause</button>
+                <button type="button" class="visual-control" data-exp-reset>Reset</button>
+                <button type="button" class="visual-control" data-exp-mode>Start experiment</button>`;
+            controlsDef.forEach((c) => {
+                const lab = document.createElement('label');
+                lab.className = 'exp-param';
+                lab.innerHTML = `${c.label} <input class="visual-control-range" data-exp-key="${c.key}" type="range" min="${c.min}" max="${c.max}" step="${c.step || 1}" value="${values[c.key]}"><output data-exp-out="${c.key}">${values[c.key]}${c.unit || ''}</output>`;
+                controls.appendChild(lab);
+            });
+            div.appendChild(controls);
+
+            if (Array.isArray(spec.scenarios) && spec.scenarios.length) {
+                const sc = document.createElement('div');
+                sc.className = 'experiment-scenarios';
+                spec.scenarios.forEach((s, i) => {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'visual-control';
+                    b.textContent = s.name || ('Scenario ' + (i + 1));
+                    b.onclick = () => {
+                        Object.keys(s.fixed || {}).forEach((k) => {
+                            if (values[k] === undefined) return;
+                            values[k] = Number(s.fixed[k]);
+                            const inp = controls.querySelector(`[data-exp-key="${k}"]`);
+                            const out = controls.querySelector(`[data-exp-out="${k}"]`);
+                            const def = controlsDef.find((x) => x.key === k);
+                            if (inp) inp.value = values[k];
+                            if (out) out.textContent = values[k] + (def?.unit || '');
+                        });
+                    };
+                    sc.appendChild(b);
+                });
+                div.appendChild(sc);
+            }
+
+            const challenge = document.createElement('div');
+            challenge.className = 'live-readout';
+            challenge.innerHTML = spec.experiment?.prompt ? ('Challenge: <b>' + spec.experiment.prompt + '</b>') : '';
+            if (challenge.innerHTML) div.appendChild(challenge);
+
+            // Visual scene: SVG diagrams + Canvas continuous effects
+            const scene = document.createElement('div');
+            scene.className = 'experiment-scene';
+            scene.innerHTML = expSceneSVG(template, uid);
+            const canvas = document.createElement('canvas');
+            scene.appendChild(canvas);
+            div.appendChild(scene);
+            const ctx = canvas.getContext('2d');
+
+            const graphWrap = document.createElement('div');
+            graphWrap.className = 'experiment-graph';
+            const gCanvas = document.createElement('canvas');
+            graphWrap.appendChild(gCanvas);
+            div.appendChild(graphWrap);
+
+            const readout = document.createElement('div');
+            readout.className = 'experiment-readout';
+            div.appendChild(readout);
+
+            const results = document.createElement('div');
+            results.className = 'experiment-results';
+            results.hidden = !!spec.experiment?.prompt;
+            div.appendChild(results);
+
+            function rate() { return expCalculateRate(values, controlsDef, rules); }
+            function paintResults(r) {
+                const rows = controlsDef.map((c) => `<dt>${c.label}</dt><dd>${values[c.key]}${c.unit || ''}</dd>`).join('');
+                results.innerHTML = `<h4>Results</h4><dl>${rows}<dt>Rate</dt><dd>${r}%</dd><dt>O2 produced</dt><dd>${expLevelLabel(r)}</dd></dl>`;
+            }
+
+            // Chart.js live graph of the rate over time
+            let chart = null;
+            if (window.Chart) {
+                Chart.defaults.color = '#ececec';
+                Chart.defaults.borderColor = '#383838';
+                chart = new Chart(gCanvas, {
+                    type: 'line',
+                    data: { labels: [], datasets: [{ label: (spec.graph?.label) || 'Rate', data: [], borderColor: '#60a5fa', backgroundColor: '#60a5fa33', tension: 0.35, pointRadius: 0, fill: true }] },
+                    options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { x: { grid: { color: '#222227' } }, y: { min: 0, max: 100, grid: { color: '#222227' } } }, plugins: { legend: { labels: { color: '#ececec' } } } }
+                });
+            } else {
+                graphWrap.innerHTML = '<div class="text-xs text-red-400 p-3 font-mono">Chart.js failed to load (offline?).</div>';
+            }
+
+            // Canvas particles: inputs flow in, products (bubbles) rise. Speed follows rate.
+            const parts = [];
+            function sizeCanvas() {
+                const r = scene.getBoundingClientRect();
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                canvas.width = Math.max(280, r.width) * dpr;
+                canvas.height = 300 * dpr;
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+            sizeCanvas();
+            const ro = new ResizeObserver(sizeCanvas);
+            ro.observe(scene);
+            const state = { playing: true, t: 0, tick: 0 };
+            let raf = 0, last = performance.now(), lastGraph = 0;
+
+            function spawn(r) {
+                const W = canvas.clientWidth || 560, H = 300;
+                const speed = 0.5 + r / 100;
+                if (parts.length < 90 && Math.random() < r / 100) {
+                    const kind = Math.random();
+                    if (kind < 0.45) parts.push({ x: 60 + Math.random() * 60, y: 90 + Math.random() * 130, vx: speed * (1 + Math.random()), vy: (Math.random() - 0.5) * 0.4, r: 2.5, c: '#22d3ee' });
+                    else if (kind < 0.8) parts.push({ x: 60 + Math.random() * 60, y: 90 + Math.random() * 130, vx: speed * (1 + Math.random()), vy: (Math.random() - 0.5) * 0.4, r: 2.5, c: '#60a5fa' });
+                    else parts.push({ x: 300 + (Math.random() - 0.5) * 120, y: 200, vx: (Math.random() - 0.5) * 0.5, vy: -(0.6 + Math.random() * speed), r: 2 + Math.random() * 3, c: '#34d399', bubble: true });
+                }
+            }
+            function draw(now) {
+                raf = requestAnimationFrame(draw);
+                const dt = Math.min(0.05, (now - last) / 1000);
+                last = now;
+                const r = rate();
+                const speed = 0.5 + r / 100;
+                if (state.playing) {
+                    state.t += dt;
+                    spawn(r);
+                    const W = canvas.clientWidth || 560, H = 300;
+                    ctx.clearRect(0, 0, W, H);
+                    // sunlight shimmer scales with light-like control if present
+                    const lightKey = controlsDef.find((c) => /light|sun/i.test(c.label))?.key;
+                    const glow = lightKey ? expNorm(values[lightKey], controlsDef.find((c) => c.key === lightKey)) / 100 : r / 100;
+                    ctx.fillStyle = `rgba(251,191,36,${0.05 + glow * 0.10})`;
+                    ctx.fillRect(0, 0, W, H);
+                    for (let i = parts.length - 1; i >= 0; i--) {
+                        const p = parts[i];
+                        p.x += p.vx * speed;
+                        p.y += p.vy * speed;
+                        if (p.bubble) { p.y -= speed * 0.6; p.x += Math.sin(state.t * 3 + i) * 0.3; }
+                        if (p.x > W + 10 || p.y < -10 || p.y > H + 10) { parts.splice(i, 1); continue; }
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                        if (p.bubble) { ctx.strokeStyle = p.c; ctx.lineWidth = 1.5; ctx.stroke(); }
+                        else { ctx.fillStyle = p.c; ctx.globalAlpha = 0.85; ctx.fill(); ctx.globalAlpha = 1; }
+                    }
+                    // SVG hooks: glow + bob/swing per template
+                    const svg = scene.querySelector('svg');
+                    if (svg) {
+                        const leaf = svg.querySelector('[data-exp="leaf"]');
+                        if (leaf) leaf.setAttribute('opacity', (0.55 + (r / 100) * 0.45).toFixed(2));
+                        const sun = svg.querySelector('[data-exp="sun"]');
+                        if (sun) sun.setAttribute('opacity', (0.5 + glow * 0.5).toFixed(2));
+                        const bob = svg.querySelector('[data-exp="bob"]');
+                        const str = svg.querySelector('[data-exp="string"]');
+                        if (bob && str) {
+                            const ang = Math.sin(state.t * (0.8 + speed)) * 40;
+                            const rad = (ang * Math.PI) / 180;
+                            const bx = 300 + Math.sin(rad) * 172, by = 28 + Math.cos(rad) * 172;
+                            bob.setAttribute('cx', bx.toFixed(1));
+                            bob.setAttribute('cy', by.toFixed(1));
+                            str.setAttribute('x2', bx.toFixed(1));
+                            str.setAttribute('y2', by.toFixed(1));
+                        }
+                        if (window.gsap && svg.querySelector('[data-exp="rays"]') && !svg._gsap) {
+                            svg._gsap = true;
+                            gsap.to(svg.querySelector('[data-exp="rays"]'), { rotation: 360, transformOrigin: '90px 60px', duration: 24, repeat: -1, ease: 'none' });
+                        }
+                    }
+                    if (chart && now - lastGraph > 1000) {
+                        lastGraph = now;
+                        state.tick += 1;
+                        chart.data.labels.push(state.tick + 's');
+                        chart.data.datasets[0].data.push(r);
+                        if (chart.data.labels.length > 40) { chart.data.labels.shift(); chart.data.datasets[0].data.shift(); }
+                        chart.update('none');
+                    }
+                    const lvl = expLevel(r);
+                    readout.innerHTML = `rate = <b>${r}%</b> · O2 = <b class="experiment-level-${lvl}">${expLevelLabel(r)}</b> · particles x<b>${speed.toFixed(2)}</b> · ${state.playing ? 'live' : 'paused'}`;
+                    paintResults(r);
+                }
+            }
+            draw(last);
+
+            const q = (s) => controls.querySelector(s);
+            q('[data-exp-play]').onclick = (e) => { state.playing = !state.playing; e.currentTarget.textContent = state.playing ? 'Pause' : 'Play'; };
+            q('[data-exp-reset]').onclick = () => {
+                controlsDef.forEach((c) => {
+                    values[c.key] = Number(c.value ?? 0);
+                    const inp = controls.querySelector(`[data-exp-key="${c.key}"]`);
+                    const out = controls.querySelector(`[data-exp-out="${c.key}"]`);
+                    if (inp) inp.value = values[c.key];
+                    if (out) out.textContent = values[c.key] + (c.unit || '');
+                });
+                parts.length = 0;
+                if (chart) { chart.data.labels.length = 0; chart.data.datasets[0].data.length = 0; chart.update('none'); }
+            };
+            q('[data-exp-mode]').onclick = (e) => {
+                results.hidden = false;
+                e.currentTarget.textContent = 'Experiment running - find the maximum';
+                challenge.innerHTML = (spec.experiment?.prompt ? 'Challenge: <b>' + spec.experiment.prompt + '</b><br>' : '') + 'Vary one slider at a time and watch O2 + graph. Results update live below.';
+            };
+            controls.querySelectorAll('[data-exp-key]').forEach((inp) => {
+                inp.oninput = (e) => {
+                    const k = e.target.getAttribute('data-exp-key');
+                    values[k] = Number(e.target.value);
+                    const def = controlsDef.find((x) => x.key === k);
+                    const out = controls.querySelector(`[data-exp-out="${k}"]`);
+                    if (out) out.textContent = values[k] + (def?.unit || '');
+                };
+            });
+            paintResults(rate());
+            expCleanup(div, [() => cancelAnimationFrame(raf), () => ro.disconnect(), () => chart && chart.destroy()]);
+            lucide.createIcons();
+        }
+
+        // Offline demos (same engine, no backend needed)
+        function runExperimentDemo(kind) {
+            try {
+                appendUserMessage(kind === 'pendulum' ? 'Show me a pendulum experiment' : kind === 'titration' ? 'Show me a titration experiment' : kind === 'circuit' ? 'Show me a circuit experiment' : 'Show me a photosynthesis experiment');
+            } catch (e) {}
+            const aiNode = createAIMessage();
+            const contentArea = aiNode.querySelector('.content-area');
+            const specs = {
+                photosynthesis: { title: 'Photosynthesis lab', template: 'photosynthesis', controls: [{ key: 'light', label: 'Light', min: 0, max: 100, step: 1, value: 70, unit: '%' }, { key: 'co2', label: 'CO2', min: 0, max: 100, step: 1, value: 60, unit: '%' }, { key: 'water', label: 'Water', min: 0, max: 100, step: 1, value: 80, unit: '%' }, { key: 'temperature', label: 'Temperature', min: 0, max: 45, step: 1, value: 25, unit: 'C' }], rateRules: { mode: 'limiting', keys: ['light', 'co2', 'water'] }, scenarios: [{ name: 'Light', fixed: { co2: 70, water: 80 }, vary: 'light' }, { name: 'CO2', fixed: { light: 70, water: 80 }, vary: 'co2' }], experiment: { prompt: 'Find the light intensity that produces the maximum rate.' }, graph: { label: 'Photosynthesis rate' } },
+                pendulum: { title: 'Pendulum lab', template: 'pendulum', controls: [{ key: 'gravity', label: 'Gravity', min: 1, max: 25, step: 0.1, value: 9.8, unit: '' }, { key: 'length', label: 'Length', min: 20, max: 100, step: 1, value: 60, unit: '' }, { key: 'angle', label: 'Angle', min: 5, max: 80, step: 1, value: 30, unit: '' }], rateRules: { mode: 'average', keys: ['gravity', 'length', 'angle'] }, graph: { label: 'Swing energy' } },
+                titration: { title: 'Titration lab', template: 'titration', controls: [{ key: 'acid', label: 'Acid', min: 0, max: 100, step: 1, value: 50, unit: '%' }, { key: 'base', label: 'Base', min: 0, max: 100, step: 1, value: 50, unit: '%' }, { key: 'drops', label: 'Drop rate', min: 0, max: 100, step: 1, value: 60, unit: '%' }], rateRules: { mode: 'limiting', keys: ['acid', 'base', 'drops'] }, graph: { label: 'Reaction rate' } },
+                circuit: { title: 'Circuit lab', template: 'circuit', controls: [{ key: 'voltage', label: 'Voltage', min: 0, max: 24, step: 0.5, value: 9, unit: 'V' }, { key: 'resistance', label: 'Resistance', min: 1, max: 100, step: 1, value: 40, unit: '' }, { key: 'current', label: 'Current path', min: 0, max: 100, step: 1, value: 70, unit: '%' }], rateRules: { mode: 'average', keys: ['voltage', 'resistance', 'current'] }, graph: { label: 'Current flow' } }
+            };
+            const spec = specs[kind] || specs.photosynthesis;
+            const fence = '```experiment\n' + JSON.stringify(spec) + '\n```';
+            const md = `Here is a **live working experiment** - move the sliders and the scene, particles and graph follow the rate.\n\n${fence}`;
+            aiNode.setAttribute('data-raw', md);
+            contentArea.innerHTML = processTextWithMath(md);
+            renderVisuals(aiNode);
+            scrollToBottom();
+        }
+
 
         // ─── Interactive Quiz Rendering ───
         function renderInteractiveQuiz(container) {
@@ -1405,780 +1675,6 @@
             container.querySelector('.content-area').appendChild(quizContainer);
             lucide.createIcons();
         }
-
-        const REAL_ATOMIC_DATA = {
-            H: { name: 'Hydrogen', color: '#f1f1f1', radius: 0.31, mass: 1.008 },
-            C: { name: 'Carbon', color: '#555555', radius: 0.76, mass: 12.011 },
-            N: { name: 'Nitrogen', color: '#4f8cff', radius: 0.71, mass: 14.007 },
-            O: { name: 'Oxygen', color: '#ff5b67', radius: 0.66, mass: 15.999 },
-            F: { name: 'Fluorine', color: '#8be28b', radius: 0.57, mass: 18.998 },
-            P: { name: 'Phosphorus', color: '#ff9d45', radius: 1.07, mass: 30.974 },
-            S: { name: 'Sulfur', color: '#f4d35e', radius: 1.05, mass: 32.06 },
-            Cl: { name: 'Chlorine', color: '#42d66b', radius: 1.02, mass: 35.45 },
-            Na: { name: 'Sodium', color: '#8d7aff', radius: 1.66, mass: 22.990 },
-            Mg: { name: 'Magnesium', color: '#89b6c8', radius: 1.41, mass: 24.305 }
-        };
-
-        function makeVisualToolbar(title, description) {
-            const toolbar = document.createElement('div');
-            toolbar.className = 'visual-toolbar';
-            toolbar.innerHTML = `<span class="visual-toolbar-title"><i data-lucide="activity" class="w-3.5 h-3.5 text-blue-400"></i><span>${title}</span><span class="visual-live-badge">Live</span></span><span class="text-[10px] text-chat-muted">${description}</span>`;
-            return toolbar;
-        }
-
-        function addVisualLegend(container, entries) {
-            const legend = document.createElement('div');
-            legend.className = 'visual-legend';
-            entries.forEach(entry => {
-                const item = document.createElement('span');
-                item.className = 'visual-legend-item';
-                item.innerHTML = `<span class="visual-legend-dot" style="background:${entry.color}"></span>${entry.label}`;
-                legend.appendChild(item);
-            });
-            container.appendChild(legend);
-        }
-
-        function initChemistrySimulation(div, spec) {
-            div.innerHTML = '';
-            div.className = 'chemistry-container';
-            const atoms = (spec.atoms || []).map((atom, index) => ({
-                ...atom,
-                element: atom.element || atom.symbol || 'C',
-                index
-            }));
-            const bonds = spec.bonds || [];
-            const state = { running: true, phase: 0, yaw: 0.35, pitch: -0.18, zoom: 1, dragging: false, lastX: 0, lastY: 0 };
-            const moleculeName = spec.title || spec.name || 'Interactive molecule';
-            const vibration = spec.vibration || {};
-
-            div.appendChild(makeVisualToolbar(moleculeName, 'Drag to rotate · Scroll to zoom'));
-            const controls = document.createElement('div');
-            controls.className = 'flex flex-wrap items-center gap-2 mb-2';
-            controls.innerHTML = `<button type="button" class="visual-control" data-chem-play>Pause</button><button type="button" class="visual-control" data-chem-reset>Reset view</button><label class="flex items-center gap-1.5 text-[10px] text-chat-muted"><input type="checkbox" data-chem-labels ${spec.showLabels !== false ? 'checked' : ''}> Labels</label><label class="flex items-center gap-1.5 text-[10px] text-chat-muted"><input type="checkbox" data-chem-vibration ${vibration.enabled !== false ? 'checked' : ''}> Vibrate</label>`;
-            div.appendChild(controls);
-
-            const canvas = document.createElement('canvas');
-            canvas.setAttribute('aria-label', 'Interactive chemistry molecule simulation');
-            div.appendChild(canvas);
-            const ctx = canvas.getContext('2d');
-            let dpr = 1;
-            let frameId;
-            let lastTime = performance.now();
-            let showLabels = spec.showLabels !== false;
-            let vibrating = vibration.enabled !== false;
-
-            function resize() {
-                const rect = canvas.getBoundingClientRect();
-                dpr = Math.min(window.devicePixelRatio || 1, 2);
-                canvas.width = Math.max(280, rect.width) * dpr;
-                canvas.height = Math.max(280, rect.height || 360) * dpr;
-                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            }
-            const resizeObserver = new ResizeObserver(resize);
-            resizeObserver.observe(canvas);
-            resize();
-
-            function project(position) {
-                const cosY = Math.cos(state.yaw), sinY = Math.sin(state.yaw);
-                const cosP = Math.cos(state.pitch), sinP = Math.sin(state.pitch);
-                const x1 = position.x * cosY - position.z * sinY;
-                const z1 = position.x * sinY + position.z * cosY;
-                const y1 = position.y * cosP - z1 * sinP;
-                const z2 = position.y * sinP + z1 * cosP;
-                const scale = Math.min(canvas.clientWidth || 600, canvas.clientHeight || 360) * 0.22 * state.zoom;
-                return { x: (canvas.clientWidth || 600) / 2 + x1 * scale, y: (canvas.clientHeight || 360) / 2 - y1 * scale, z: z2 };
-            }
-
-            function draw(now) {
-                const dt = Math.min(0.04, Math.max(0, (now - lastTime) / 1000));
-                lastTime = now;
-                if (state.running) state.phase += dt;
-                const width = canvas.clientWidth || 600;
-                const height = canvas.clientHeight || 360;
-                ctx.clearRect(0, 0, width, height);
-                ctx.fillStyle = '#101318';
-                ctx.fillRect(0, 0, width, height);
-
-                const positions = atoms.map((atom, index) => {
-                    const p = atom.position || atom.coordinates || { x: atom.x || 0, y: atom.y || 0, z: atom.z || 0 };
-                    const amplitude = Number(vibration.amplitude ?? 0.045);
-                    const frequency = Number(vibration.frequency ?? 2.2);
-                    const offset = vibrating ? amplitude * Math.sin(state.phase * frequency + index * 1.7) : 0;
-                    return project({ x: Number(p.x || 0) + offset * 0.25, y: Number(p.y || 0) + offset, z: Number(p.z || 0) + offset * 0.15 });
-                });
-
-                bonds.slice().sort((a, b) => ((positions[a.from ?? a.start ?? 0]?.z || 0) + (positions[a.to ?? a.end ?? 0]?.z || 0)) - ((positions[b.from ?? b.start ?? 0]?.z || 0) + (positions[b.to ?? b.end ?? 0]?.z || 0))).forEach(bond => {
-                    const from = positions[bond.from ?? bond.start ?? 0];
-                    const to = positions[bond.to ?? bond.end ?? 0];
-                    if (!from || !to) return;
-                    const order = Math.max(1, Math.min(3, Number(bond.order || 1)));
-                    ctx.strokeStyle = bond.color || '#a9b4c6';
-                    ctx.lineWidth = 3;
-                    for (let line = 0; line < order; line++) {
-                        const nudge = (line - (order - 1) / 2) * 5;
-                        ctx.beginPath();
-                        ctx.moveTo(from.x - nudge, from.y);
-                        ctx.lineTo(to.x - nudge, to.y);
-                        ctx.stroke();
-                    }
-                });
-
-                positions.map((position, index) => ({ position, atom: atoms[index] })).sort((a, b) => a.position.z - b.position.z).forEach(({ position, atom }) => {
-                    const data = REAL_ATOMIC_DATA[atom.element] || REAL_ATOMIC_DATA.C;
-                    const radius = Math.max(11, Math.min(30, data.radius * 19 * state.zoom));
-                    const gradient = ctx.createRadialGradient(position.x - radius * 0.3, position.y - radius * 0.35, radius * 0.1, position.x, position.y, radius);
-                    gradient.addColorStop(0, '#ffffff');
-                    gradient.addColorStop(0.18, data.color);
-                    gradient.addColorStop(1, '#101318');
-                    ctx.fillStyle = gradient;
-                    ctx.beginPath();
-                    ctx.arc(position.x, position.y, radius, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.strokeStyle = '#ffffff55';
-                    ctx.stroke();
-                    if (showLabels) {
-                        ctx.fillStyle = '#ffffff';
-                        ctx.font = '600 11px sans-serif';
-                        ctx.textAlign = 'center';
-                        ctx.fillText(atom.element, position.x, position.y + 4);
-                    }
-                });
-                ctx.fillStyle = '#9ca3af';
-                ctx.font = '11px monospace';
-                ctx.textAlign = 'left';
-                ctx.fillText(`t = ${state.phase.toFixed(2)} s`, 12, height - 14);
-                frameId = requestAnimationFrame(draw);
-            }
-            draw(performance.now());
-
-            controls.querySelector('[data-chem-play]').onclick = (event) => {
-                state.running = !state.running;
-                event.currentTarget.textContent = state.running ? 'Pause' : 'Play';
-            };
-            controls.querySelector('[data-chem-reset]').onclick = () => { state.yaw = 0.35; state.pitch = -0.18; state.zoom = 1; state.phase = 0; };
-            controls.querySelector('[data-chem-labels]').onchange = (event) => { showLabels = event.target.checked; };
-            controls.querySelector('[data-chem-vibration]').onchange = (event) => { vibrating = event.target.checked; };
-            canvas.addEventListener('pointerdown', event => { state.dragging = true; state.lastX = event.clientX; state.lastY = event.clientY; canvas.setPointerCapture?.(event.pointerId); });
-            canvas.addEventListener('pointermove', event => { if (!state.dragging) return; state.yaw += (event.clientX - state.lastX) * 0.012; state.pitch += (event.clientY - state.lastY) * 0.01; state.lastX = event.clientX; state.lastY = event.clientY; });
-            canvas.addEventListener('pointerup', event => { state.dragging = false; canvas.releasePointerCapture?.(event.pointerId); });
-            canvas.addEventListener('wheel', event => { event.preventDefault(); state.zoom = Math.max(0.55, Math.min(2.4, state.zoom - event.deltaY * 0.001)); }, { passive: false });
-            addVisualLegend(div, [...new Set(atoms.map(atom => atom.element))].map(element => ({ label: `${element} · ${REAL_ATOMIC_DATA[element]?.name || 'Element'}`, color: REAL_ATOMIC_DATA[element]?.color || '#9ca3af' })));
-            lucide.createIcons();
-
-            const mutationObserver = new MutationObserver(() => {
-                if (!document.body.contains(div)) { cancelAnimationFrame(frameId); resizeObserver.disconnect(); mutationObserver.disconnect(); }
-            });
-            mutationObserver.observe(document.body, { childList: true, subtree: true });
-        }
-
-        function initPhysicsSimulation(div, spec) {
-            div.innerHTML = '';
-            div.className = 'physics-container';
-            const type = String(spec.type || spec.simulation || 'projectile').toLowerCase();
-            const source = spec.parameters || spec.params || {};
-            const state = { running: true, time: 0, x: 0, y: 0, vx: 0, vy: 0, theta: Number(source.angle ?? 0.65), omega: 0, zoom: 1 };
-            const gravity = Number(source.gravity ?? 9.80665);
-            const mass = Number(source.mass ?? 1);
-            const speed = Number(source.speed ?? source.velocity ?? 18);
-            const angle = Number(source.angleDegrees ?? source.angle ?? 45);
-            const initialAngle = type === 'pendulum' ? Number(source.angle ?? 0.65) : angle * Math.PI / 180;
-            const length = Number(source.length ?? 1.5);
-            const springK = Number(source.stiffness ?? source.k ?? 12);
-            const damping = Number(source.damping ?? 0.03);
-
-            div.appendChild(makeVisualToolbar(spec.title || `${type[0].toUpperCase()}${type.slice(1)} simulation`, 'Real-time numerical integration · SI units'));
-            const controls = document.createElement('div');
-            controls.className = 'flex flex-wrap items-center gap-2 mb-2';
-            controls.innerHTML = `<button type="button" class="visual-control" data-physics-play>Pause</button><button type="button" class="visual-control" data-physics-reset>Reset</button><label class="flex items-center gap-1 text-[10px] text-chat-muted">g <input class="visual-control-range" data-physics-gravity type="range" min="0" max="20" step="0.01" value="${gravity}"><output data-physics-gravity-output>${gravity.toFixed(2)}</output></label><label class="flex items-center gap-1 text-[10px] text-chat-muted">Input <input class="visual-control-range" data-physics-input type="range" min="0.1" max="40" step="0.1" value="${speed}"><output data-physics-input-output>${speed.toFixed(1)}</output></label>`;
-            div.appendChild(controls);
-            const canvas = document.createElement('canvas');
-            canvas.setAttribute('aria-label', `Interactive real-time ${type} physics simulation`);
-            div.appendChild(canvas);
-            const ctx = canvas.getContext('2d');
-            let dpr = 1;
-            let frameId;
-            let lastTime = performance.now();
-            let currentGravity = gravity;
-            let currentInput = speed;
-
-            function resize() { const rect = canvas.getBoundingClientRect(); dpr = Math.min(window.devicePixelRatio || 1, 2); canvas.width = Math.max(280, rect.width) * dpr; canvas.height = Math.max(280, rect.height || 360) * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
-            const resizeObserver = new ResizeObserver(resize); resizeObserver.observe(canvas); resize();
-            function reset() { state.time = 0; state.x = 0; state.y = 0; state.vx = type === 'projectile' ? currentInput * Math.cos(initialAngle) : 0; state.vy = type === 'projectile' ? currentInput * Math.sin(initialAngle) : 0; state.theta = initialAngle; state.omega = 0; }
-            reset();
-            function integrate(dt) {
-                if (type === 'pendulum') { const alpha = -(currentGravity / length) * Math.sin(state.theta) - damping * state.omega; state.omega += alpha * dt; state.theta += state.omega * dt; }
-                else if (type === 'spring') { const acceleration = -(springK / mass) * state.x - damping * state.vx; state.vx += acceleration * dt; state.x += state.vx * dt; }
-                else { state.vy -= currentGravity * dt; state.x += state.vx * dt; state.y += state.vy * dt; if (state.y < 0) { state.y = 0; state.vy = -state.vy * 0.78; if (Math.abs(state.vy) < 0.35) { state.vy = 0; state.vx *= 0.92; } } }
-                state.time += dt;
-            }
-            function draw(now) {
-                const dt = Math.min(0.03, Math.max(0, (now - lastTime) / 1000)); lastTime = now; if (state.running) integrate(dt);
-                const width = canvas.clientWidth || 600, height = canvas.clientHeight || 360; ctx.clearRect(0, 0, width, height); ctx.fillStyle = '#101318'; ctx.fillRect(0, 0, width, height); ctx.strokeStyle = '#263244'; ctx.lineWidth = 1;
-                for (let x = 0; x < width; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke(); } for (let y = 0; y < height; y += 32) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke(); }
-                const originX = width * 0.13, groundY = height * 0.78;
-                ctx.strokeStyle = '#738196'; ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(width, groundY); ctx.stroke();
-                let metric = '';
-                if (type === 'pendulum') { const px = originX + Math.sin(state.theta) * length * 95; const py = groundY - Math.cos(state.theta) * length * 95; ctx.strokeStyle = '#8daef7'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(originX, groundY); ctx.lineTo(px, py); ctx.stroke(); ctx.fillStyle = '#ff9d45'; ctx.beginPath(); ctx.arc(px, py, 17, 0, Math.PI * 2); ctx.fill(); metric = `θ ${state.theta.toFixed(2)} rad · ω ${state.omega.toFixed(2)} rad/s`; }
-                else if (type === 'spring') { const anchorX = width * 0.16, cy = height * 0.48, px = anchorX + 150 + state.x * 85; ctx.strokeStyle = '#8daef7'; ctx.lineWidth = 2; ctx.beginPath(); for (let i = 0; i <= 32; i++) { const x = anchorX + i * (px - anchorX) / 32; const y = cy + Math.sin(i * Math.PI * 5) * 10; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); } ctx.stroke(); ctx.fillStyle = '#ff9d45'; ctx.fillRect(px, cy - 24, 42, 48); metric = `x ${state.x.toFixed(2)} m · v ${state.vx.toFixed(2)} m/s`; }
-                else { const scale = Math.min(18, width / 20); const px = originX + state.x * scale; const py = groundY - state.y * scale; ctx.fillStyle = '#ff9d45'; ctx.beginPath(); ctx.arc(px, py, 13, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#60a5fa'; ctx.beginPath(); ctx.moveTo(originX, groundY); ctx.lineTo(px, py); ctx.stroke(); metric = `x ${state.x.toFixed(2)} m · y ${state.y.toFixed(2)} m · v ${Math.hypot(state.vx, state.vy).toFixed(2)} m/s`; }
-                const kinetic = 0.5 * mass * (state.vx * state.vx + state.vy * state.vy); const potential = type === 'projectile' ? mass * currentGravity * state.y : 0; ctx.fillStyle = '#d6deeb'; ctx.font = '12px monospace'; ctx.fillText(`t ${state.time.toFixed(2)} s  |  E ${(kinetic + potential).toFixed(2)} J  |  ${metric}`, 12, height - 14); frameId = requestAnimationFrame(draw);
-            }
-            draw(performance.now());
-            const play = controls.querySelector('[data-physics-play]'); play.onclick = () => { state.running = !state.running; play.textContent = state.running ? 'Pause' : 'Play'; };
-            controls.querySelector('[data-physics-reset]').onclick = reset;
-            const gravityInput = controls.querySelector('[data-physics-gravity]'); const gravityOutput = controls.querySelector('[data-physics-gravity-output]'); gravityInput.oninput = event => { currentGravity = Number(event.target.value); gravityOutput.value = currentGravity.toFixed(2); gravityOutput.textContent = currentGravity.toFixed(2); };
-            const inputControl = controls.querySelector('[data-physics-input]'); const inputOutput = controls.querySelector('[data-physics-input-output]'); inputControl.oninput = event => { currentInput = Number(event.target.value); inputOutput.value = currentInput.toFixed(1); inputOutput.textContent = currentInput.toFixed(1); reset(); };
-            const mutationObserver = new MutationObserver(() => { if (!document.body.contains(div)) { cancelAnimationFrame(frameId); resizeObserver.disconnect(); mutationObserver.disconnect(); } }); mutationObserver.observe(document.body, { childList: true, subtree: true });
-        }
-
-        function bindLive3DControls(div, camera, renderer, objects) {
-            let dragging = false;
-            let lastX = 0;
-            let lastY = 0;
-
-            div.style.cursor = 'grab';
-            div.addEventListener('pointerdown', (event) => {
-                dragging = true;
-                lastX = event.clientX;
-                lastY = event.clientY;
-                div.setPointerCapture?.(event.pointerId);
-                div.style.cursor = 'grabbing';
-            });
-            div.addEventListener('pointermove', (event) => {
-                if (!dragging) return;
-                const dx = event.clientX - lastX;
-                const dy = event.clientY - lastY;
-                lastX = event.clientX;
-                lastY = event.clientY;
-                objects.forEach(object => {
-                    object.rotation.y += dx * 0.012;
-                    object.rotation.x += dy * 0.008;
-                });
-            });
-            const stopDragging = (event) => {
-                dragging = false;
-                div.releasePointerCapture?.(event.pointerId);
-                div.style.cursor = 'grab';
-            };
-            div.addEventListener('pointerup', stopDragging);
-            div.addEventListener('pointercancel', stopDragging);
-            div.addEventListener('wheel', (event) => {
-                event.preventDefault();
-                camera.position.z = Math.max(1.5, Math.min(30, camera.position.z + event.deltaY * 0.01));
-            }, { passive: false });
-
-            const resizeObserver = new ResizeObserver(() => {
-                const width = Math.max(280, div.clientWidth || 600);
-                const height = Math.max(260, div.clientHeight || 400);
-                camera.aspect = width / height;
-                camera.updateProjectionMatrix();
-                renderer.setSize(width, height, false);
-            });
-            resizeObserver.observe(div);
-            return resizeObserver;
-        }
-
-        // ─── Three.js Renderer ───
-        function initThreeJS(div, spec) {
-        div.innerHTML = '';
-        const width = div.clientWidth || 600;
-        const height = 400;
-
-        const scene = new THREE.Scene();
-        scene.background = null;
-
-        const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
-        camera.position.set(0, 0, spec.cameraDistance || 6);
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(width, height);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-        renderer.domElement.setAttribute('aria-label', 'Interactive live 3D visual. Drag to rotate and scroll to zoom.');
-        div.appendChild(renderer.domElement);
-
-        const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambient);
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(5, 5, 5);
-        scene.add(dirLight);
-
-        const objects = [];
-        const shapes = spec.objects || spec.elements || [spec];
-
-        shapes.forEach(obj => {
-        let geometry;
-        const type = (obj.type || 'sphere').toLowerCase();
-        const size = obj.size || 1;
-
-        if (type.includes('box') || type.includes('cube')) {
-            geometry = new THREE.BoxGeometry(size, size, size);
-        } else if (type.includes('sphere')) {
-            geometry = new THREE.SphereGeometry(size * 0.6, 32, 32);
-        } else if (type.includes('cylinder')) {
-            geometry = new THREE.CylinderGeometry(size * 0.5, size * 0.5, size, 32);
-        } else if (type.includes('cone')) {
-            geometry = new THREE.ConeGeometry(size * 0.5, size, 32);
-        } else if (type.includes('torus')) {
-            geometry = new THREE.TorusGeometry(size * 0.5, size * 0.2, 16, 100);
-        } else if (type.includes('plane')) {
-            geometry = new THREE.PlaneGeometry(size, size);
-        } else {
-            geometry = new THREE.SphereGeometry(size * 0.6, 32, 32);
-        }
-
-        const color = obj.color ? new THREE.Color(obj.color) : new THREE.Color(0x60a5fa);
-        const material = new THREE.MeshStandardMaterial({
-            color,
-            metalness: 0.2,
-            roughness: 0.5,
-            wireframe: !!obj.wireframe
-        });
-
-        const mesh = new THREE.Mesh(geometry, material);
-        if (obj.position) {
-            mesh.position.set(obj.position.x || 0, obj.position.y || 0, obj.position.z || 0);
-        } else if (obj.x !== undefined) {
-            mesh.position.set((obj.x - 300) / 60, -(obj.y - 200) / 60, 0);
-        }
-        scene.add(mesh);
-        objects.push(mesh);
-        });
-
-        const resizeObserver = bindLive3DControls(div, camera, renderer, objects);
-
-        if (objects.length === 0) {
-        const geo = new THREE.SphereGeometry(1.2, 32, 32);
-        const mat = new THREE.MeshStandardMaterial({ color: 0x60a5fa, roughness: 0.4 });
-        const mesh = new THREE.Mesh(geo, mat);
-        scene.add(mesh);
-        objects.push(mesh);
-        }
-
-        let frameId;
-        function animate() {
-        frameId = requestAnimationFrame(animate);
-        objects.forEach(o => { o.rotation.y += 0.006; o.rotation.x += 0.002; });
-        renderer.render(scene, camera);
-        }
-        animate();
-
-        const observer = new MutationObserver(() => {
-        if (!document.body.contains(div)) {
-            cancelAnimationFrame(frameId);
-            renderer.dispose();
-            resizeObserver.disconnect();
-            observer.disconnect();
-        }
-         });
-        observer.observe(document.body, { childList: true, subtree: true });
-          }
-
-        // ─── 3Dmol.js Renderer ───
-        function initThreeDmol(div, spec) {
-            div.innerHTML = '';
-            div.style.position = 'relative';
-            div.style.height = '400px';
-
-            try {
-                const viewer = $3Dmol.createViewer(div, {
-                    backgroundColor: 'black',
-                    width: div.clientWidth,
-                    height: 400
-                });
-
-                if (spec.molecule_type === 'pdb') {
-                    viewer.addModel(spec.data, "pdb");
-                } else if (spec.molecule_type === 'sdf') {
-                    viewer.addModel(spec.data, "sdf");
-                } else if (spec.molecule_type === 'cif') {
-                    viewer.addModel(spec.data, "cif");
-                } else if (spec.smiles) {
-                    viewer.addModel(spec.smiles, "smi");
-                } else {
-                    // Fallback: show a placeholder
-                    div.innerHTML = `<div class="text-sm text-chat-muted">No molecular data provided</div>`;
-                    return;
-                }
-
-                const style = spec.style || { stick: { colorscheme: 'greenCarbon' } };
-                viewer.setStyle({}, style);
-
-                if (spec.zoom) {
-                    viewer.zoomTo();
-                }
-                viewer.render();
-                viewer.zoom(0.8, 1000);
-
-                const resizeObserver = new ResizeObserver(() => {
-                    viewer.resize?.();
-                    viewer.render();
-                });
-                resizeObserver.observe(div);
-
-                const mutationObserver = new MutationObserver(() => {
-                    if (!document.body.contains(div)) {
-                        resizeObserver.disconnect();
-                        mutationObserver.disconnect();
-                    }
-                });
-                mutationObserver.observe(document.body, { childList: true, subtree: true });
-
-                // Label
-                if (spec.label) {
-                    const label = document.createElement('div');
-                    label.className = 'absolute bottom-2 left-2 text-xs text-chat-muted bg-black/50 px-2 py-1 rounded';
-                    label.textContent = spec.label;
-                    div.appendChild(label);
-                }
-            } catch (e) {
-                div.innerHTML = `<div class="text-xs text-red-500 font-mono">3Dmol.js Error: ${e.message}</div>`;
-            }
-        }
-
-        // ─── PyVista / VTK Renderer (iframe fallback) ───
-        function initPyVista(div, spec) {
-            div.innerHTML = '';
-            div.className = 'pyvista-container';
-
-            try {
-                // Create an embedded 3D viewer using Three.js as PyVista visualization fallback
-                // PyVista outputs are typically HTML/VTK JSON that we render via a canvas
-                const width = div.clientWidth || 600;
-                const height = 400;
-
-                const scene = new THREE.Scene();
-                scene.background = null;
-
-                const camera = new THREE.PerspectiveCamera(45, width / height, 0.01, 1000);
-                camera.position.set(0, 0, 5);
-
-                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-                renderer.setSize(width, height);
-                renderer.setPixelRatio(window.devicePixelRatio || 1);
-                div.appendChild(renderer.domElement);
-
-                const ambient = new THREE.AmbientLight(0xffffff, 0.7);
-                scene.add(ambient);
-                const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-                dirLight.position.set(5, 5, 5);
-                scene.add(dirLight);
-
-                const objects = [];
-
-                // Parse PyVista spec - handle common PyVista output formats
-                const shapes = spec.objects || spec.meshes || spec.elements || [spec];
-                shapes.forEach(obj => {
-                    let geometry;
-                    const type = (obj.type || 'sphere').toLowerCase();
-                    const size = obj.size || 1;
-
-                    if (type.includes('box') || type.includes('cube')) {
-                        geometry = new THREE.BoxGeometry(size, size, size);
-                    } else if (type.includes('sphere') || type.includes('blob')) {
-                        geometry = new THREE.SphereGeometry(size * 0.6, 32, 32);
-                    } else if (type.includes('cylinder') || type.includes('tube')) {
-                        geometry = new THREE.CylinderGeometry(size * 0.5, size * 0.5, size, 32);
-                    } else if (type.includes('cone')) {
-                        geometry = new THREE.ConeGeometry(size * 0.5, size, 32);
-                    } else if (type.includes('plane') || type.includes('surface')) {
-                        geometry = new THREE.PlaneGeometry(size, size, 32, 32);
-                    } else if (type.includes('point') || type.includes('node')) {
-                        geometry = new THREE.SphereGeometry(size * 0.3, 16, 16);
-                    } else {
-                        geometry = new THREE.SphereGeometry(size * 0.6, 32, 32);
-                    }
-
-                    const color = obj.color ? new THREE.Color(obj.color) : new THREE.Color(0x60a5fa);
-                    const material = new THREE.MeshStandardMaterial({
-                        color,
-                        metalness: 0.3,
-                        roughness: 0.4,
-                        wireframe: !!obj.wireframe
-                    });
-
-                    const mesh = new THREE.Mesh(geometry, material);
-                    if (obj.position) {
-                        mesh.position.set(obj.position.x || 0, obj.position.y || 0, obj.position.z || 0);
-                    } else if (obj.x !== undefined) {
-                        mesh.position.set((obj.x - 300) / 60, -(obj.y - 200) / 60, 0);
-                    }
-                    if (obj.rotation) {
-                        mesh.rotation.set(obj.rotation.x || 0, obj.rotation.y || 0, obj.rotation.z || 0);
-                    }
-                    scene.add(mesh);
-                    objects.push(mesh);
-                });
-
-                const resizeObserver = bindLive3DControls(div, camera, renderer, objects);
-
-                // Add grid for scientific context
-                const gridHelper = new THREE.GridHelper(10, 10, 0x383838, 0x2a2a2a);
-                scene.add(gridHelper);
-
-                // Axes
-                const axesHelper = new THREE.AxesHelper(2);
-                scene.add(axesHelper);
-
-                let frameId;
-                function animate() {
-                    frameId = requestAnimationFrame(animate);
-                    objects.forEach(o => { o.rotation.y += 0.005; o.rotation.x += 0.002; });
-                    renderer.render(scene, camera);
-                }
-                animate();
-
-                const observer = new MutationObserver(() => {
-                                            if (!document.body.contains(div)) {
-                            cancelAnimationFrame(frameId);
-                            renderer.dispose();
-                            resizeObserver.disconnect();
-                            observer.disconnect();
-                        }
-                    });
-
-                observer.observe(document.body, { childList: true, subtree: true });
-
-            } catch (e) {
-                div.innerHTML = `<div class="text-xs text-red-500 font-mono">PyVista Render Error: ${e.message}</div>`;
-            }
-        }
-
-        // ─── Manim Animation Renderer ───
-        function initManim(div, spec) {
-            div.innerHTML = '';
-            div.className = 'manim-container';
-
-            try {
-                // Manim outputs are typically video files or animated scene descriptions
-                // We render them as described in the spec
-                if (spec.video_url) {
-                    // Direct video playback
-                    const video = document.createElement('video');
-                    video.src = spec.video_url;
-                    video.controls = true;
-                    video.autoplay = spec.autoplay !== false;
-                    video.loop = spec.loop !== false;
-                    video.muted = spec.muted !== false;
-                    video.playsInline = true;
-                    video.style.width = '100%';
-                    video.style.maxHeight = '400px';
-                    video.style.borderRadius = '0.5rem';
-                    div.appendChild(video);
-                } else if (spec.script || spec.scene_description) {
-                    // Render Manim scene description as animated SVG/Canvas
-                    const desc = spec.script || spec.scene_description;
-                    const canvas = document.createElement('canvas');
-                    canvas.width = div.clientWidth || 600;
-                    canvas.height = 400;
-                    canvas.style.borderRadius = '0.5rem';
-                    canvas.style.background = '#0a0a0a';
-                    div.appendChild(canvas);
-
-                    const ctx = canvas.getContext('2d');
-                    const W = canvas.width, H = canvas.height;
-
-                    // Parse simple Manim scene instructions and animate
-                    let progress = 0;
-                    function animateManim() {
-                        progress += 0.005;
-                        if (progress > 1) progress = 1;
-
-                        ctx.fillStyle = '#0a0a0a';
-                        ctx.fillRect(0, 0, W, H);
-
-                        // Render based on scene type
-                        if (desc.includes('circle') || desc.includes('Circle')) {
-                            const radius = Math.min(W, H) * 0.25 * progress;
-                            ctx.strokeStyle = '#60a5fa';
-                            ctx.lineWidth = 2;
-                            ctx.beginPath();
-                            ctx.arc(W/2, H/2, radius, 0, Math.PI * 2);
-                            ctx.stroke();
-                        } else if (desc.includes('square') || desc.includes('Square')) {
-                            const size = Math.min(W, H) * 0.4 * progress;
-                            ctx.strokeStyle = '#60a5fa';
-                            ctx.lineWidth = 2;
-                            ctx.strokeRect(W/2 - size/2, H/2 - size/2, size, size);
-                        } else if (desc.includes('transform') || desc.includes('Transform')) {
-                            const t = progress;
-                            const r1 = Math.min(W, H) * 0.15;
-                            const r2 = Math.min(W, H) * 0.25;
-                            ctx.strokeStyle = `rgba(96, 165, 250, ${t})`;
-                            ctx.lineWidth = 2;
-                            ctx.beginPath();
-                            ctx.arc(W/2, H/2, r1 + (r2 - r1) * t, 0, Math.PI * 2);
-                            ctx.stroke();
-                        } else {
-                            // Generic animation: draw text with fade
-                            ctx.fillStyle = `rgba(236, 236, 236, ${progress})`;
-                            ctx.font = '16px monospace';
-                            ctx.textAlign = 'center';
-                            ctx.fillText('Manim Animation', W/2, H/2);
-                            if (desc) {
-                                ctx.font = '12px monospace';
-                                ctx.fillStyle = `rgba(180, 180, 180, ${progress * 0.7})`;
-                                ctx.fillText(desc.substring(0, 80), W/2, H/2 + 25);
-                            }
-                        }
-
-                        if (progress < 1 || spec.loop !== false) {
-                            if (progress >= 1) progress = 0;
-                            requestAnimationFrame(animateManim);
-                        }
-                    }
-                    animateManim();
-                } else if (spec.elements || spec.shapes) {
-                    // Render Manim shapes as animated canvas elements
-                    const shapes = spec.elements || spec.shapes || [spec];
-                    const canvas = document.createElement('canvas');
-                    canvas.width = div.clientWidth || 600;
-                    canvas.height = 400;
-                    canvas.style.borderRadius = '0.5rem';
-                    canvas.style.background = '#0a0a0a';
-                    div.appendChild(canvas);
-
-                    const ctx = canvas.getContext('2d');
-                    const W = canvas.width, H = canvas.height;
-                    let progress = 0;
-
-                    function animateShapes() {
-                        progress += 0.005;
-                        if (progress > 1) progress = 1;
-
-                        ctx.fillStyle = '#0a0a0a';
-                        ctx.fillRect(0, 0, W, H);
-
-                        shapes.forEach((shape, i) => {
-                            const delay = i * 0.15;
-                            const p = Math.max(0, Math.min(1, (progress - delay) / (1 - delay * shapes.length)));
-                            if (p <= 0) return;
-
-                            const type = (shape.type || 'circle').toLowerCase();
-                            const color = shape.color || '#60a5fa';
-                            const size = shape.size || 1;
-
-                            ctx.strokeStyle = color;
-                            ctx.lineWidth = 2;
-                            ctx.globalAlpha = p;
-
-                            const cx = (shape.x || 0) + W/2;
-                            const cy = (shape.y || 0) + H/2;
-
-                            if (type === 'circle') {
-                                ctx.beginPath();
-                                ctx.arc(cx, cy, size * 40, 0, Math.PI * 2);
-                                ctx.stroke();
-                            } else if (type === 'square' || type === 'rectangle') {
-                                ctx.strokeRect(cx - size * 30, cy - size * 30, size * 60, size * 60);
-                            } else if (type === 'line') {
-                                ctx.beginPath();
-                                ctx.moveTo(cx - size * 40, cy);
-                                ctx.lineTo(cx + size * 40, cy);
-                                ctx.stroke();
-                            } else if (type === 'arrow') {
-                                ctx.beginPath();
-                                ctx.moveTo(cx - size * 30, cy);
-                                ctx.lineTo(cx + size * 30, cy);
-                                ctx.stroke();
-                                ctx.beginPath();
-                                ctx.moveTo(cx + size * 30, cy);
-                                ctx.lineTo(cx + size * 20, cy - 8);
-                                ctx.moveTo(cx + size * 30, cy);
-                                ctx.lineTo(cx + size * 20, cy + 8);
-                                ctx.stroke();
-                            }
-
-                            if (shape.label) {
-                                ctx.fillStyle = color;
-                                ctx.font = '12px monospace';
-                                ctx.textAlign = 'center';
-                                ctx.fillText(shape.label, cx, cy + size * 50);
-                            }
-
-                            ctx.globalAlpha = 1;
-                        });
-
-                        if (progress < 1 || spec.loop !== false) {
-                            if (progress >= 1) progress = 0;
-                            requestAnimationFrame(animateShapes);
-                        }
-                    }
-                    animateShapes();
-                }
-            } catch (e) {
-                div.innerHTML = `<div class="text-xs text-red-500 font-mono">Manim Error: ${e.message}</div>`;
-            }
-        }
-
-        // ─── SVG Spec Renderer ───
-        function renderSvgSpec(div, spec) {
-         const w = spec.width || 600;
-         const h = spec.height || 400;
-         const ns = 'http://www.w3.org/2000/svg';
-         const svg = document.createElementNS(ns, 'svg');
-         svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-         svg.setAttribute('width', '100%');
-         svg.style.maxHeight = '420px';
-
-        (spec.elements || []).forEach(el => {
-        let node;
-        const type = (el.type || '').toLowerCase();
-
-        if (type === 'ellipse') {
-            node = document.createElementNS(ns, 'ellipse');
-            node.setAttribute('cx', el.cx); node.setAttribute('cy', el.cy);
-            node.setAttribute('rx', el.rx); node.setAttribute('ry', el.ry);
-        } else if (type === 'circle') {
-            node = document.createElementNS(ns, 'circle');
-            node.setAttribute('cx', el.cx); node.setAttribute('cy', el.cy);
-            node.setAttribute('r', el.r);
-        } else if (type === 'rect') {
-            node = document.createElementNS(ns, 'rect');
-            node.setAttribute('x', el.x); node.setAttribute('y', el.y);
-            node.setAttribute('width', el.width); node.setAttribute('height', el.height);
-            node.setAttribute('rx', el.rx || 0);
-        } else if (type === 'path') {
-            node = document.createElementNS(ns, 'path');
-            node.setAttribute('d', el.d);
-        } else if (type === 'line') {
-            node = document.createElementNS(ns, 'line');
-            node.setAttribute('x1', el.x1); node.setAttribute('y1', el.y1);
-            node.setAttribute('x2', el.x2); node.setAttribute('y2', el.y2);
-        } else if (type === 'text') {
-            node = document.createElementNS(ns, 'text');
-            node.setAttribute('x', el.x); node.setAttribute('y', el.y);
-            node.setAttribute('font-size', el.fontSize || 14);
-            node.setAttribute('fill', el.fill || '#ececec');
-            node.textContent = el.content || el.label || '';
-            svg.appendChild(node);
-            return;
-        } else {
-            return;
-        }
-
-        if (el.stroke) node.setAttribute('stroke', el.stroke);
-        if (el.fill) node.setAttribute('fill', el.fill); else if (type !== 'path') node.setAttribute('fill', 'none');
-        if (el.strokeWidth) node.setAttribute('stroke-width', el.strokeWidth);
-        if (type === 'path' && !el.fill) node.setAttribute('fill', 'none');
-        svg.appendChild(node);
-
-        if (el.label && type !== 'text') {
-            const label = document.createElementNS(ns, 'text');
-            const lx = el.cx !== undefined ? el.cx : (el.x !== undefined ? el.x + (el.width || 0) / 2 : w / 2);
-            const ly = el.cy !== undefined ? el.cy - (el.ry || el.r || 0) - 8 : (el.y !== undefined ? el.y - 8 : h / 2);
-            label.setAttribute('x', lx);
-            label.setAttribute('y', ly);
-            label.setAttribute('font-size', 12);
-            label.setAttribute('fill', el.fill && el.fill !== 'none' ? el.fill : '#ececec');
-            label.setAttribute('text-anchor', 'middle');
-            label.textContent = el.label;
-            svg.appendChild(label);
-                }
-                });
-
-         div.innerHTML = '';
-         div.appendChild(svg);
-            }   
 
         function copyText(btn) {
             const contentArea = btn.closest('.flex-1').querySelector('.content-area');
@@ -2462,6 +1958,8 @@
                 scrollToBottom();
             }
         });
+
+
 
     </script>
 </body>

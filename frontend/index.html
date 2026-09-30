@@ -78,7 +78,7 @@
             pointer-events: none;
         }
         .splash-content {
-            animation: splashPop 3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: splashPop 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         @keyframes splashPop {
             0% { transform: scale(0.85); opacity: 0; filter: blur(4px); }
@@ -768,7 +768,7 @@
         // ─── Init on DOM ready ───
         document.addEventListener("DOMContentLoaded", () => {
             // Schedule this FIRST, before anything risky runs
-            setTimeout(hideSplash, 3400);
+            setTimeout(hideSplash, 2000);
 
             try {
                 lucide.createIcons();

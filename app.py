@@ -521,6 +521,37 @@ If this is a continuation of a previous conversation, reference the prior discus
     template_format="jinja2"
 )
 
+FAST_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        ("system", SYSTEM_PROMPT),
+        MessagesPlaceholder("history"),
+        (
+            "human",
+            """
+Topic: {{topic}}
+Question: {{question}}
+
+Connected source:
+{{connected_source}}
+
+Mode: fast
+Depth instruction: {{depth_instruction}}
+
+Answer the user's question directly and quickly. Put the core answer first.
+For normal questions, keep the response brief: usually 1-3 short paragraphs or
+a few bullets. Include only the most useful explanation and avoid unrelated
+sections, visual blocks, experiments, quizzes, or long introductions.
+If the question explicitly asks for a deep, detailed, step-by-step, advanced,
+thorough, or comprehensive explanation, follow that request instead and explain
+like ChatGPT with the necessary reasoning, examples, formulas, and caveats.
+If the user asks a simple follow-up, answer only that follow-up while using the
+conversation context.
+""",
+        ),
+    ],
+    template_format="jinja2"
+)
+
 QUIZ_PROMPT = ChatPromptTemplate.from_messages(
     [
         ("system", SYSTEM_PROMPT),
@@ -638,6 +669,28 @@ def choose_provider(provider: Provider, text: str, level: Level) -> Provider:
         return Provider.glm
 
     return Provider.groq
+
+
+def fast_depth_instruction(text: str) -> str:
+    """Describe whether a fast-mode request explicitly asks for depth."""
+    deep_phrases = (
+        "explain deeply",
+        "explain in depth",
+        "deep explanation",
+        "deep dive",
+        "step by step",
+        "step-by-step",
+        "detailed explanation",
+        "explain thoroughly",
+        "comprehensive explanation",
+        "explain fully",
+        "advanced explanation",
+        "derive",
+        "prove",
+    )
+    if any(phrase in text.lower() for phrase in deep_phrases):
+        return "The user explicitly requested a deep explanation; provide the necessary detail."
+    return "The user did not request depth; keep the answer concise and core-focused."
 
 
 def get_model(provider: Provider):
@@ -768,6 +821,48 @@ async def teach(request: TeachRequest) -> AIResponse:
             request.question or request.topic,
             response.answer,
         )
+
+    return response
+
+
+@app.post("/fast", response_model=AIResponse)
+async def fast(request: TeachRequest) -> AIResponse:
+    """Answer quickly by default, expanding when the user explicitly asks for depth."""
+    mode = "fast"
+
+    messages = build_messages_with_context(
+        history=request.history,
+        session_id=request.session_id,
+        new_session=request.new_session,
+        topic=request.topic,
+        mode=mode,
+    )
+
+    if not messages:
+        messages = convert_history(request.history)
+
+    question = request.question or request.topic
+    values = {
+        "level": request.level.value,
+        "language": request.language,
+        "history": messages,
+        "topic": request.topic,
+        "question": question,
+        "connected_source": request.connected_source or "None",
+        "depth_instruction": fast_depth_instruction(question),
+    }
+
+    routing_text = f"{request.topic}\n{question}\n{request.connected_source or ''}"
+    response = await run_routed(
+        request.provider,
+        FAST_PROMPT,
+        values,
+        routing_text,
+        request.level,
+    )
+
+    if request.session_id:
+        update_session(request.session_id, question, response.answer)
 
     return response
 

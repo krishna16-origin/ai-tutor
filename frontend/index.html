@@ -550,7 +550,10 @@
             <div class="max-w-3xl mx-auto relative">
                 <!-- Section mode buttons above input -->
                 <div class="flex items-center gap-2 mb-3 overflow-x-auto pb-1 hide-scrollbar">
-                    <button onclick="setMode('teach')" id="mode-teach" class="mode-btn px-3 py-1.5 rounded-full text-xs font-medium bg-chat-input text-chat-text border border-chat-border hover:bg-gray-700 transition-colors flex items-center gap-1.5 whitespace-nowrap">
+                    <button onclick="setMode('fast')" id="mode-fast" class="mode-btn px-3 py-1.5 rounded-full text-xs font-medium bg-chat-input text-chat-text border border-chat-border hover:bg-gray-700 transition-colors flex items-center gap-1.5 whitespace-nowrap">
+                        <i data-lucide="zap" class="w-3.5 h-3.5"></i> Fast
+                    </button>
+                    <button onclick="setMode('teach')" id="mode-teach" class="mode-btn px-3 py-1.5 rounded-full text-xs font-medium bg-transparent text-chat-muted border border-transparent hover:bg-gray-700 transition-colors flex items-center gap-1.5 whitespace-nowrap">
                         <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i> Teach
                     </button>
                     <button onclick="setMode('deep')" id="mode-deep" class="mode-btn px-3 py-1.5 rounded-full text-xs font-medium bg-transparent text-chat-muted border border-transparent hover:bg-chat-hover transition-colors flex items-center gap-1.5 whitespace-nowrap">
@@ -662,7 +665,7 @@
                             </div>
                         </section>
                     </div>
-                    <textarea id="main-input" rows="1" placeholder="Enter a topic to learn..." class="w-full bg-transparent text-chat-text text-base px-4 py-3 focus:outline-none placeholder-chat-muted resize-none custom-scrollbar m-0" oninput="autoResize(this)" onkeydown="handleEnter(event)"></textarea>
+                    <textarea id="main-input" rows="1" placeholder="Ask anything for a fast answer..." class="w-full bg-transparent text-chat-text text-base px-4 py-3 focus:outline-none placeholder-chat-muted resize-none custom-scrollbar m-0" oninput="autoResize(this)" onkeydown="handleEnter(event)"></textarea>
                     <div class="flex items-center justify-between px-2 pb-1">
                         <div class="flex items-center gap-1">
                             <button type="button" id="provider-picker" class="model-picker-trigger flex items-center gap-1.5 text-xs text-chat-muted hover:bg-chat-hover hover:text-chat-text transition-colors" aria-expanded="false" aria-controls="provider-menu" onclick="toggleProviderMenu(event)">
@@ -731,7 +734,7 @@
 
     <script>
         // ─── GLOBAL STATE (defined first so they're available everywhere) ───
-        let currentMode = 'teach';
+        let currentMode = 'fast';
         let isGenerating = false;
         let chatStarted = false;
 
@@ -809,7 +812,7 @@
             document.getElementById('empty-state').classList.remove('md:hidden');
             
             updateSessionDisplay();
-            setMode('teach');
+            setMode('fast');
             
             // Notify backend to clear session
             try {
@@ -1027,7 +1030,11 @@
             ui.optNum.classList.add('hidden');
             ui.optQuizContext.classList.add('hidden');
 
-            if (mode === 'teach') {
+            if (mode === 'fast') {
+                ui.input.placeholder = chatStarted
+                    ? "Ask a follow-up question..."
+                    : "Ask anything for a fast answer...";
+            } else if (mode === 'teach') {
                 ui.input.placeholder = chatStarted 
                     ? "Ask a follow-up question or enter a new topic..." 
                     : "Enter a topic to learn...";
@@ -1885,7 +1892,20 @@
                 let endpointPath = '/teach';
                 let requestBody = {};
 
-                if (currentMode === 'teach') {
+                if (currentMode === 'fast') {
+                    endpointPath = '/fast';
+                    const isNewSession = !chatStarted || conversationHistory.length === 0;
+                    requestBody = {
+                        topic: text,
+                        question: text,
+                        level,
+                        provider,
+                        language,
+                        history: getConversationHistory(),
+                        session_id: sessionId,
+                        new_session: isNewSession
+                    };
+                } else if (currentMode === 'teach') {
                     endpointPath = '/teach';
                     // Determine if this is a new session or continuation
                     const isNewSession = !chatStarted || conversationHistory.length === 0;

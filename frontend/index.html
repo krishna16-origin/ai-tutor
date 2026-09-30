@@ -1292,6 +1292,11 @@
             return /```experiment[^`]*```/is.test(text);
         }
 
+        function stripQuizSolutions(text) {
+            if (currentMode !== 'quiz') return text;
+            return text.replace(/\n\s*(?:Answer Key|Answers|Correct Answers|Solutions|Explanations)\s*:?[\s\S]*$/i, '').trim();
+        }
+
         function scheduleLiveVisualRender(container) {
             if (!container || !hasCompleteVisualBlock(container.getAttribute('data-raw') || '')) return;
             if (container._visualRenderTimer) return;
@@ -1303,8 +1308,9 @@
 
         function updateStreamingContent(aiNode, contentArea, text, showCursor = true) {
             aiNode.setAttribute('data-raw', text);
-            contentArea.innerHTML = processTextWithMath(text) + (showCursor ? '<span class="blinking-cursor"></span>' : '');
-            scheduleLiveVisualRender(aiNode);
+            const visibleText = stripQuizSolutions(text);
+            contentArea.innerHTML = processTextWithMath(visibleText) + (showCursor ? '<span class="blinking-cursor"></span>' : '');
+            if (!showCursor || currentMode !== 'quiz') scheduleLiveVisualRender(aiNode);
         }
 
         // ─── RENDER VISUALS: universal experiment engine only (formulas stay via KaTeX) ───
@@ -1861,23 +1867,50 @@
 
             if (questions.length === 0) return;
 
+            let hasAnswerKey = false;
             const answerKeyMatch = rawText.match(/(?:Answer Key|Answers|Correct Answers|Solutions):?([\s\S]*)/i);
             if (answerKeyMatch) {
                 const keySection = answerKeyMatch[1];
                 const mappedKeys = [...keySection.matchAll(/\b(\d+)[\.\-\):]\s*([a-d])\b/gi)];
 
                 if (mappedKeys.length > 0) {
+                    hasAnswerKey = true;
                     mappedKeys.forEach(match => {
                         const targetIdx = parseInt(match[1]) - 1;
                         const ansLetter = match[2].toLowerCase();
                         if (questions[targetIdx]) questions[targetIdx].correct = ansLetter.charCodeAt(0) - 97;
+                    });
+
+                    // Protect against models clustering every correct answer on one letter.
+                    // Reorder choices while preserving the correct answer's meaning.
+                    questions.forEach((question, qIdx) => {
+                        if (question.options.length < 4) return;
+                        const targetIndex = [0, 1, 2, 3][qIdx % 4];
+                        if (question.correct === targetIndex) return;
+                        [question.options[question.correct], question.options[targetIndex]] = [
+                            question.options[targetIndex],
+                            question.options[question.correct]
+                        ];
+                        question.correct = targetIndex;
                     });
                 }
             }
 
             const quizContainer = document.createElement('div');
             quizContainer.className = 'quiz-container mt-6';
-            quizContainer.innerHTML = `<h3 class="text-base font-semibold mb-4 flex items-center gap-2 text-blue-400"><i data-lucide="help-circle" class="w-5 h-5"></i> Interactive Knowledge Check</h3>`;
+            quizContainer.innerHTML = `<div class="flex items-center justify-between gap-3 mb-4 flex-wrap"><h3 class="text-base font-semibold flex items-center gap-2 text-blue-400"><i data-lucide="help-circle" class="w-5 h-5"></i> Interactive Knowledge Check</h3><label class="flex items-center gap-2 text-xs text-chat-muted cursor-pointer"><input type="checkbox" data-reveal-answers class="accent-blue-500" ${hasAnswerKey ? '' : 'disabled'}> Reveal answers</label></div>`;
+
+            const revealAnswers = (revealed) => {
+                questions.forEach(question => {
+                    (question.optionButtons || []).forEach((button, optionIndex) => {
+                        button.classList.toggle('correct', revealed && optionIndex === question.correct);
+                        button.classList.toggle('incorrect', revealed && question.selectedIndex === optionIndex && optionIndex !== question.correct);
+                    });
+                });
+            };
+            quizContainer.querySelector('[data-reveal-answers]').addEventListener('change', (event) => {
+                revealAnswers(event.target.checked);
+            });
 
             questions.forEach((q, qIdx) => {
                 const qBox = document.createElement('div');
@@ -1886,6 +1919,7 @@
 
                 const optsDiv = document.createElement('div');
                 optsDiv.className = 'space-y-2';
+                q.optionButtons = [];
 
                 q.options.forEach((opt, oIdx) => {
                     const btn = document.createElement('button');
@@ -1895,13 +1929,13 @@
                     btn.onclick = () => {
                         if (q.selectedIndex !== null) return;
                         q.selectedIndex = oIdx;
-                        
+                        btn.classList.add('selected');
                         Array.from(optsDiv.children).forEach((child, idx) => {
                             child.classList.add('disabled');
-                            if (idx === q.correct) child.classList.add('correct');
-                            if (idx === oIdx && oIdx !== q.correct) child.classList.add('incorrect');
                         });
+                        revealAnswers(quizContainer.querySelector('[data-reveal-answers]').checked);
                     };
+                    q.optionButtons.push(btn);
                     optsDiv.appendChild(btn);
                 });
 

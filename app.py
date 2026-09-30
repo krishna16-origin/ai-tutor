@@ -589,7 +589,8 @@ Answer Key:
 1. b
 2. a
 (continue for every question — number, period, space, single correct
-letter, nothing else on each line)
+letter, nothing else on each line. This key is used internally by the
+interactive quiz and is hidden from the learner until they reveal answers.)
 
 Explanations:
 - Explain question 1: why the correct answer is right and why the
@@ -603,6 +604,9 @@ Advanced Challenge:
 
 Rules:
 - Mix difficulty levels across the numbered questions.
+- Randomize the correct option position across questions. Balance a), b), c),
+  and d) as evenly as possible; never make every answer the same letter and do
+  not use the same correct letter for more than two consecutive questions.
 - Never use a)/b)/c)/d) style lettering anywhere outside the quiz
   questions and Answer Key.
 - The Answer Key must come immediately after the last question,

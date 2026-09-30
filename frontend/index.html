@@ -546,6 +546,10 @@
             <div id="chat-transcript" class="pb-6 pt-6 flex flex-col gap-6 w-full"></div>
         </div>
 
+        <button type="button" id="scroll-bottom-btn" onclick="scrollToLatest()" class="hidden absolute bottom-28 left-1/2 -translate-x-1/2 z-10 p-2 rounded-full bg-chat-input text-chat-text border border-chat-border shadow-lg hover:bg-chat-hover transition-colors" title="Scroll to latest" aria-label="Scroll to latest answer">
+            <i data-lucide="arrow-down" class="w-4 h-4"></i>
+        </button>
+
         <div class="w-full bg-chat-bg pt-2 pb-6 px-3 md:px-8 shrink-0 z-10 border-t border-chat-border md:border-transparent" style="padding-bottom:max(1.5rem, env(safe-area-inset-bottom))">
             <div class="max-w-3xl mx-auto relative">
                 <!-- Section mode buttons above input -->
@@ -743,6 +747,12 @@
         let conversationHistory = [];
 
         let streamingInterval;
+        let activeRequestController = null;
+        let activeResponseNode = null;
+        let activeResponseText = '';
+        let activeUserText = '';
+        let stopRequested = false;
+        let shouldAutoScroll = true;
 
         // ─── Session ID Helpers (defined before any usage) ───
         function generateSessionId() {
@@ -1073,7 +1083,7 @@
             const tpl = document.getElementById('tpl-user-msg').content.cloneNode(true);
             tpl.querySelector('div > div').textContent = text;
             ui.transcript.appendChild(tpl);
-            scrollToBottom();
+            scrollToBottom(true);
         }
 
         function createAIMessage() {
@@ -1086,14 +1096,88 @@
             ui.transcript.appendChild(container.firstElementChild);
 
             lucide.createIcons();
-            scrollToBottom();
+            scrollToBottom(true);
 
             return ui.transcript.lastElementChild;
         }
 
-        function scrollToBottom() {
+        function isNearBottom(container, threshold = 80) {
+            return container.scrollHeight - container.scrollTop - container.clientHeight <= threshold;
+        }
+
+        function updateScrollButton() {
+            const button = document.getElementById('scroll-bottom-btn');
+            if (button) button.classList.toggle('hidden', shouldAutoScroll);
+        }
+
+        function scrollToBottom(force = false) {
             const chatContainer = document.getElementById('chat-container');
+            if (!force && !shouldAutoScroll) return;
             chatContainer.scrollTop = chatContainer.scrollHeight;
+            shouldAutoScroll = true;
+            updateScrollButton();
+        }
+
+        function scrollToLatest() {
+            scrollToBottom(true);
+        }
+
+        document.getElementById('chat-container').addEventListener('scroll', (event) => {
+            shouldAutoScroll = isNearBottom(event.currentTarget);
+            updateScrollButton();
+        });
+
+        function updateSubmitButton() {
+            if (!ui.submitBtn) return;
+            if (isGenerating) {
+                ui.submitBtn.disabled = false;
+                ui.submitBtn.title = 'Stop response';
+                ui.submitBtn.setAttribute('aria-label', 'Stop response');
+                ui.submitBtn.innerHTML = '<i data-lucide="square" class="w-4 h-4 fill-current"></i>';
+            } else {
+                ui.submitBtn.disabled = false;
+                ui.submitBtn.title = 'Send message';
+                ui.submitBtn.setAttribute('aria-label', 'Send message');
+                ui.submitBtn.innerHTML = '<i data-lucide="arrow-up" class="w-5 h-5"></i>';
+            }
+            lucide.createIcons();
+        }
+
+        function resetGenerationState() {
+            isGenerating = false;
+            activeRequestController = null;
+            activeResponseNode = null;
+            activeResponseText = '';
+            activeUserText = '';
+            ui.input.disabled = false;
+            updateSubmitButton();
+            ui.input.focus();
+        }
+
+        function stopActiveResponse() {
+            if (!isGenerating) return;
+
+            stopRequested = true;
+            if (streamingInterval) {
+                clearInterval(streamingInterval);
+                streamingInterval = null;
+            }
+            if (activeRequestController) activeRequestController.abort();
+
+            if (activeResponseNode) {
+                const contentArea = activeResponseNode.querySelector('.content-area');
+                stopThinking(activeResponseNode);
+                const stoppedText = activeResponseText
+                    ? `${activeResponseText}\n\n*Response stopped.*`
+                    : '*Response stopped.*';
+                updateStreamingContent(activeResponseNode, contentArea, stoppedText, false);
+                activeResponseNode.setAttribute('data-raw', stoppedText);
+                addToConversationHistory('user', activeUserText);
+                addToConversationHistory('assistant', stoppedText);
+            }
+
+            resetGenerationState();
+            scrollToBottom(true);
         }
 
         function startThinking(aiNode) {
@@ -1890,10 +1974,18 @@
         ui.form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const text = ui.input.value.trim();
-            if (!text || isGenerating) return;
+            if (isGenerating) {
+                stopActiveResponse();
+                return;
+            }
+            if (!text) return;
 
             isGenerating = true;
-            ui.submitBtn.disabled = true;
+            stopRequested = false;
+            activeRequestController = new AbortController();
+            activeResponseText = '';
+            activeUserText = text;
+            updateSubmitButton();
             ui.input.disabled = true;
 
             appendUserMessage(text);
@@ -1904,6 +1996,7 @@
             chatStarted = true;
 
             const aiNode = createAIMessage();
+            activeResponseNode = aiNode;
             const contentArea = aiNode.querySelector('.content-area');
             const actionBar = aiNode.querySelector('.action-bar');
             const badge = aiNode.querySelector('.provider-badge');
@@ -1996,7 +2089,8 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(requestBody)
+                    body: JSON.stringify(requestBody),
+                    signal: activeRequestController.signal
                 });
 
                 if (!response.ok) {
@@ -2074,6 +2168,7 @@
                             }
                         }
 
+                        activeResponseText = displayMain;
                         const logs = aiNode.querySelector('#thought-logs');
                         const accordion = aiNode.querySelector('#thought-accordion');
                         if (displayThoughts.trim()) {
@@ -2107,6 +2202,8 @@
                         }
                     }
 
+                    activeResponseText = displayMain;
+
                     const logs = aiNode.querySelector('#thought-logs');
                     const accordion = aiNode.querySelector('#thought-accordion');
                     if (displayThoughts.trim()) {
@@ -2120,6 +2217,7 @@
                     streamingInterval = setInterval(() => {
                         if (currentIdx <= displayMain.length) {
                             const chunk = displayMain.substring(0, currentIdx);
+                            activeResponseText = chunk;
                             updateStreamingContent(aiNode, contentArea, chunk, true);
                             scrollToBottom();
                             currentIdx += 4;
@@ -2131,6 +2229,7 @@
                 }
 
                 function finalizeResponse(finalText) {
+                    if (stopRequested) return;
                     updateStreamingContent(aiNode, contentArea, finalText, false);
                     renderVisuals(aiNode);
                     playCompletionSnap();
@@ -2139,19 +2238,15 @@
                     addToConversationHistory('user', text);
                     addToConversationHistory('assistant', finalText);
                     
-                    isGenerating = false;
-                    ui.submitBtn.disabled = false;
-                    ui.input.disabled = false;
-                    ui.input.focus();
+                    resetGenerationState();
                     scrollToBottom();
                 }
 
             } catch (error) {
+                if (stopRequested || error.name === 'AbortError') return;
                 stopThinking(aiNode);
                 contentArea.innerHTML = `<div class="text-red-500 font-mono text-sm p-3 bg-red-900/20 border border-red-500/30 rounded-lg">Error connecting to backend: ${error.message}<br><br>Please verify your API URL is correctly set and running.</div>`;
-                isGenerating = false;
-                ui.submitBtn.disabled = false;
-                ui.input.disabled = false;
+                resetGenerationState();
                 scrollToBottom();
             }
         });

@@ -1855,6 +1855,36 @@
             }, 2000);
         }
 
+        // A tiny, UI-free completion sound for successfully finished answers.
+        let completionAudioContext;
+        function playCompletionSnap() {
+            try {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextClass) return;
+
+                completionAudioContext ||= new AudioContextClass();
+                const audio = completionAudioContext;
+                const now = audio.currentTime;
+                const oscillator = audio.createOscillator();
+                const gain = audio.createGain();
+
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(1450, now);
+                oscillator.frequency.exponentialRampToValueAtTime(680, now + 0.075);
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.exponentialRampToValueAtTime(0.12, now + 0.004);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.085);
+
+                oscillator.connect(gain);
+                gain.connect(audio.destination);
+                oscillator.start(now);
+                oscillator.stop(now + 0.09);
+            } catch (error) {
+                // Audio is optional; never interrupt an otherwise successful answer.
+                console.debug('Completion sound unavailable:', error);
+            }
+        }
+
         // ==========================================
         // ACTUAL BACKEND INTEGRATION WITH CONVERSATIONAL MEMORY
         // ==========================================
@@ -2104,6 +2134,7 @@
                 function finalizeResponse(finalText) {
                     updateStreamingContent(aiNode, contentArea, finalText, false);
                     renderVisuals(aiNode);
+                    playCompletionSnap();
                     
                     // Save to conversational memory
                     addToConversationHistory('user', text);

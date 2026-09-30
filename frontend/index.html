@@ -784,8 +784,7 @@
             }
         });
 
-        // Safety net in case DOMContentLoaded is delayed or something upstream breaks
-        window.addEventListener('load', hideSplash);
+        // DOMContentLoaded owns splash timing so the entrance animation is never skipped.
 
         // ─── Library config (runs immediately, safe outside DOMContentLoaded) ───
         if (window.markedGfmHeadingId) {

@@ -78,7 +78,7 @@
             pointer-events: none;
         }
         .splash-content {
-            animation: splashPop 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: splashPop 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         @keyframes splashPop {
             0% { transform: scale(0.85); opacity: 0; filter: blur(4px); }
@@ -1872,7 +1872,7 @@
                 oscillator.frequency.setValueAtTime(1450, now);
                 oscillator.frequency.exponentialRampToValueAtTime(680, now + 0.075);
                 gain.gain.setValueAtTime(0.0001, now);
-                gain.gain.exponentialRampToValueAtTime(0.12, now + 0.004);
+                gain.gain.exponentialRampToValueAtTime(0.3, now + 0.004);
                 gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.085);
 
                 oscillator.connect(gain);
